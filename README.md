@@ -2,10 +2,27 @@
 
 # <img src="public/assets/logo.png" alt="BeThere Logo" width="35" style="vertical-align: middle;"/> BeThere – Smart Attendance System Frontend
 
-**BeThere Client** is a modern, intuitive, and responsive frontend interface for the **BeThere Smart Attendance System**.
-It connects seamlessly with the BeThere backend to deliver **face-based attendance verification**, **event management**, and **real-time attendance analytics** for both users and administrators.
+**BeThere Client** is the web app for a full-stack **smart attendance system** that verifies attendance using **facial recognition** combined with **GPS geolocation**. Instead of signing a sheet or tapping a card, a person looks into their device camera, the app matches their face against an enrolled scan, confirms they are physically within **50 meters** of the event location, and only then records them as present. It is built for organizations, schools, and recurring events where attendance records need to be genuinely hard to fake — you have to *be there*, in person.
 
-Built with **React (Vite)**, **React Query**, **Shadcn UI**, and **face-api.js**, BeThere-client provides a secure, performant, and user-friendly experience.
+This repository is the **React frontend**: it runs the in-browser face recognition, captures live GPS, manages events and sessions, and renders the user and admin dashboards. It talks to the [BeThere-server](https://github.com/nuru484/BeThere-server.git) API for everything else.
+
+> **One-line pitch:** Attendance you can't fake — face recognition + GPS verification confirm the right person showed up at the right place, in real time.
+
+---
+
+## 🧠 How It Works
+
+**1. In-browser face recognition.**
+The app runs **face-api.js** with TensorFlow models loaded locally from `/public/models` (Tiny Face Detector, 68-point landmarks, face recognition, expression net). On first login a user enrolls their face: the app captures **3 samples**, extracts a **128-dimension descriptor** from each, and **averages them** into one stable face signature (`FaceAuthSystem.scanFace`). Verification compares two descriptors by **Euclidean distance** against a `0.6` threshold (`verifyFaceScan`). A **liveness check** (`performLivenessCheck`) watches for natural head movement and expression variance over ~2 seconds to resist someone holding up a static photo.
+
+**2. Location-gated check-in.**
+When a user checks in or out, the app captures live GPS coordinates and sends them to the backend, which validates the user is **within 50 meters** of the event location (via `@turf/turf`) and within the session's daily time window before recording a **PRESENT / LATE / ABSENT** status.
+
+**3. Roles & dashboards.**
+Two roles (`ADMIN`, `USER`). **Users** check in/out of active sessions and view their own attendance history, event records, and dashboard insights. **Admins** create/update/delete events, manage user records, **reset a user's face scan** when needed, and view organization-wide analytics — attendance by user, by event, and totals of users / events / active sessions, with charts (Recharts) and date-range filters.
+
+**4. Secure client experience.**
+Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AES-encrypted** local storage for tokens and sensitive data, **Zod** form validation, **context-based auth** with protected routes (`AuthContext` + `ProtectedRoutes.jsx`), React **Error Boundaries**, and a consistent UI built with **shadcn/ui** + **TailwindCSS**.
 
 ---
 
@@ -61,17 +78,27 @@ Built with **React (Vite)**, **React Query**, **Shadcn UI**, and **face-api.js**
 
 ## 🛠️ Tech Stack
 
-| Layer                  | Technology / Library                   |
-| ---------------------- | -------------------------------------- |
-| **Framework**          | React (Vite)                           |
-| **UI & Styling**       | Shadcn UI + TailwindCSS                |
-| **State / API Layer**  | @tanstack/react-query                  |
-| **Validation**         | Zod                                    |
-| **Face Recognition**   | face-api.js                            |
-| **Routing**            | React Router                           |
-| **Storage Encryption** | AES (via custom `encryptedStorage.js`) |
-| **Deployment**         | Vercel                                 |
-| **Error Handling**     | React Error Boundaries                 |
+| Layer                  | Technology / Library                                            |
+| ---------------------- | -------------------------------------------------------------- |
+| **Framework**          | React (Vite)                                                   |
+| **UI & Styling**       | shadcn/ui (Radix UI primitives) + TailwindCSS + tailwindcss-animate |
+| **Icons**              | lucide-react                                                    |
+| **Animation**          | framer-motion                                                  |
+| **Server State / API** | @tanstack/react-query                                          |
+| **HTTP Client**        | axios                                                          |
+| **Data Tables**        | @tanstack/react-table                                          |
+| **Charts**             | recharts                                                        |
+| **Forms**              | react-hook-form + @hookform/resolvers                         |
+| **Validation**         | Zod                                                            |
+| **Face Recognition**   | face-api.js (in-browser TensorFlow models)                    |
+| **Image Conversion**   | heic2any (iPhone HEIC → JPEG before scanning)                 |
+| **Routing**            | react-router-dom                                              |
+| **Auth Tokens**        | jwt-decode + encrypted local storage                         |
+| **Storage Encryption** | AES via `encrypt-storage` (wrapped in `encryptedStorage.js`) |
+| **Date Handling**      | date-fns + react-day-picker                                   |
+| **Notifications**      | react-hot-toast / sonner                                       |
+| **Error Handling**     | React Error Boundaries                                         |
+| **Deployment**         | Vercel                                                         |
 
 ---
 
