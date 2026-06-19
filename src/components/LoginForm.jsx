@@ -1,5 +1,6 @@
 // src/components/LoginForm.jsx
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import {
@@ -150,14 +151,13 @@ const LoginForm = ({ form, onSubmit, isLoading }) => {
               Remember me
             </label>
 
-            {/* FIXED: missing <a> tag */}
-            <a
-              href="#"
+            <Link
+              to="/forgot-password"
               className="text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline transition duration-200"
               tabIndex={isLoading ? -1 : 0}
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           {/* Security Badge */}

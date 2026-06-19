@@ -2,6 +2,8 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import LoginPage from "@/pages/LoginPage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ErrorPage from "@/pages/ErrorPage";
 import Layout from "@/components/Layout";
 import CreateEventPage from "@/pages/dashboard/events/CreateEventPage";
@@ -104,6 +106,16 @@ const Routes = () => {
     {
       path: "/login",
       element: <LoginPage />,
+    },
+
+    {
+      path: "/forgot-password",
+      element: <ForgotPasswordPage />,
+    },
+
+    {
+      path: "/reset-password",
+      element: <ResetPasswordPage />,
     },
   ];
 
