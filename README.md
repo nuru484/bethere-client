@@ -39,7 +39,6 @@ Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AE
 * [Screenshots](#-screenshots) 
 * [License](#-license)
 * [Contributing](#-contributing)
-* [Author](#-author)
 
 ---
 
@@ -48,6 +47,7 @@ Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AE
 ### 👤 User Capabilities
 
 * Login securely using credentials.
+* **Reset a forgotten password** via an emailed, time-limited link — request a reset, verify the link, and set a new password.
 * On first login, register your **facial scan** using **face-api.js** for future authentication.
 * Check in and out of **active event sessions** during their valid time windows.
 * View:
@@ -139,6 +139,17 @@ Redis (BullMQ Workers)
    * Access dashboards
 5. Auth state is managed globally using **AuthContext**.
 6. Routes are protected with `ProtectedRoutes.jsx`.
+
+### Password Reset
+
+A self-service flow backed by the BeThere API:
+
+1. From the login screen, **Forgot password?** opens `/forgot-password`, where the user submits their email. The response is intentionally generic (no account enumeration).
+2. The API emails a single-use, **15-minute** reset link pointing to `/reset-password?token=…`.
+3. On load, `/reset-password` **verifies the token** with the API — showing a loading, invalid/expired, or ready state accordingly.
+4. The user sets a new password (validated with **Zod**, mirroring the server rules); on success they're redirected to login.
+
+Reset endpoints are **rate-limited** server-side to deter abuse.
 
 ---
 
@@ -282,16 +293,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-## 🧠 Author
-
-**Developer:** Nurudeen Abdul-Majeed  
-
-**Email:** [abdulmajeednurudeen47@gmail.com](mailto:abdulmajeednurudeen47@gmail.com)  
-
-**Backend API:** [BeThere Backend](https://github.com/nuru484/BeThere-server.git)
-
----
 
