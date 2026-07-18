@@ -1,12 +1,16 @@
 // src/hooks/useUsers.js
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   getUsers,
   getUserById,
   addUser,
   updateUserProfile,
   deleteUser,
-  deleteAllUsers,
   updateUserRole,
   updateUserProfilePicture,
   changePassword,
@@ -21,7 +25,7 @@ export const useGetAllUsers = (params = {}) => {
     queryFn: () => getUsers(params),
     staleTime: 1000 * 60 * 5,
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -44,7 +48,7 @@ export const useAddUser = () => {
   return useMutation({
     mutationFn: (userData) => addUser(userData),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -56,8 +60,8 @@ export const useUpdateUserProfile = () => {
   return useMutation({
     mutationFn: ({ userId, userData }) => updateUserProfile(userId, userData),
     onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries(["user", userId]);
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -69,8 +73,8 @@ export const useUpdateUserProfilePicture = () => {
     mutationFn: ({ userId, formData }) =>
       updateUserProfilePicture(userId, formData),
     onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries(["user", userId]);
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -81,7 +85,7 @@ export const useChangePassword = () => {
   return useMutation({
     mutationFn: ({ data }) => changePassword(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -93,8 +97,8 @@ export const useUpdateUserRole = () => {
   return useMutation({
     mutationFn: ({ userId, role }) => updateUserRole(userId, role),
     onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries(["user", userId]);
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -106,21 +110,8 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: (userId) => deleteUser(userId),
     onSuccess: (data, userId) => {
-      queryClient.removeQueries(["user", userId]);
-      queryClient.invalidateQueries(["users"]);
-    },
-  });
-};
-
-// Delete all users
-export const useDeleteAllUsers = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (confirmData) => deleteAllUsers(confirmData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
-      queryClient.removeQueries(["user"]);
+      queryClient.removeQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -133,7 +124,7 @@ export const useSearchUsers = (searchParams = {}) => {
     queryFn: () => getUsers(searchParams),
     staleTime: 1000 * 60 * 3,
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: !!searchParams.search,
   });
 };

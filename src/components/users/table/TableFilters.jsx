@@ -28,7 +28,6 @@ export function TableFilters({
   onDeleteSelected,
 }) {
   const selectedCount = table.getSelectedRowModel().rows.length;
-  const isAllSelected = selectedCount === totalCount && totalCount > 0;
 
   const [searchInput, setSearchInput] = useState(filters.search || "");
 
@@ -75,7 +74,7 @@ export function TableFilters({
           {selectedCount > 0 ? (
             <div className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-lg border">
               <Badge variant="secondary" className="font-medium">
-                {selectedCount} selected {isAllSelected && "(All)"}
+                {selectedCount} selected
               </Badge>
               <Button
                 variant="destructive"
@@ -84,7 +83,7 @@ export function TableFilters({
                 className="h-8 hover:cursor-pointer"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                {isAllSelected ? "Delete All" : "Delete Selected"}
+                Delete Selected
               </Button>
             </div>
           ) : (

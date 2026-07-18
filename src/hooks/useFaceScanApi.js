@@ -7,7 +7,7 @@ export const useGetUserFaceScan = (userId) => {
     queryKey: ["facescan", userId],
     queryFn: () => getUserFaceScan(userId),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -20,8 +20,8 @@ export const useAddFaceScan = () => {
   return useMutation({
     mutationFn: (userData) => addFaceScan(userData),
     onSuccess: (_, userId) => {
-      queryClient.invalidateQueries(["facescan", userId]);
-      queryClient.invalidateQueries(["user", userId]);
+      queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });
 };
@@ -33,7 +33,7 @@ export const useDeleteFaceScan = () => {
     mutationFn: ({ userId }) => deleteFaceScan(userId),
     onSuccess: (userId) => {
       queryClient.invalidateQueries({ queryKey: ["facescan"] });
-      queryClient.invalidateQueries(["user", userId]);
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });
 };

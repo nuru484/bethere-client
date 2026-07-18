@@ -23,11 +23,11 @@ const Pagination = ({
   pageSizeOptions = [10, 25, 50, 100],
   className = "",
 }) => {
-  const { totalRecords, page: currentPage, limit, totalPages } = meta;
+  const { total, page: currentPage, limit, totalPages } = meta;
 
   // Calculate current range
-  const startItem = Math.min((currentPage - 1) * limit + 1, totalRecords);
-  const endItem = Math.min(currentPage * limit, totalRecords);
+  const startItem = Math.min((currentPage - 1) * limit + 1, total);
+  const endItem = Math.min(currentPage * limit, total);
 
   const getVisiblePages = () => {
     const delta = 2;
@@ -91,7 +91,7 @@ const Pagination = ({
             </span>
             {" of "}
             <span className="text-foreground font-semibold">
-              {totalRecords.toLocaleString()}
+              {total.toLocaleString()}
             </span>
             {" entries"}
           </div>

@@ -135,9 +135,9 @@ const EventList = ({
               Events
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-              {meta.totalRecords.toLocaleString()} event
-              {meta.totalRecords !== 1 ? "s" : ""}{" "}
-              {meta.totalRecords === 0 ? "available" : "found"}
+              {meta.total.toLocaleString()} event
+              {meta.total !== 1 ? "s" : ""}{" "}
+              {meta.total === 0 ? "available" : "found"}
             </p>
           </div>
         </div>
@@ -287,7 +287,7 @@ EventList.propTypes = {
   isError: PropTypes.bool.isRequired,
   error: PropTypes.object,
   meta: PropTypes.shape({
-    totalRecords: PropTypes.number.isRequired,
+    total: PropTypes.number.isRequired,
     page: PropTypes.number.isRequired,
     limit: PropTypes.number.isRequired,
     totalPages: PropTypes.number.isRequired,

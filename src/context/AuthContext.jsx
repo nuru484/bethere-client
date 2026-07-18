@@ -2,6 +2,7 @@
 import { createContext, useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import encryptStorage from "@/lib/encryptedStorage";
+import { logoutApi } from "@/api/auth";
 
 const AuthContext = createContext();
 
@@ -48,6 +49,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Fire-and-forget server-side revocation of the refresh token. Local
+    // state is cleared regardless: a failed revocation must never keep the
+    // user logged in on this device.
+    const refreshToken = encryptStorage.getItem("refreshToken");
+    if (refreshToken) {
+      logoutApi(refreshToken).catch(() => {});
+    }
+
     encryptStorage.removeItem("accessToken");
     encryptStorage.removeItem("refreshToken");
     setUser(null);

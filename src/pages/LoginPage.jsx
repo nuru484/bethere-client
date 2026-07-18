@@ -2,8 +2,7 @@
 import { useLogin } from "@/hooks/useAuth";
 import LoginForm from "@/components/LoginForm";
 import encryptStorage from "@/lib/encryptedStorage";
-import { useNavigate } from "react-router-dom";
-import { CheckCircle, UserCheck } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -36,10 +35,13 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     login(data, {
       onSuccess: (response) => {
+        // Server envelope: { message, data: { accessToken, refreshToken, user } }
+        const { accessToken, refreshToken, user: loggedInUser } = response.data;
+
         toast.success(response.message || "Login Successful");
-        logUserIn(response.user);
-        encryptStorage.setItem("accessToken", response.accessToken);
-        encryptStorage.setItem("refreshToken", response.refreshToken);
+        logUserIn(loggedInUser);
+        encryptStorage.setItem("accessToken", accessToken);
+        encryptStorage.setItem("refreshToken", refreshToken);
         navigate("/dashboard", { replace: true });
       },
 
@@ -49,7 +51,6 @@ const LoginPage = () => {
 
         if (hasFieldErrors && fieldErrors) {
           Object.entries(fieldErrors).forEach(([field, errorMessage]) => {
-            console.log("Setting field error:", field, errorMessage);
             form.setError(field, {
               message: errorMessage,
             });
@@ -72,8 +73,8 @@ const LoginPage = () => {
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
 
         <div className="relative z-10">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
+          {/* Logo → back to landing */}
+          <Link to="/" className="group mb-8 flex w-fit items-center gap-3">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
               <img
                 src={"/assets/logo.png"}
@@ -84,7 +85,7 @@ const LoginPage = () => {
             <span className="text-3xl font-bold text-white tracking-tight">
               BeThere
             </span>
-          </div>
+          </Link>
 
           <div className="mt-16">
             <h2 className="text-5xl font-bold text-white mb-6 leading-tight">
@@ -96,39 +97,6 @@ const LoginPage = () => {
               Streamline your attendance tracking with our intelligent, secure,
               and easy-to-use platform designed for modern organizations.
             </p>
-          </div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="space-y-6">
-            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <CheckCircle
-                className="text-white mt-1 flex-shrink-0"
-                size={24}
-              />
-              <div>
-                <h3 className="font-semibold text-white mb-1">
-                  Effortless Tracking
-                </h3>
-                <p className="text-emerald-100 text-sm">
-                  Monitor attendance in real-time and generate instant reports
-                  with our intuitive system.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <UserCheck className="text-white mt-1 flex-shrink-0" size={24} />
-              <div>
-                <h3 className="font-semibold text-white mb-1">
-                  Smart Analytics
-                </h3>
-                <p className="text-emerald-100 text-sm">
-                  Get valuable insights into attendance patterns and make
-                  informed decisions.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

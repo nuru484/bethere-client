@@ -17,7 +17,7 @@ import logo from "/assets/logo.png";
 
 const getMenuItems = (user) => {
   const isAdmin = user?.role === "ADMIN";
-  const shouldShowFaceScan = user?.faceScan === null;
+  const shouldShowFaceScan = user?.hasFaceScan === false;
 
   return [
     {

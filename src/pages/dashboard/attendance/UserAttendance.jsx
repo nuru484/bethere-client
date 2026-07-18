@@ -138,7 +138,7 @@ const UserAttendancePage = () => {
           <AttendanceDataTable
             data={attendanceRecords || []}
             loading={isLoading}
-            totalCount={attendanceData?.pagination?.totalRecords || 0}
+            totalCount={attendanceData?.meta?.total || 0}
             page={page}
             pageSize={pageSize}
             filters={filters}

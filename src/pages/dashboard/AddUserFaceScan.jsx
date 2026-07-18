@@ -42,7 +42,6 @@ export default function AddUserFaceScan() {
               navigate(`/dashboard`);
             },
             onError: (err) => {
-              console.log(err);
               toast.error(err?.message || "Failed to register face.");
               hasSubmittedRef.current = false;
             },

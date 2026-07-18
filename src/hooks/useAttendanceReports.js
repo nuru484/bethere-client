@@ -1,5 +1,5 @@
 // src/hooks/useAttendanceReports.jsx
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getAttendanceReport } from "@/api/attendance-reports.js";
 
 /**
@@ -14,9 +14,9 @@ export const useGetAttendanceReport = (params = {}, options = {}) => {
     queryKey,
     queryFn: () => getAttendanceReport(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchOnReconnect: false,
     ...options,
   });

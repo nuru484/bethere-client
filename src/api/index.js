@@ -33,6 +33,34 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Single-flight refresh: all concurrent 401s share one in-flight refresh
+// request so token rotation does not invalidate sibling refresh attempts.
+let refreshPromise = null;
+
+const refreshTokens = async () => {
+  const refreshToken = encryptStorage.getItem("refreshToken");
+
+  if (!refreshToken) {
+    throw new Error("No refresh token available");
+  }
+
+  // Server envelope: { message, data: { accessToken, refreshToken } }
+  const { data: body } = await axios.post(
+    `${serverURL}/api/v1/refreshToken`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${refreshToken}` },
+    }
+  );
+
+  const { accessToken, refreshToken: rotatedRefreshToken } = body.data;
+
+  encryptStorage.setItem("accessToken", accessToken);
+  encryptStorage.setItem("refreshToken", rotatedRefreshToken);
+
+  return accessToken;
+};
+
 // Response interceptor for token refresh
 api.interceptors.response.use(
   (response) => response,
@@ -41,31 +69,19 @@ api.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      error.response?.data?.type === "TOKEN_EXPIRED" &&
+      error.response?.data?.code === "TOKEN_EXPIRED" &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = encryptStorage.getItem("refreshToken");
-
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
+        if (!refreshPromise) {
+          refreshPromise = refreshTokens().finally(() => {
+            refreshPromise = null;
+          });
         }
 
-        const { data } = await axios.post(
-          `${serverURL}/api/v1/refreshToken`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${refreshToken}` },
-          }
-        );
-
-        const newAccessToken = data.newAccessToken;
-        const newRefreshToken = data.newRefreshToken;
-
-        encryptStorage.setItem("accessToken", newAccessToken);
-        encryptStorage.setItem("refreshToken", newRefreshToken);
+        const newAccessToken = await refreshPromise;
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axios(originalRequest);
@@ -73,12 +89,14 @@ api.interceptors.response.use(
         console.error("Token refresh failed", err);
         encryptStorage.removeItem("accessToken");
         encryptStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.assign("/login");
         return Promise.reject({
           status: 401,
           data: {
             status: "error",
             message: "Session expired. Please log in again.",
-            type: "AUTH_ERROR",
+            code: "AUTH_ERROR",
           },
         });
       }
@@ -107,15 +125,12 @@ api.interceptors.response.use(
       standardizedError.data = {
         status: "error",
         message: data.message || "An error occurred",
-        type: data.type || "UNKNOWN_ERROR",
+        code: data.code || "UNKNOWN_ERROR",
       };
 
-      // Add errorId and code if present
+      // Add errorId if present
       if (data.errorId) {
         standardizedError.data.errorId = data.errorId;
-      }
-      if (data.code) {
-        standardizedError.data.code = data.code;
       }
 
       if (data.details && typeof data.details === "object") {

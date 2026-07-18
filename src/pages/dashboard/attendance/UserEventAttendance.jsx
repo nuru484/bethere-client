@@ -42,7 +42,7 @@ const UserEventAttendancePage = () => {
   } = useGetUserEventAttendance(userId, eventId, queryParams);
 
   const attendanceRecords = attendanceData?.data;
-  const totalCount = attendanceData?.pagination?.totalRecords || 0;
+  const totalCount = attendanceData?.meta?.total || 0;
 
   // Get event and user details from the first record
   const eventDetails = attendanceRecords?.[0]?.session?.event;

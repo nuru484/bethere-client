@@ -1,5 +1,5 @@
 // src/hooks/useDashboard.js
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   getAdminDashboardTotals,
   getAllUsersAttendanceData,
@@ -13,7 +13,7 @@ export const useGetAdminDashboardTotals = () => {
     queryKey: ["adminDashboardTotals"],
     queryFn: getAdminDashboardTotals,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -26,10 +26,10 @@ export const useGetAllUsersAttendanceData = (params = {}) => {
     queryKey,
     queryFn: () => getAllUsersAttendanceData(params),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
     refetchOnWindowFocus: false,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -38,7 +38,7 @@ export const useGetUserDashboardTotals = () => {
     queryKey: ["userDashboardTotals"],
     queryFn: getUserDashboardTotals,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -49,7 +49,7 @@ export const useGetRecentEvents = () => {
     queryKey: ["recentEvents"],
     queryFn: getRecentEvents,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -62,9 +62,9 @@ export const useGetUserAttendanceData = (params = {}) => {
     queryKey,
     queryFn: () => getUserAttendanceData(params),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
     refetchOnWindowFocus: false,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };

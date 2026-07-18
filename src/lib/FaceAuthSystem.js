@@ -1,5 +1,6 @@
 // src/lib/FaceAuthSystem.js
 import * as faceapi from "face-api.js";
+import { compareDescriptors, DESCRIPTOR_LENGTH } from "@/lib/face-math";
 
 export class FaceAuthSystem {
   constructor(options = {}) {
@@ -122,7 +123,7 @@ export class FaceAuthSystem {
         !descriptor1 ||
         !descriptor2 ||
         descriptor1.length !== descriptor2.length ||
-        descriptor1.length !== 128
+        descriptor1.length !== DESCRIPTOR_LENGTH
       ) {
         return {
           success: false,
@@ -130,15 +131,11 @@ export class FaceAuthSystem {
         };
       }
 
-      // Calculate Euclidean distance
-      const euclideanDistance = Math.sqrt(
-        descriptor1.reduce(
-          (sum, val, i) => sum + Math.pow(val - descriptor2[i], 2),
-          0
-        )
+      const { isMatch, distance } = compareDescriptors(
+        descriptor1,
+        descriptor2,
+        this.config.distanceThreshold
       );
-
-      const isMatch = euclideanDistance <= this.config.distanceThreshold;
 
       return {
         success: true,
@@ -146,7 +143,7 @@ export class FaceAuthSystem {
         message: isMatch
           ? "Face scan verified successfully"
           : "Face scan does not match",
-        distance: euclideanDistance,
+        distance,
       };
     } catch (error) {
       console.error("Error in face scan verification:", error);

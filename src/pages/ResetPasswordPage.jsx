@@ -1,5 +1,6 @@
 // src/pages/ResetPasswordPage.jsx
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -225,6 +226,14 @@ const ResetPasswordPage = () => {
       </Link>
     </AuthShell>
   );
+};
+
+PasswordField.propTypes = {
+  control: PropTypes.object.isRequired,
+  name: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  placeholder: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default ResetPasswordPage;

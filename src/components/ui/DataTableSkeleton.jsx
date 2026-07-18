@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// eslint-disable-next-line react/prop-types
 export function DataTableSkeleton({ rows = 10 }) {
   return (
     <div className="w-full max-w-full space-y-4">

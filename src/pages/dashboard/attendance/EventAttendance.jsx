@@ -42,7 +42,7 @@ const EventAttendancePage = () => {
   } = useGetEventAttendance(eventId, queryParams);
 
   const attendanceRecords = attendanceData?.data;
-  const totalCount = attendanceData?.pagination?.totalRecords || 0;
+  const totalCount = attendanceData?.meta?.total || 0;
 
   const eventDetails = attendanceRecords?.[0]?.session?.event;
   const eventTitle = eventDetails?.title || "Event";

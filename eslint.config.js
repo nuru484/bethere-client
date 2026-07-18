@@ -35,4 +35,12 @@ export default [
       ],
     },
   },
+  {
+    // Vendored shadcn/ui primitives: not authored here, so prop-types
+    // annotations are not maintained for them.
+    files: ['src/components/ui/**'],
+    rules: {
+      'react/prop-types': 'off',
+    },
+  },
 ]

@@ -139,7 +139,7 @@ export function UserActionsDropdown({ user }) {
     { value: "USER", label: "User" },
   ];
 
-  const hasFaceScan = user.faceScan !== null && user.faceScan !== undefined;
+  const hasFaceScan = user.hasFaceScan === true;
 
   return (
     <>
@@ -372,6 +372,6 @@ UserActionsDropdown.propTypes = {
     lastName: PropTypes.string.isRequired,
     email: PropTypes.string,
     role: PropTypes.oneOf(["ADMIN", "USER"]).isRequired,
-    faceScan: PropTypes.object,
+    hasFaceScan: PropTypes.bool,
   }).isRequired,
 };

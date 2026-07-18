@@ -69,7 +69,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
 
   if (!data) return null;
 
-  const { data: attendances, topAttendees, summary, pagination } = data;
+  const { data: attendances, topAttendees, summary, meta } = data;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -95,7 +95,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
         <div>
           <h2 className="text-2xl font-bold">Attendance Reports</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {pagination?.totalRecords || 0} total records
+            {meta?.total || 0} total records
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -380,18 +380,18 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
               </div>
 
               {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
+              {meta && meta.totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
                   <p className="text-sm text-muted-foreground text-center sm:text-left">
-                    Showing page {pagination.page} of {pagination.totalPages} (
-                    {pagination.totalRecords} total records)
+                    Showing page {meta.page} of {meta.totalPages} (
+                    {meta.total} total records)
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={pagination.page === 1}
-                      onClick={() => onPageChange(pagination.page - 1)}
+                      disabled={meta.page === 1}
+                      onClick={() => onPageChange(meta.page - 1)}
                       className="w-full sm:w-auto"
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
@@ -399,7 +399,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
                     </Button>
                     <div className="flex items-center gap-1 overflow-x-auto max-w-full">
                       {Array.from(
-                        { length: Math.min(5, pagination.totalPages) },
+                        { length: Math.min(5, meta.totalPages) },
                         (_, i) => {
                           const pageNum = i + 1;
                           return (
@@ -407,7 +407,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
                               key={pageNum}
                               size="sm"
                               variant={
-                                pagination.page === pageNum
+                                meta.page === pageNum
                                   ? "default"
                                   : "outline"
                               }
@@ -423,8 +423,8 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={pagination.page === pagination.totalPages}
-                      onClick={() => onPageChange(pagination.page + 1)}
+                      disabled={meta.page === meta.totalPages}
+                      onClick={() => onPageChange(meta.page + 1)}
                       className="w-full sm:w-auto"
                     >
                       Next

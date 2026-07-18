@@ -88,8 +88,7 @@ const ProfileInfoTab = ({ user }) => {
             blob: file,
             toType: "image/jpeg",
           });
-        } catch (err) {
-          console.log(err);
+        } catch {
           toast.error("Failed to preview HEIC file");
           setIsProcessingImage(false);
           setIsEditingAvatar(false);

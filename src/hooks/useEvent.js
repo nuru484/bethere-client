@@ -1,12 +1,16 @@
 // src/hooks/useEvent.js
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   fetchEvent,
   fetchEvents,
   createEvent,
   updateEvent,
   deleteEvent,
-  deleteAllEvents,
 } from "@/api/event";
 
 export const useGetEvent = (eventId) => {
@@ -14,7 +18,7 @@ export const useGetEvent = (eventId) => {
     queryKey: ["event", eventId],
     queryFn: () => fetchEvent(eventId),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 1,
     refetchOnReconnect: false,
   });
@@ -27,9 +31,9 @@ export const useGetEvents = (params = {}) => {
     queryKey,
     queryFn: () => fetchEvents(params),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 1,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchOnReconnect: false,
   });
 };
@@ -40,7 +44,7 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: createEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries(["events"]);
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });
 };
@@ -51,8 +55,8 @@ export const useUpdateEvent = () => {
   return useMutation({
     mutationFn: ({ eventId, data }) => updateEvent(eventId, data),
     onSuccess: (data, { eventId }) => {
-      queryClient.invalidateQueries(["event", eventId]);
-      queryClient.invalidateQueries(["events"]);
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });
 };
@@ -63,19 +67,8 @@ export const useDeleteEvent = () => {
   return useMutation({
     mutationFn: ({ eventId }) => deleteEvent(eventId),
     onSuccess: (eventId) => {
-      queryClient.invalidateQueries(["event", eventId]);
-      queryClient.invalidateQueries(["events"]);
-    },
-  });
-};
-
-export const useDeleteAllEvents = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: deleteAllEvents,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["events"]);
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
     },
   });
 };

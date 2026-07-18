@@ -1,5 +1,6 @@
 // src/pages/ForgotPasswordPage.jsx
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -173,5 +174,9 @@ export const AuthShell = ({ children }) => (
     </div>
   </div>
 );
+
+AuthShell.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export default ForgotPasswordPage;

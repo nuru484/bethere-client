@@ -51,10 +51,3 @@ export const updateUserRole = async (userId, role) =>
 // Delete single user
 export const deleteUser = async (userId) =>
   await api.delete(`/users/${userId}`);
-
-// Delete all users
-export const deleteAllUsers = async (confirmData) => {
-  return await api.delete("/users", {
-    data: confirmData,
-  });
-};

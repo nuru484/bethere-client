@@ -6,13 +6,9 @@ import {
   useUpdateAttendance,
 } from "@/hooks/useAttendance";
 import FaceScanner from "@/components/FaceScanner";
-import FaceScannerSkeleton from "@/components/FaceScannerSkeleton";
-import { FaceAuthSystem } from "@/lib/FaceAuthSystem";
-import { useGetUserFaceScan } from "@/hooks/useFaceScanApi";
 import { useAuth } from "@/hooks/useAuth";
 import PropTypes from "prop-types";
 import toast from "react-hot-toast";
-import ErrorMessage from "../ui/ErrorMessage";
 import { LogIn, LogOut, ArrowLeft, MapPin } from "lucide-react";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { Button } from "@/components/ui/button";
@@ -27,19 +23,9 @@ export default function MarkAttendance({ type = "in" }) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState(null);
   const watchIdRef = useRef(null);
-  const authSystemRef = useRef(null);
   const hasSubmittedRef = useRef(false);
   const toastIdRef = useRef(null);
 
-  const {
-    data: userFaceData,
-    isLoading: fetchingUserFaceData,
-    isError: isFaceApiDataError,
-    error: faceApiDataError,
-    refetch: refetchFaceData,
-  } = useGetUserFaceScan(user?.id);
-
-  const storedDescriptor = userFaceData?.data?.faceScan;
   const { mutate: createAttendance, isPending: isCreating } =
     useCreateAttendance();
   const { mutate: updateAttendance, isPending: isUpdating } =
@@ -47,16 +33,6 @@ export default function MarkAttendance({ type = "in" }) {
 
   const isMarking = type === "in" ? isCreating : isUpdating;
   const markAttendance = type === "in" ? createAttendance : updateAttendance;
-
-  // Initialize FaceAuthSystem
-  useEffect(() => {
-    const initAuthSystem = async () => {
-      const system = new FaceAuthSystem({ distanceThreshold: 0.6 });
-      await system.initialize();
-      authSystemRef.current = system;
-    };
-    initAuthSystem();
-  }, []);
 
   // Start watching location
   const startWatchingLocation = useCallback(() => {
@@ -118,97 +94,54 @@ export default function MarkAttendance({ type = "in" }) {
         return;
       }
 
+      if (!latitude || !longitude) {
+        const locMsg =
+          "Location is required to mark attendance. Please enable location services.";
+        toast.error(locMsg);
+        setVerificationStatus({ message: locMsg, type: "error" });
+        return;
+      }
+
       setIsVerifying(true);
       toastIdRef.current = toast.loading("Verifying face...");
+      hasSubmittedRef.current = true;
+      setVerificationStatus({
+        message: `Verifying face and marking attendance ${type}...`,
+        type: "loading",
+      });
 
-      try {
-        if (!storedDescriptor) {
-          const msg =
-            "No stored face scan found. Please register your face first.";
-          toast.error(msg, { id: toastIdRef.current });
-          setVerificationStatus({ message: msg, type: "error" });
-          setIsVerifying(false);
-          return;
-        }
-
-        const verificationResult = authSystemRef.current.verifyFaceScan(
-          scanResult.descriptor,
-          storedDescriptor
-        );
-
-        if (!verificationResult.success || !verificationResult.isMatch) {
-          const msg =
-            verificationResult.message ||
-            "Face does not match. Authentication failed.";
-          toast.error(msg, { id: toastIdRef.current });
-          setVerificationStatus({ message: msg, type: "error" });
-          setIsVerifying(false);
-          return;
-        }
-
-        const successMsg =
-          verificationResult.message || "Face verified successfully!";
-        toast.success(successMsg, { id: toastIdRef.current });
-        setVerificationStatus({ message: successMsg, type: "success" });
-
-        if (!latitude || !longitude) {
-          const locMsg =
-            "Location is required to mark attendance. Please enable location services.";
-          toast.error(locMsg, { id: toastIdRef.current });
-          setVerificationStatus({ message: locMsg, type: "error" });
-          setIsVerifying(false);
-          hasSubmittedRef.current = false;
-          return;
-        }
-
-        hasSubmittedRef.current = true;
-        setVerificationStatus({
-          message: `Marking attendance ${type}...`,
-          type: "loading",
-        });
-
-        markAttendance(
-          {
-            eventId: parseInt(eventId),
-            attendanceData: { latitude, longitude },
+      // The server verifies the live descriptor against the enrolled face
+      // scan and marks attendance in one call.
+      markAttendance(
+        {
+          eventId: parseInt(eventId),
+          attendanceData: {
+            latitude,
+            longitude,
+            faceDescriptor: Array.from(scanResult.descriptor),
           },
-          {
-            onSuccess: (response) => {
-              const msg =
-                response?.message || `Attendance ${type} marked successfully!`;
-              toast.success(msg, { id: toastIdRef.current });
-              setVerificationStatus({ message: msg, type: "success" });
-              setIsVerifying(false);
-              setTimeout(() => navigate(`/dashboard/events/${eventId}`), 2000);
-            },
-            onError: (error) => {
-              const { message } = extractApiErrorMessage(error);
-              const errMsg = message || `Failed to mark attendance ${type}.`;
-              toast.error(errMsg, { id: toastIdRef.current });
-              setVerificationStatus({ message: errMsg, type: "error" });
-              setIsVerifying(false);
-              hasSubmittedRef.current = false;
-            },
-          }
-        );
-      } catch (error) {
-        const msg =
-          error?.message || "An error occurred during face verification.";
-        toast.error(msg, { id: toastIdRef.current });
-        setVerificationStatus({ message: msg, type: "error" });
-        setIsVerifying(false);
-        hasSubmittedRef.current = false;
-      }
+        },
+        {
+          onSuccess: (response) => {
+            const msg =
+              response?.message || `Attendance ${type} marked successfully!`;
+            toast.success(msg, { id: toastIdRef.current });
+            setVerificationStatus({ message: msg, type: "success" });
+            setIsVerifying(false);
+            setTimeout(() => navigate(`/dashboard/events/${eventId}`), 2000);
+          },
+          onError: (error) => {
+            const { message } = extractApiErrorMessage(error);
+            const errMsg = message || `Failed to mark attendance ${type}.`;
+            toast.error(errMsg, { id: toastIdRef.current });
+            setVerificationStatus({ message: errMsg, type: "error" });
+            setIsVerifying(false);
+            hasSubmittedRef.current = false;
+          },
+        }
+      );
     },
-    [
-      storedDescriptor,
-      latitude,
-      longitude,
-      markAttendance,
-      eventId,
-      type,
-      navigate,
-    ]
+    [latitude, longitude, markAttendance, eventId, type, navigate]
   );
 
   const getExternalStatus = () => {
@@ -222,16 +155,6 @@ export default function MarkAttendance({ type = "in" }) {
   const gradientColors = isCheckIn
     ? "from-green-500 to-green-600"
     : "from-orange-500 to-orange-600";
-
-  if (isFaceApiDataError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="container max-w-2xl">
-          <ErrorMessage error={faceApiDataError} onRetry={refetchFaceData} />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
@@ -373,23 +296,19 @@ export default function MarkAttendance({ type = "in" }) {
             </div>
 
             <div className="flex justify-center">
-              {fetchingUserFaceData ? (
-                <FaceScannerSkeleton />
-              ) : (
-                <FaceScanner
-                  buttonText={`Scan Face to Mark ${
-                    isCheckIn ? "Check-In" : "Check-Out"
-                  }`}
-                  onScanComplete={handleScanComplete}
-                  disabled={
-                    isVerifying ||
-                    isMarking ||
-                    !user?.id ||
-                    hasSubmittedRef.current
-                  }
-                  externalStatus={getExternalStatus()}
-                />
-              )}
+              <FaceScanner
+                buttonText={`Scan Face to Mark ${
+                  isCheckIn ? "Check-In" : "Check-Out"
+                }`}
+                onScanComplete={handleScanComplete}
+                disabled={
+                  isVerifying ||
+                  isMarking ||
+                  !user?.id ||
+                  hasSubmittedRef.current
+                }
+                externalStatus={getExternalStatus()}
+              />
             </div>
           </div>
         </div>

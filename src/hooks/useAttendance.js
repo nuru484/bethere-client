@@ -1,5 +1,10 @@
 // src/hooks/useAttendance.jsx
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   createAttendance,
   updateAttendance,
@@ -15,7 +20,7 @@ export const useCreateAttendance = () => {
     mutationFn: ({ eventId, attendanceData }) =>
       createAttendance(eventId, attendanceData),
     onSuccess: () => {
-      queryClient.invalidateQueries(["attendance"]);
+      queryClient.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 };
@@ -27,8 +32,8 @@ export const useUpdateAttendance = () => {
     mutationFn: ({ eventId, attendanceData }) =>
       updateAttendance(eventId, attendanceData),
     onSuccess: (data, { eventId }) => {
-      queryClient.invalidateQueries(["attendance", eventId]);
-      queryClient.invalidateQueries(["attendance"]);
+      queryClient.invalidateQueries({ queryKey: ["attendance", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["attendance"] });
     },
   });
 };
@@ -39,10 +44,10 @@ export const useGetUserAttendance = (userId, params = {}) => {
   return useQuery({
     queryKey,
     queryFn: () => getUserAttendance(userId, params),
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     staleTime: 1000 * 60 * 5,
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchOnReconnect: false,
   });
 };
@@ -54,9 +59,9 @@ export const useGetEventAttendance = (eventId, params = {}) => {
     queryKey,
     queryFn: () => getEventAttendance(eventId, params),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchOnReconnect: false,
   });
 };
@@ -69,9 +74,9 @@ export const useGetUserEventAttendance = (userId, eventId, params = {}) => {
     queryFn: () => getUserEventAttendance(userId, eventId, params),
     enabled: !!(userId && eventId),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 2,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     refetchOnReconnect: false,
   });
 };

@@ -1,26 +1,75 @@
 //src/routes/index.jsx
+import { lazy, Suspense } from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
+import RequireRole from "./RequireRole";
+import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ErrorPage from "@/pages/ErrorPage";
 import Layout from "@/components/Layout";
-import CreateEventPage from "@/pages/dashboard/events/CreateEventPage";
-import UpdateEventPage from "@/pages/dashboard/events/UpdateEventPage";
-import AddUserFaceScan from "@/pages/dashboard/AddUserFaceScan";
-import EventSignIn from "@/pages/dashboard/attendance/EventSignIn";
-import EventSignOut from "@/pages/dashboard/attendance/EventSignOut";
-import EventAttendancePage from "@/pages/dashboard/attendance/EventAttendance";
-import UserEventAttendancePage from "@/pages/dashboard/attendance/UserEventAttendance";
-import Userspage from "@/pages/dashboard/users/Users";
-import AddUserPage from "@/pages/dashboard/users/AddUserPage";
-import DashboardRedirect from "@/pages/dashboard/DashboardRedirect";
-import UserAttendancePage from "@/pages/dashboard/attendance/UserAttendance";
-import EventDetailsPage from "@/pages/dashboard/events/EventDetailsPage";
-import EventsPage from "@/pages/dashboard/events/Events";
-import UserProfilePage from "@/pages/dashboard/users/UserProfilePage";
-import AttendanceReportsPage from "@/pages/dashboard/attendance/ReportsPage";
+
+// Dashboard pages are code-split so the initial bundle stays small.
+const DashboardRedirect = lazy(() =>
+  import("@/pages/dashboard/DashboardRedirect")
+);
+const EventsPage = lazy(() => import("@/pages/dashboard/events/Events"));
+const EventDetailsPage = lazy(() =>
+  import("@/pages/dashboard/events/EventDetailsPage")
+);
+const CreateEventPage = lazy(() =>
+  import("@/pages/dashboard/events/CreateEventPage")
+);
+const UpdateEventPage = lazy(() =>
+  import("@/pages/dashboard/events/UpdateEventPage")
+);
+const AddUserFaceScan = lazy(() =>
+  import("@/pages/dashboard/AddUserFaceScan")
+);
+const EventSignIn = lazy(() =>
+  import("@/pages/dashboard/attendance/EventSignIn")
+);
+const EventSignOut = lazy(() =>
+  import("@/pages/dashboard/attendance/EventSignOut")
+);
+const EventAttendancePage = lazy(() =>
+  import("@/pages/dashboard/attendance/EventAttendance")
+);
+const UserEventAttendancePage = lazy(() =>
+  import("@/pages/dashboard/attendance/UserEventAttendance")
+);
+const UserAttendancePage = lazy(() =>
+  import("@/pages/dashboard/attendance/UserAttendance")
+);
+const AttendanceReportsPage = lazy(() =>
+  import("@/pages/dashboard/attendance/ReportsPage")
+);
+const Userspage = lazy(() => import("@/pages/dashboard/users/Users"));
+const AddUserPage = lazy(() => import("@/pages/dashboard/users/AddUserPage"));
+const UserProfilePage = lazy(() =>
+  import("@/pages/dashboard/users/UserProfilePage")
+);
+
+const PageFallback = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div
+      className="h-10 w-10 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin"
+      role="status"
+      aria-label="Loading page"
+    />
+  </div>
+);
+
+const page = (element) => (
+  <Suspense fallback={<PageFallback />}>{element}</Suspense>
+);
+
+const adminPage = (element) => (
+  <Suspense fallback={<PageFallback />}>
+    <RequireRole role="ADMIN">{element}</RequireRole>
+  </Suspense>
+);
 
 const Routes = () => {
   const protectedRoutes = [
@@ -33,62 +82,62 @@ const Routes = () => {
           element: <Layout />,
           errorElement: <ErrorPage />,
           children: [
-            { index: true, element: <DashboardRedirect /> },
+            { index: true, element: page(<DashboardRedirect />) },
             {
               path: "/dashboard/events",
-              element: <EventsPage />,
+              element: page(<EventsPage />),
             },
             {
               path: "/dashboard/events/:eventId",
-              element: <EventDetailsPage />,
+              element: page(<EventDetailsPage />),
             },
             {
               path: "/dashboard/events/create",
-              element: <CreateEventPage />,
+              element: adminPage(<CreateEventPage />),
             },
             {
               path: "/dashboard/events/:eventId/edit",
-              element: <UpdateEventPage />,
+              element: adminPage(<UpdateEventPage />),
             },
             {
               path: "/dashboard/events/:eventId/attendance",
-              element: <EventAttendancePage />,
+              element: adminPage(<EventAttendancePage />),
             },
             {
               path: "/dashboard/attendance/user/:userId/event/:eventId",
-              element: <UserEventAttendancePage />,
+              element: page(<UserEventAttendancePage />),
             },
             {
               path: "/dashboard/attendance/:userId",
-              element: <UserAttendancePage />,
+              element: page(<UserAttendancePage />),
             },
             {
               path: "/dashboard/users",
-              element: <Userspage />,
+              element: adminPage(<Userspage />),
             },
             {
               path: "/dashboard/users/:userId/profile",
-              element: <UserProfilePage />,
+              element: page(<UserProfilePage />),
             },
             {
               path: "/dashboard/users/create",
-              element: <AddUserPage />,
+              element: adminPage(<AddUserPage />),
             },
             {
               path: "/dashboard/add-facescan",
-              element: <AddUserFaceScan />,
+              element: page(<AddUserFaceScan />),
             },
             {
               path: "/dashboard/events/:eventId/attendance-in",
-              element: <EventSignIn />,
+              element: page(<EventSignIn />),
             },
             {
               path: "/dashboard/events/:eventId/attendance-out",
-              element: <EventSignOut />,
+              element: page(<EventSignOut />),
             },
             {
               path: "/dashboard/attendance/reports",
-              element: <AttendanceReportsPage />,
+              element: adminPage(<AttendanceReportsPage />),
             },
           ],
         },
@@ -99,7 +148,7 @@ const Routes = () => {
   const publicRoutes = [
     {
       path: "/",
-      element: <LoginPage />,
+      element: <LandingPage />,
       errorElement: <ErrorPage />,
     },
 
