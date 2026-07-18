@@ -15,8 +15,5 @@ export const addUserSchema = z.object({
     .max(50, "Last name must not exceed 50 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   phone: z.string().optional().nullable(),
-  role: z.enum(["USER", "ADMIN"], {
-    errorMap: () => ({ message: "Please select a valid role" }),
-  }),
   password: passwordRule,
 });

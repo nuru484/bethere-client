@@ -1,21 +1,15 @@
 // src/api/index.test.js
 //
-// Exercises the token-refresh response interceptor in isolation by invoking
-// its rejected handler directly with a fabricated 401. The axios module is
-// mocked so the bare `axios.post` refresh call and the `axios(config)` retry
-// never hit the network, while `axios.create` stays real so the interceptor
-// chain on the `api` instance is wired exactly as in production.
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-const { storage } = vi.hoisted(() => ({ storage: new Map() }));
-
-vi.mock("@/lib/encryptedStorage", () => ({
-  default: {
-    getItem: (key) => storage.get(key),
-    setItem: (key, value) => storage.set(key, value),
-    removeItem: (key) => storage.delete(key),
-  },
-}));
+// Exercises the session-refresh response interceptor in isolation by
+// invoking its rejected handler directly with a fabricated 401. Auth is
+// cookie-only: nothing is persisted client-side, the refresh POST simply
+// rides the httpOnly refresh cookie and the original request is retried
+// once the server has re-set the auth cookies. The axios module is mocked
+// so the bare `axios.post` refresh call and the `axios(config)` retry
+// never hit the network, while `axios.create` stays real so the
+// interceptor chain on the `api` instance is wired exactly as in
+// production.
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("axios", async (importOriginal) => {
   const actual = await importOriginal();
@@ -38,28 +32,27 @@ const expiredError = (config = { headers: {} }) => ({
     status: 401,
     data: {
       status: "error",
-      message: "Token expired",
+      message: "Access token expired.",
       code: "TOKEN_EXPIRED",
     },
   },
 });
 
-describe("refresh interceptor", () => {
+describe("refresh interceptor (cookie flow)", () => {
   beforeEach(() => {
-    storage.clear();
-    storage.set("accessToken", "old-access");
-    storage.set("refreshToken", "old-refresh");
     vi.clearAllMocks();
+    localStorage.setItem("user", JSON.stringify({ id: 1, role: "ADMIN" }));
   });
 
-  it("reads the new { message, data: { accessToken, refreshToken } } envelope and retries", async () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("refreshes via the cookie endpoint and retries the original request", async () => {
     axios.post.mockResolvedValue({
       data: {
         message: "Token refreshed",
-        data: {
-          accessToken: "new-access",
-          refreshToken: "new-refresh",
-        },
+        data: { user: { id: 1, role: "ADMIN" } },
       },
     });
     axios.mockResolvedValue({ data: "retried-response" });
@@ -67,30 +60,30 @@ describe("refresh interceptor", () => {
     const originalRequest = { url: "/users", headers: {} };
     const result = await refreshRejectedHandler(expiredError(originalRequest));
 
-    // Refresh call carried the old refresh token as the Bearer credential.
+    // Refresh call carries no payload or header: the httpOnly refresh
+    // cookie travels via withCredentials.
     expect(axios.post).toHaveBeenCalledTimes(1);
     expect(axios.post).toHaveBeenCalledWith(
       expect.stringContaining("/refreshToken"),
       {},
-      { headers: { Authorization: "Bearer old-refresh" } }
+      { withCredentials: true }
     );
 
-    // Rotated tokens were persisted from body.data (not newAccessToken/
-    // newRefreshToken at the top level).
-    expect(storage.get("accessToken")).toBe("new-access");
-    expect(storage.get("refreshToken")).toBe("new-refresh");
-
-    // The original request was retried with the new access token.
-    expect(originalRequest.headers.Authorization).toBe("Bearer new-access");
+    // Nothing is persisted client-side; the retry has no Authorization
+    // header because the new cookies are already set by the server.
+    expect(originalRequest.headers.Authorization).toBeUndefined();
     expect(axios).toHaveBeenCalledWith(originalRequest);
     expect(result).toEqual({ data: "retried-response" });
+
+    // The persisted user is untouched by a successful refresh.
+    expect(localStorage.getItem("user")).not.toBeNull();
   });
 
   it("shares one in-flight refresh across concurrent 401s", async () => {
     axios.post.mockResolvedValue({
       data: {
         message: "Token refreshed",
-        data: { accessToken: "new-access", refreshToken: "new-refresh" },
+        data: { user: { id: 1, role: "ADMIN" } },
       },
     });
     axios.mockResolvedValue({ data: "retried-response" });
@@ -101,6 +94,24 @@ describe("refresh interceptor", () => {
     ]);
 
     expect(axios.post).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the persisted user when refresh fails", async () => {
+    // Note: the handler also calls window.location.assign("/login"); jsdom
+    // makes location unforgeable so the navigation itself is not spied on
+    // here - it just logs a jsdom "Not implemented: navigation" notice.
+    axios.post.mockRejectedValue({
+      response: { status: 401, data: { code: "TOKEN_EXPIRED" } },
+    });
+
+    await expect(
+      refreshRejectedHandler(expiredError({ url: "/users", headers: {} }))
+    ).rejects.toMatchObject({
+      status: 401,
+      data: { code: "AUTH_ERROR" },
+    });
+
+    expect(localStorage.getItem("user")).toBeNull();
   });
 
   it("does not attempt a refresh for other auth error codes", async () => {
@@ -115,6 +126,13 @@ describe("refresh interceptor", () => {
         },
       },
     };
+
+    await expect(refreshRejectedHandler(error)).rejects.toBe(error);
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it("does not retry a request that has already been retried", async () => {
+    const error = expiredError({ url: "/users", headers: {}, _retry: true });
 
     await expect(refreshRejectedHandler(error)).rejects.toBe(error);
     expect(axios.post).not.toHaveBeenCalled();

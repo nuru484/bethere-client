@@ -44,10 +44,6 @@ export const updateUserProfilePicture = async (userId, formData) => {
 export const changePassword = async (data) =>
   await api.patch(`/users/change-password`, data);
 
-// Update user role
-export const updateUserRole = async (userId, role) =>
-  await api.patch(`/users/${userId}/role`, { role });
-
 // Delete single user
 export const deleteUser = async (userId) =>
   await api.delete(`/users/${userId}`);

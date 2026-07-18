@@ -6,6 +6,10 @@ import Routes from "./routes";
 import ErrorBoundary from "./lib/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { initSentry } from "./lib/sentry";
+
+// No-op unless VITE_SENTRY_DSN is set (lazy-loads the SDK when it is).
+initSentry();
 
 const client = new QueryClient();
 

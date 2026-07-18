@@ -46,6 +46,7 @@ const AttendanceReportsPage = lazy(() =>
   import("@/pages/dashboard/attendance/ReportsPage")
 );
 const Userspage = lazy(() => import("@/pages/dashboard/users/Users"));
+const AdminsPage = lazy(() => import("@/pages/dashboard/admins/Admins"));
 const AddUserPage = lazy(() => import("@/pages/dashboard/users/AddUserPage"));
 const UserProfilePage = lazy(() =>
   import("@/pages/dashboard/users/UserProfilePage")
@@ -114,6 +115,10 @@ const Routes = () => {
             {
               path: "/dashboard/users",
               element: adminPage(<Userspage />),
+            },
+            {
+              path: "/dashboard/admins",
+              element: adminPage(<AdminsPage />),
             },
             {
               path: "/dashboard/users/:userId/profile",

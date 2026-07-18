@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { reportError } from "@/lib/sentry";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -15,6 +16,8 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
+    // No-op unless Sentry was initialized (VITE_SENTRY_DSN set).
+    reportError(error, { componentStack: errorInfo?.componentStack });
     this.setState({ errorInfo });
   }
 

@@ -3,7 +3,6 @@ import { ArrowUpDown, Calendar, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { UserActionsDropdown } from "./UserActionsDropdown";
 
 export const createUserColumns = () => [
@@ -78,27 +77,6 @@ export const createUserColumns = () => [
             {email}
           </div>
         </div>
-      );
-    },
-  },
-  {
-    accessorKey: "role",
-    header: "Role",
-    cell: ({ row }) => {
-      const role = row.getValue("role");
-      return (
-        <Badge
-          variant={
-            role === "ADMIN"
-              ? "default"
-              : role === "AGENT"
-              ? "secondary"
-              : "outline"
-          }
-          className="text-xs"
-        >
-          {role}
-        </Badge>
       );
     },
   },

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
   MoreHorizontal,
   Trash2,
-  Shield,
   User,
   Calendar,
   CalendarCheck,
@@ -21,9 +20,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -42,7 +38,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useUpdateUserRole, useDeleteUser } from "@/hooks/useUsers";
+import { useDeleteUser } from "@/hooks/useUsers";
 import { useGetEvents } from "@/hooks/useEvent";
 import { useDeleteFaceScan } from "@/hooks/useFaceScanApi";
 import PropTypes from "prop-types";
@@ -55,7 +51,6 @@ export function UserActionsDropdown({ user }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEventId, setSelectedEventId] = useState(null);
 
-  const updateUserRoleMutation = useUpdateUserRole();
   const deleteUserMutation = useDeleteUser();
   const deleteFaceScanMutation = useDeleteFaceScan();
 
@@ -65,25 +60,6 @@ export function UserActionsDropdown({ user }) {
     limit: 50,
     search: searchTerm,
   });
-
-  const handleChangeRole = async (newRole) => {
-    const toastId = toast.loading(`Changing role to ${newRole}...`);
-
-    try {
-      const response = await updateUserRoleMutation.mutateAsync({
-        userId: user.id,
-        role: newRole,
-      });
-
-      toast.dismiss(toastId);
-      toast.success(
-        response.message || `User role changed to ${newRole} successfully`
-      );
-    } catch (error) {
-      toast.dismiss(toastId);
-      toast.error(error.message || "Failed to update role");
-    }
-  };
 
   const handleDeleteUser = async () => {
     const toastId = toast.loading("Deleting user...");
@@ -134,11 +110,6 @@ export function UserActionsDropdown({ user }) {
 
   const availableEvents = eventsData?.data || [];
 
-  const roleOptions = [
-    { value: "ADMIN", label: "Admin" },
-    { value: "USER", label: "User" },
-  ];
-
   const hasFaceScan = user.hasFaceScan === true;
 
   return (
@@ -180,34 +151,6 @@ export function UserActionsDropdown({ user }) {
             <CalendarCheck className="mr-2 h-4 w-4" />
             Event Attendance
           </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          {/* Update Role Submenu */}
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="hover:cursor-pointer">
-              <Shield className="mr-2 h-4 w-4" />
-              Update Role
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              {roleOptions.map((role) => (
-                <DropdownMenuItem
-                  key={role.value}
-                  className="hover:cursor-pointer"
-                  onClick={() => handleChangeRole(role.value)}
-                  disabled={user.role === role.value}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  {role.label}
-                  {user.role === role.value && (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Current
-                    </span>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
 
           <DropdownMenuSeparator />
 
@@ -371,7 +314,6 @@ UserActionsDropdown.propTypes = {
     firstName: PropTypes.string.isRequired,
     lastName: PropTypes.string.isRequired,
     email: PropTypes.string,
-    role: PropTypes.oneOf(["ADMIN", "USER"]).isRequired,
     hasFaceScan: PropTypes.bool,
   }).isRequired,
 };

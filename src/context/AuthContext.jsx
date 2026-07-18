@@ -1,7 +1,10 @@
 // src/context/AuthContext.jsx
+//
+// Cookie-only auth: the tokens live in httpOnly cookies the browser sends
+// automatically, so "authenticated" here simply means "we have a persisted
+// user". A 401 that fails refresh clears that user (see src/api/index.js).
 import { createContext, useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import encryptStorage from "@/lib/encryptedStorage";
 import { logoutApi } from "@/api/auth";
 
 const AuthContext = createContext();
@@ -15,17 +18,13 @@ export const AuthProvider = ({ children }) => {
       try {
         setIsLoading(true);
         const savedUser = localStorage.getItem("user");
-        const accessToken = encryptStorage.getItem("accessToken");
 
-        if (savedUser && accessToken) {
+        if (savedUser) {
           setUser(JSON.parse(savedUser));
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
-
         localStorage.removeItem("user");
-        encryptStorage.removeItem("accessToken");
-        encryptStorage.removeItem("refreshToken");
       } finally {
         setIsLoading(false);
       }
@@ -48,23 +47,26 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
-  const logout = () => {
-    // Fire-and-forget server-side revocation of the refresh token. Local
-    // state is cleared regardless: a failed revocation must never keep the
-    // user logged in on this device.
-    const refreshToken = encryptStorage.getItem("refreshToken");
-    if (refreshToken) {
-      logoutApi(refreshToken).catch(() => {});
-    }
+  // Merges fresh server-sent user fields (e.g. twoFactorEnabled after a
+  // toggle) into the persisted user.
+  const updateUser = (userData) => {
+    setUser((prev) => (prev ? { ...prev, ...userData } : userData));
+  };
 
-    encryptStorage.removeItem("accessToken");
-    encryptStorage.removeItem("refreshToken");
+  const logout = () => {
+    // Fire-and-forget server-side revocation; the server clears the auth
+    // cookies. Local state is cleared regardless: a failed revocation must
+    // never keep the user logged in on this device.
+    logoutApi().catch(() => {});
+
     setUser(null);
     localStorage.removeItem("user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, updateUser, isLoading }}
+    >
       {children}
     </AuthContext.Provider>
   );

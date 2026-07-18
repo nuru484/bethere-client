@@ -21,7 +21,6 @@ export default function AddUserPage() {
       lastName: "",
       email: "",
       phone: "",
-      role: "USER",
       password: "",
     }),
     []
@@ -38,7 +37,6 @@ export default function AddUserPage() {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
-        role: values.role,
         password: values.password,
       };
       if (values.phone) payload.phone = values.phone;
@@ -95,10 +93,10 @@ export default function AddUserPage() {
 
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight break-words">
-                Create User
+                Create Attendant
               </h1>
               <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1 sm:mt-1.5 leading-snug">
-                Fill in details to add a new user to the system
+                Fill in details to add a new attendant to the system
               </p>
             </div>
           </div>

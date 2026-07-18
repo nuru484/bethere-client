@@ -1,21 +1,42 @@
-import axios from "axios";
+// src/api/auth.js
+//
+// Cookie-only auth: the server sets/clears httpOnly cookies; response
+// bodies carry only the safe user (and flow flags), never a token.
 import { api } from ".";
 
-const serverURL = import.meta.env.VITE_SERVER_URL;
-
-// Responds { message, data: { accessToken, refreshToken, user } }
+// Responds { message, data: { user } } (cookies set), or
+// { message, data: { twoFactorRequired: true, channel } } when a second
+// factor is needed (a short-lived pending cookie was set).
 export const login = async (credentials) =>
   await api.post("/auth/login", credentials);
 
-// Revokes the refresh token server-side. Uses a bare axios call (not the
-// `api` instance) because the request interceptor would overwrite the
-// Authorization header with the ACCESS token, and this endpoint expects
-// the REFRESH token as the Bearer credential.
-export const logoutApi = async (refreshToken) =>
-  await axios.post(
-    `${serverURL}/api/v1/auth/logout`,
-    {},
-    {
-      headers: { Authorization: `Bearer ${refreshToken}` },
-    }
-  );
+// Second login step when 2FA is on. Responds { message, data: { user } }
+// with auth cookies set. A 401 with code "2FA_PENDING_EXPIRED" means the
+// pending cookie ran out - restart from the password step.
+export const verify2fa = async ({ code }) =>
+  await api.post("/auth/login/2fa", { code });
+
+// Passwordless OTP login, step 1 (attendants). Always succeeds;
+// data.channel is "SMS", "EMAIL", or null (enumeration-safe).
+export const otpRequest = async ({ identifier }) =>
+  await api.post("/auth/otp/request", { identifier });
+
+// Passwordless OTP login, step 2. Responds { message, data: { user } }
+// with auth cookies set.
+export const otpVerify = async ({ identifier, code }) =>
+  await api.post("/auth/otp/verify", { identifier, code });
+
+// Revokes the session server-side and clears the cookies. Cookie-based:
+// no header or body needed.
+export const logoutApi = async () => await api.post("/auth/logout", {});
+
+// 2FA management for the signed-in principal: challenge sends a code,
+// enable/disable prove possession with it. Responses carry { data: { user } }.
+export const twoFactorChallenge = async () =>
+  await api.post("/auth/2fa/challenge", {});
+
+export const twoFactorEnable = async ({ code }) =>
+  await api.post("/auth/2fa/enable", { code });
+
+export const twoFactorDisable = async ({ code }) =>
+  await api.post("/auth/2fa/disable", { code });

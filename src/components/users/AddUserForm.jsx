@@ -12,13 +12,6 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2, User, Mail, Shield } from "lucide-react";
 
 export default function AddUserForm({ form, onSubmit, isLoading }) {
@@ -157,37 +150,6 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
             </div>
 
             <div className="space-y-6">
-              {/* Role */}
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
-                      User Role
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="border-gray-300 focus:border-green-500 focus:ring-green-500">
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="USER">User</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-gray-500">
-                      Assign appropriate permissions for this user
-                    </FormDescription>
-                    <FormMessage className="text-red-600" />
-                  </FormItem>
-                )}
-              />
-
               {/* Password */}
               <FormField
                 control={form.control}
@@ -234,7 +196,7 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
               className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-colors"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create User Account
+              Create Attendant Account
             </Button>
           </div>
         </form>

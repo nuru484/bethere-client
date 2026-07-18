@@ -1,5 +1,4 @@
 import axios from "axios";
-import encryptStorage from "@/lib/encryptedStorage";
 
 class APIError extends Error {
   constructor(message, status, type, details = null) {
@@ -13,55 +12,33 @@ class APIError extends Error {
 
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
+// Auth is cookie-only: httpOnly cookies carry the tokens, so every request
+// just needs credentials enabled - no Authorization header, no token reads.
 const api = axios.create({
   baseURL: `${serverURL}/api/v1`,
   timeout: 3 * 60 * 1000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const accessToken = encryptStorage.getItem("accessToken");
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Single-flight refresh: all concurrent 401s share one in-flight refresh
-// request so token rotation does not invalidate sibling refresh attempts.
+// request so cookie rotation does not invalidate sibling refresh attempts.
 let refreshPromise = null;
 
-const refreshTokens = async () => {
-  const refreshToken = encryptStorage.getItem("refreshToken");
-
-  if (!refreshToken) {
-    throw new Error("No refresh token available");
-  }
-
-  // Server envelope: { message, data: { accessToken, refreshToken } }
-  const { data: body } = await axios.post(
+// The refresh cookie travels automatically; the server rotates both auth
+// cookies and responds { message, data: { user } }. Nothing to persist
+// client-side - the retry succeeds because the new cookies are already set.
+const refreshSession = async () => {
+  await axios.post(
     `${serverURL}/api/v1/refreshToken`,
     {},
-    {
-      headers: { Authorization: `Bearer ${refreshToken}` },
-    }
+    { withCredentials: true }
   );
-
-  const { accessToken, refreshToken: rotatedRefreshToken } = body.data;
-
-  encryptStorage.setItem("accessToken", accessToken);
-  encryptStorage.setItem("refreshToken", rotatedRefreshToken);
-
-  return accessToken;
 };
 
-// Response interceptor for token refresh
+// Response interceptor for session refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -76,19 +53,16 @@ api.interceptors.response.use(
 
       try {
         if (!refreshPromise) {
-          refreshPromise = refreshTokens().finally(() => {
+          refreshPromise = refreshSession().finally(() => {
             refreshPromise = null;
           });
         }
 
-        const newAccessToken = await refreshPromise;
+        await refreshPromise;
 
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axios(originalRequest);
       } catch (err) {
-        console.error("Token refresh failed", err);
-        encryptStorage.removeItem("accessToken");
-        encryptStorage.removeItem("refreshToken");
+        console.error("Session refresh failed", err);
         localStorage.removeItem("user");
         window.location.assign("/login");
         return Promise.reject({

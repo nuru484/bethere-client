@@ -25,9 +25,6 @@ const renderSkeletonCells = () => (
       </div>
     </TableCell>
     <TableCell>
-      <Skeleton className="h-6 w-16 rounded-full" />
-    </TableCell>
-    <TableCell>
       <Skeleton className="h-4 w-20" />
     </TableCell>
     <TableCell>
@@ -155,7 +152,6 @@ UsersDataTable.propTypes = {
   pageSize: PropTypes.number,
   filters: PropTypes.shape({
     search: PropTypes.string,
-    role: PropTypes.oneOf(["ADMIN", "USER"]),
   }).isRequired,
   onPageChange: PropTypes.func.isRequired,
   onPageSizeChange: PropTypes.func.isRequired,

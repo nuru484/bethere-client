@@ -9,13 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
 import PropTypes from "prop-types";
@@ -39,29 +32,12 @@ export function TableFilters({
     }
   }, [debouncedSearch, filters.search, onFiltersChange]);
 
-  const getRoleFilterValue = () => {
-    if (filters.role === "ADMIN") return "admin";
-    if (filters.role === "USER") return "user";
-    return "all";
-  };
-
-  const handleRoleFilterChange = (value) => {
-    let role;
-    if (value === "admin") role = "ADMIN";
-    else if (value === "user") role = "USER";
-    else role = undefined;
-
-    onFiltersChange({ role });
-  };
-
-  const hasFiltersApplied =
-    filters.role !== undefined || filters.search !== undefined;
+  const hasFiltersApplied = filters.search !== undefined;
 
   const clearFilters = () => {
     setSearchInput("");
     onFiltersChange({
       search: undefined,
-      role: undefined,
     });
   };
 
@@ -88,7 +64,7 @@ export function TableFilters({
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">
-              {totalCount} total users
+              {totalCount} total attendants
             </div>
           )}
         </div>
@@ -108,21 +84,6 @@ export function TableFilters({
 
         {/* Filter Controls */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-          {/* Role Filter */}
-          <Select
-            value={getRoleFilterValue()}
-            onValueChange={handleRoleFilterChange}
-          >
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="user">User</SelectItem>
-            </SelectContent>
-          </Select>
-
           {/* Clear Filters */}
           {hasFiltersApplied && (
             <Button
@@ -189,17 +150,6 @@ export function TableFilters({
               </button>
             </Badge>
           )}
-          {filters.role !== undefined && (
-            <Badge variant="secondary" className="gap-2">
-              Role: {filters.role}
-              <button
-                onClick={() => onFiltersChange({ role: undefined })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
         </div>
       )}
     </div>
@@ -213,7 +163,6 @@ TableFilters.propTypes = {
   }).isRequired,
   filters: PropTypes.shape({
     search: PropTypes.string,
-    role: PropTypes.oneOf(["ADMIN", "USER"]),
   }).isRequired,
   onFiltersChange: PropTypes.func.isRequired,
   totalCount: PropTypes.number.isRequired,
@@ -223,6 +172,5 @@ TableFilters.propTypes = {
 TableFilters.defaultProps = {
   filters: {
     search: "",
-    role: undefined,
   },
 };

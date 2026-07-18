@@ -11,7 +11,6 @@ import {
   addUser,
   updateUserProfile,
   deleteUser,
-  updateUserRole,
   updateUserProfilePicture,
   changePassword,
 } from "@/api/users";
@@ -85,19 +84,6 @@ export const useChangePassword = () => {
   return useMutation({
     mutationFn: ({ data }) => changePassword(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-  });
-};
-
-// Update user role
-export const useUpdateUserRole = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ userId, role }) => updateUserRole(userId, role),
-    onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });

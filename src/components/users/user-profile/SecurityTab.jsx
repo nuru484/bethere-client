@@ -16,18 +16,52 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Shield, Loader2, Eye, EyeOff, Lock, Save } from "lucide-react";
+import CodeForm from "@/components/auth/CodeForm";
 import { useChangePassword } from "@/hooks/useUsers";
+import { useChangeAdminPassword } from "@/hooks/useAdmins";
+import {
+  useAuth,
+  useTwoFactorChallenge,
+  useTwoFactorToggle,
+} from "@/hooks/useAuth";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { passwordSchema } from "@/validation/user/profileValidation";
 
 const SecurityTab = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { mutate: changePassword, isLoading } = useChangePassword();
+  // 2FA toggle flow: challenge sends a code, the dialog collects it, then
+  // enable/disable proves possession of the channel.
+  const [twoFaDialogOpen, setTwoFaDialogOpen] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState(null);
+  const twoFactorEnabled = !!user?.twoFactorEnabled;
+
+  // Principal split: admins change their password on /admins, attendants
+  // on /users. Both endpoints share the same body shape.
+  const attendantChangePassword = useChangePassword();
+  const adminChangePassword = useChangeAdminPassword();
+  const { mutate: changePassword, isPending: isPasswordPending } = isAdmin
+    ? adminChangePassword
+    : attendantChangePassword;
+
+  const { mutate: sendChallenge, isPending: isChallengePending } =
+    useTwoFactorChallenge();
+  const { mutate: toggleTwoFactor, isPending: isTogglePending } =
+    useTwoFactorToggle();
 
   const form = useForm({
     resolver: zodResolver(passwordSchema),
@@ -89,6 +123,44 @@ const SecurityTab = () => {
     setShowCurrentPassword(false);
     setShowNewPassword(false);
     setShowConfirmPassword(false);
+  };
+
+  const handleTwoFactorSwitch = () => {
+    // Step 1: send the verification code, then collect it in the dialog.
+    sendChallenge(undefined, {
+      onSuccess: (response) => {
+        setTwoFaChannel(response.data?.channel ?? null);
+        setTwoFaDialogOpen(true);
+        toast.success(response.message || "We sent you a verification code.");
+      },
+      onError: (err) => {
+        const { message } = extractApiErrorMessage(err);
+        toast.error(message || "Could not send a verification code.");
+      },
+    });
+  };
+
+  const handleTwoFactorCode = (code) => {
+    // Step 2: prove possession; the response carries the updated user,
+    // which useTwoFactorToggle merges into the persisted user.
+    toggleTwoFactor(
+      { enable: !twoFactorEnabled, code },
+      {
+        onSuccess: (response) => {
+          setTwoFaDialogOpen(false);
+          toast.success(
+            response.message ||
+              `Two-factor authentication is now ${
+                twoFactorEnabled ? "off" : "on"
+              }.`
+          );
+        },
+        onError: (err) => {
+          const { message } = extractApiErrorMessage(err);
+          toast.error(message || "Invalid code. Please try again.");
+        },
+      }
+    );
   };
 
   return (
@@ -168,7 +240,7 @@ const SecurityTab = () => {
                             {...field}
                             type={showCurrentPassword ? "text" : "password"}
                             placeholder="Enter your current password"
-                            disabled={isLoading}
+                            disabled={isPasswordPending}
                             className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                           />
                           <button
@@ -206,7 +278,7 @@ const SecurityTab = () => {
                             {...field}
                             type={showNewPassword ? "text" : "password"}
                             placeholder="Enter your new password"
-                            disabled={isLoading}
+                            disabled={isPasswordPending}
                             className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                           />
                           <button
@@ -242,7 +314,7 @@ const SecurityTab = () => {
                             {...field}
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirm your new password"
-                            disabled={isLoading}
+                            disabled={isPasswordPending}
                             className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                           />
                           <button
@@ -275,7 +347,7 @@ const SecurityTab = () => {
                   onClick={handleCancel}
                   size="lg"
                   className="w-full sm:w-auto font-medium"
-                  disabled={isLoading}
+                  disabled={isPasswordPending}
                 >
                   Cancel
                 </Button>
@@ -283,9 +355,9 @@ const SecurityTab = () => {
                   type="submit"
                   size="lg"
                   className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                  disabled={isLoading}
+                  disabled={isPasswordPending}
                 >
-                  {isLoading ? (
+                  {isPasswordPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving Changes...
@@ -319,12 +391,30 @@ const SecurityTab = () => {
 
         <div className="flex justify-between items-center p-4 border-2 border-border rounded-lg bg-card shadow-sm">
           <div>
-            <p className="text-sm font-medium text-foreground">Enable 2FA</p>
+            <p className="text-sm font-medium text-foreground">
+              Two-factor authentication is{" "}
+              <span className="font-semibold">
+                {twoFactorEnabled ? "on" : "off"}
+              </span>
+            </p>
             <p className="text-xs text-muted-foreground">
-              Secure your account with two-factor authentication
+              {twoFactorEnabled
+                ? "A verification code is required at every sign in"
+                : "Secure your account with a verification code at sign in"}
             </p>
           </div>
-          <Switch className="data-[state=checked]:bg-primary" />
+          <div className="flex items-center gap-2">
+            {isChallengePending && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+            <Switch
+              checked={twoFactorEnabled}
+              disabled={isChallengePending || isTogglePending}
+              onCheckedChange={handleTwoFactorSwitch}
+              aria-label="Toggle two-factor authentication"
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
         </div>
       </div>
 
@@ -360,6 +450,35 @@ const SecurityTab = () => {
           </Button>
         </div>
       </div>
+
+      {/* 2FA Verification Code Dialog */}
+      <Dialog open={twoFaDialogOpen} onOpenChange={setTwoFaDialogOpen}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[440px]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>
+              {twoFactorEnabled
+                ? "Turn off two-factor authentication"
+                : "Turn on two-factor authentication"}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the verification code we sent you to confirm this change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-2">
+            <CodeForm
+              title={
+                twoFactorEnabled
+                  ? "Confirm turning 2FA off"
+                  : "Confirm turning 2FA on"
+              }
+              channel={twoFaChannel}
+              onSubmit={handleTwoFactorCode}
+              isLoading={isTogglePending}
+              submitLabel={twoFactorEnabled ? "Turn Off 2FA" : "Turn On 2FA"}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

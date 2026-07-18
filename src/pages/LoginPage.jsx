@@ -1,22 +1,45 @@
 // src/pages/LoginPage.jsx
-import { useLogin } from "@/hooks/useAuth";
+//
+// Orchestrates the login flows. Auth is cookie-only: successful responses
+// carry { data: { user } } while the tokens ride in httpOnly cookies.
+// Steps: password -> (optional 2FA code), or the passwordless OTP flow
+// (identifier -> code) for attendants.
+import { useLogin, useOtpRequest, useOtpVerify } from "@/hooks/useAuth";
 import LoginForm from "@/components/LoginForm";
-import encryptStorage from "@/lib/encryptedStorage";
+import TwoFactorStep from "@/components/auth/TwoFactorStep";
+import OtpRequestForm from "@/components/auth/OtpRequestForm";
+import CodeForm from "@/components/auth/CodeForm";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import toast from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { KeyRound } from "lucide-react";
 import { loginFormSchema } from "@/validation/login-validation";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+
+const STEPS = {
+  PASSWORD: "password",
+  TWO_FACTOR: "twoFactor",
+  OTP_REQUEST: "otpRequest",
+  OTP_CODE: "otpCode",
+};
 
 const LoginPage = () => {
   usePageTitle("Login");
   const { mutate: login, isPending } = useLogin();
+  const { mutate: requestOtp, isPending: isOtpRequestPending } =
+    useOtpRequest();
+  const { mutate: verifyOtp, isPending: isOtpVerifyPending } = useOtpVerify();
   const { user, login: logUserIn } = useAuth();
   const navigate = useNavigate();
+
+  const [step, setStep] = useState(STEPS.PASSWORD);
+  const [twoFactorChannel, setTwoFactorChannel] = useState(null);
+  const [otpIdentifier, setOtpIdentifier] = useState("");
+  const [otpChannel, setOtpChannel] = useState(null);
 
   const form = useForm({
     resolver: zodResolver(loginFormSchema),
@@ -32,17 +55,27 @@ const LoginPage = () => {
     }
   }, [user, navigate]);
 
+  // Shared tail of every flow: cookies are already set, the body carries
+  // only the user.
+  const completeLogin = (response) => {
+    toast.success(response.message || "Login Successful");
+    logUserIn(response.data.user);
+    navigate("/dashboard", { replace: true });
+  };
+
   const onSubmit = async (data) => {
     login(data, {
       onSuccess: (response) => {
-        // Server envelope: { message, data: { accessToken, refreshToken, user } }
-        const { accessToken, refreshToken, user: loggedInUser } = response.data;
+        if (response.data?.twoFactorRequired) {
+          setTwoFactorChannel(response.data.channel ?? null);
+          setStep(STEPS.TWO_FACTOR);
+          toast.success(
+            response.message || "Enter the verification code we sent you."
+          );
+          return;
+        }
 
-        toast.success(response.message || "Login Successful");
-        logUserIn(loggedInUser);
-        encryptStorage.setItem("accessToken", accessToken);
-        encryptStorage.setItem("refreshToken", refreshToken);
-        navigate("/dashboard", { replace: true });
+        completeLogin(response);
       },
 
       onError: (err) => {
@@ -62,6 +95,52 @@ const LoginPage = () => {
         }
       },
     });
+  };
+
+  const backToPassword = () => {
+    setStep(STEPS.PASSWORD);
+    setTwoFactorChannel(null);
+    setOtpChannel(null);
+    setOtpIdentifier("");
+  };
+
+  const handleTwoFactorExpired = (message) => {
+    toast.error(message);
+    backToPassword();
+  };
+
+  const handleOtpRequest = (identifier) => {
+    requestOtp(
+      { identifier },
+      {
+        onSuccess: (response) => {
+          // Enumeration-safe endpoint: always proceeds to the code step.
+          setOtpIdentifier(identifier);
+          setOtpChannel(response.data?.channel ?? null);
+          setStep(STEPS.OTP_CODE);
+          toast.success(
+            response.message || "If that account exists, a code is on its way."
+          );
+        },
+        onError: (err) => {
+          const { message } = extractApiErrorMessage(err);
+          toast.error(message || "Could not send a code. Please try again.");
+        },
+      }
+    );
+  };
+
+  const handleOtpVerify = (code) => {
+    verifyOtp(
+      { identifier: otpIdentifier, code },
+      {
+        onSuccess: completeLogin,
+        onError: (err) => {
+          const { message } = extractApiErrorMessage(err);
+          toast.error(message || "Invalid code. Please try again.");
+        },
+      }
+    );
   };
 
   return (
@@ -101,9 +180,53 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Login Steps */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative">
-        <LoginForm form={form} onSubmit={onSubmit} isLoading={isPending} />
+        {step === STEPS.PASSWORD && (
+          <div className="w-full max-w-md space-y-6">
+            <LoginForm form={form} onSubmit={onSubmit} isLoading={isPending} />
+
+            {/* Passwordless option (attendants) */}
+            <button
+              type="button"
+              onClick={() => setStep(STEPS.OTP_REQUEST)}
+              disabled={isPending}
+              className="w-full flex items-center justify-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline transition duration-200 disabled:opacity-70"
+            >
+              <KeyRound className="h-4 w-4" />
+              Sign in with a code instead
+            </button>
+          </div>
+        )}
+
+        {step === STEPS.TWO_FACTOR && (
+          <TwoFactorStep
+            channel={twoFactorChannel}
+            onSuccess={completeLogin}
+            onExpired={handleTwoFactorExpired}
+            onBack={backToPassword}
+          />
+        )}
+
+        {step === STEPS.OTP_REQUEST && (
+          <OtpRequestForm
+            onSubmit={handleOtpRequest}
+            onBack={backToPassword}
+            isLoading={isOtpRequestPending}
+          />
+        )}
+
+        {step === STEPS.OTP_CODE && (
+          <CodeForm
+            title="Enter your sign-in code"
+            channel={otpChannel}
+            onSubmit={handleOtpVerify}
+            onBack={() => setStep(STEPS.OTP_REQUEST)}
+            isLoading={isOtpVerifyPending}
+            submitLabel="Verify and Sign In"
+            backLabel="Use a different phone or email"
+          />
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   FileBarChart,
+  ShieldCheck,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -59,6 +60,12 @@ const getMenuItems = (user) => {
             icon: Users,
             url: "users",
             path: "/dashboard/users",
+          },
+          {
+            title: "Admins",
+            icon: ShieldCheck,
+            url: "admins",
+            path: "/dashboard/admins",
           },
           {
             title: "Reports",
