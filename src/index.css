@@ -106,3 +106,173 @@
     @apply bg-background text-foreground;
   }
 }
+/* ---------------------------------------------------------------------------
+   Landing page (marketing) primitives.
+   The wipe-fill / text-swap button mechanic needs pseudo-elements and child
+   selectors that Tailwind utilities can't express, so it lives here. Scoped
+   under .lp-* so it never leaks into the dashboard app.
+--------------------------------------------------------------------------- */
+@layer components {
+  /* Shared button skeleton: a fill layer that wipes, two text layers that
+     swap vertically. Markup contract (see LandingButtons.jsx):
+       .lp-btn > .lp-btn__fill + .lp-btn__inner + .lp-btn__hover  */
+  .lp-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: theme(fontFamily.mono);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+  .lp-btn__fill {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    clip-path: inset(0);
+    transition: clip-path 0.8s cubic-bezier(0.86, 0, 0.07, 1);
+  }
+  .lp-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border: 1px solid rgba(43, 43, 43, 0.25);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .lp-btn__inner,
+  .lp-btn__hover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .lp-btn__inner {
+    position: relative;
+    z-index: 2;
+    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .lp-btn__hover {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: inherit;
+    clip-path: ellipse(80% 50% at 50% 152%);
+    transition: clip-path 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  .lp-btn__hover > span {
+    transform: translate3d(0, 0.6em, 0);
+    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* Dark pill: black fill wipes away upward, white text swaps to ink. */
+  .lp-btn--pill {
+    border-radius: 999rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.75rem;
+    color: #fafafa;
+  }
+  .lp-btn--pill .lp-btn__fill {
+    background: #2b2b2b;
+  }
+  .lp-btn--pill .lp-btn__hover {
+    color: #2b2b2b;
+  }
+
+  /* Outlined chip: transparent at rest, ink fill rises on hover. */
+  .lp-btn--chip {
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.75rem;
+    color: #2b2b2b;
+  }
+  .lp-btn--chip .lp-btn__fill {
+    background: #2b2b2b;
+    clip-path: inset(100% 0 0);
+  }
+  .lp-btn--chip .lp-btn__hover {
+    color: #fafafa;
+  }
+
+  @media (hover: hover) {
+    .lp-btn--pill:hover .lp-btn__fill {
+      clip-path: inset(0 0 110%);
+    }
+    .lp-btn--chip:hover .lp-btn__fill {
+      clip-path: inset(0);
+    }
+    .lp-btn:hover .lp-btn__inner {
+      transform: translate3d(0, -1.5em, 0);
+    }
+    .lp-btn:hover .lp-btn__hover {
+      clip-path: ellipse(120% 100% at 50% 50%);
+    }
+    .lp-btn:hover .lp-btn__hover > span {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Growing-underline text link (the reference's .t-link). */
+  .lp-link {
+    position: relative;
+  }
+  .lp-link::before {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: 100% 50%;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .lp-link:hover::before {
+    transform: scaleX(1);
+    transform-origin: 0 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-btn__fill,
+    .lp-btn__inner,
+    .lp-btn__hover,
+    .lp-btn__hover > span,
+    .lp-link::before {
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  /* Cursor parallax for the "See for yourself" fragments. The card sets
+     --px/--py in [-0.5, 0.5]; each fragment multiplies by its own depth. */
+  .lp-fragment {
+    transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+    will-change: transform;
+  }
+  .lp-parallax:hover .lp-fragment {
+    transform: translate(
+        calc(var(--px, 0) * var(--depth, 20) * 1px),
+        calc(var(--py, 0) * var(--depth, 20) * 1px)
+      )
+      rotate(0deg);
+  }
+  .lp-fragment:hover {
+    z-index: 20;
+    scale: 1.06;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-fragment,
+    .lp-parallax:hover .lp-fragment {
+      transition: none;
+      transform: none;
+    }
+  }
+}

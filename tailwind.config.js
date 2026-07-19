@@ -7,9 +7,23 @@ export default {
   theme: {
   	extend: {
   		fontFamily: {
-  			urbanist: [
-  				'Urbanist',
+  			display: [
+  				'Outfit',
+  				'ui-sans-serif',
+  				'system-ui',
   				'sans-serif'
+  			],
+  			body: [
+  				'"Instrument Sans"',
+  				'ui-sans-serif',
+  				'system-ui',
+  				'sans-serif'
+  			],
+  			mono: [
+  				'"Space Mono"',
+  				'ui-monospace',
+  				'SFMono-Regular',
+  				'monospace'
   			]
   		},
   		borderRadius: {
