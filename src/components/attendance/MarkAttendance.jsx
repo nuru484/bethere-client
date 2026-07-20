@@ -31,6 +31,10 @@ export default function MarkAttendance({ type = "in" }) {
 
   const [stage, setStage] = useState(STAGE.SCAN);
   const [challengeToken, setChallengeToken] = useState(null);
+  // The server re-validates the rotating venue code at the upload step, so the
+  // scanned code has to survive the challenge stage and ride along on the
+  // multipart body.
+  const [venueCode, setVenueCode] = useState(null);
   const [actions, setActions] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
   // Bumped to force-remount the scanner (which stops itself after a scan) when
@@ -65,13 +69,14 @@ export default function MarkAttendance({ type = "in" }) {
   const resetToScan = useCallback(() => {
     setStage(STAGE.SCAN);
     setChallengeToken(null);
+    setVenueCode(null);
     setActions([]);
     setScanKey((k) => k + 1);
   }, []);
 
   // Stage 2: exchange the scanned venue code for a liveness challenge.
   const handleScan = useCallback(
-    (venueCode) => {
+    (scannedCode) => {
       setStage(STAGE.REQUESTING);
       setStatusMessage({
         message: "Verifying venue code...",
@@ -79,11 +84,12 @@ export default function MarkAttendance({ type = "in" }) {
       });
 
       requestChallenge(
-        { eventId: parseInt(eventId), venueCode, mode },
+        { eventId: parseInt(eventId), venueCode: scannedCode, mode },
         {
           onSuccess: (response) => {
             const data = response?.data || {};
             setChallengeToken(data.challengeToken ?? null);
+            setVenueCode(scannedCode);
             setActions(Array.isArray(data.actions) ? data.actions : []);
             setStatusMessage(null);
             setStage(STAGE.CAPTURE);
@@ -103,14 +109,14 @@ export default function MarkAttendance({ type = "in" }) {
   );
 
   // Stage 4: upload the captured frames. POST to check in, PUT to check out -
-  // identical multipart shape (challengeToken + `frames`).
+  // identical multipart shape (challengeToken + venueCode + `frames`).
   const handleCapture = useCallback(
     (blobs) => {
       if (!blobs || blobs.length < 6) {
         toast.error("Could not capture enough frames. Please try again.");
         return;
       }
-      if (!challengeToken) {
+      if (!challengeToken || !venueCode) {
         toast.error("Your session expired. Please scan the venue code again.");
         resetToScan();
         return;
@@ -118,6 +124,7 @@ export default function MarkAttendance({ type = "in" }) {
 
       const formData = new FormData();
       formData.append("challengeToken", challengeToken);
+      formData.append("venueCode", venueCode);
       blobs.forEach((blob, index) => {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
@@ -156,6 +163,7 @@ export default function MarkAttendance({ type = "in" }) {
     },
     [
       challengeToken,
+      venueCode,
       isCheckIn,
       createAttendance,
       updateAttendance,

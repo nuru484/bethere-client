@@ -28,6 +28,7 @@ export default function LivenessCapture({
   actions = [],
   onCapture,
   isSubmitting = false,
+  startLabel = "Start Check-In Scan",
 }) {
   const {
     videoRef,
@@ -139,7 +140,7 @@ export default function LivenessCapture({
               ? `Capturing ${capturedCount}/${frameCount}...`
               : !cameraReady
               ? "Starting camera..."
-              : "Start Check-In Scan"}
+              : startLabel}
           </Button>
         )}
       </div>
@@ -174,4 +175,5 @@ LivenessCapture.propTypes = {
   actions: PropTypes.arrayOf(PropTypes.string),
   onCapture: PropTypes.func.isRequired,
   isSubmitting: PropTypes.bool,
+  startLabel: PropTypes.string,
 };

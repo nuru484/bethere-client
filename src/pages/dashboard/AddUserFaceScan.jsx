@@ -1,7 +1,10 @@
-// src/pages/AddUserFaceScan.jsx
-import { useCallback, useRef, useState } from "react";
-import { useAddFaceScan } from "@/hooks/useFaceScanApi";
-import FaceScanner from "@/components/FaceScanner";
+// src/pages/dashboard/AddUserFaceScan.jsx
+import { useCallback, useState } from "react";
+import {
+  useAddFaceScan,
+  useRequestEnrollmentChallenge,
+} from "@/hooks/useFaceScanApi";
+import LivenessCapture from "@/components/attendance/LivenessCapture";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { UserCircle, TriangleAlert } from "lucide-react";
@@ -9,84 +12,141 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+
+// Two-step enrollment, mirroring check-in:
+//  consent    -> tick biometric consent, then request a liveness challenge
+//  requesting -> waiting for the challenge
+//  capture    -> capture a face-frame burst and upload it; the server derives
+//                the face template from the frames
+const STAGE = {
+  CONSENT: "consent",
+  REQUESTING: "requesting",
+  CAPTURE: "capture",
+};
 
 export default function AddUserFaceScan() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  // Biometric consent is required by the server: the enrollment payload must
-  // carry consent: true, and the scanner stays disabled until it is ticked.
+  // Biometric consent is required by the server: the enrollment upload must
+  // carry consent, and nothing starts until it is ticked.
   const [consent, setConsent] = useState(false);
+  const [stage, setStage] = useState(STAGE.CONSENT);
+  const [challengeToken, setChallengeToken] = useState(null);
+  const [actions, setActions] = useState([]);
+  const [statusMessage, setStatusMessage] = useState(null);
 
-  const hasSubmittedRef = useRef(false);
-  const {
-    mutate: addFaceScan,
-    isPending,
-    isSuccess,
-    isError,
-    error,
-  } = useAddFaceScan();
+  const { mutate: requestChallenge, isPending: isRequestingChallenge } =
+    useRequestEnrollmentChallenge();
+  const { mutate: addFaceScan, isPending: isSubmitting } = useAddFaceScan();
 
-  const handleScanComplete = useCallback(
-    (result) => {
-      if (result.success && consent && !hasSubmittedRef.current) {
-        hasSubmittedRef.current = true;
+  // Challenges are single-use, so a failed attempt always starts over and asks
+  // for a fresh one.
+  const resetToConsent = useCallback(() => {
+    setStage(STAGE.CONSENT);
+    setChallengeToken(null);
+    setActions([]);
+  }, []);
 
-        addFaceScan(
-          {
-            faceScan: result.descriptor,
-            consent: true,
-          },
-          {
-            onSuccess: (response) => {
-              toast.success(
-                response?.message || "Face registered successfully!"
-              );
+  const handleStart = useCallback(() => {
+    setStage(STAGE.REQUESTING);
+    setStatusMessage(null);
 
-              if (response.data.user) {
-                login(response.data.user);
-              }
-              navigate(`/dashboard`);
-            },
-            onError: (err) => {
-              toast.error(err?.message || "Failed to register face.");
-              hasSubmittedRef.current = false;
-            },
-          }
-        );
+    requestChallenge(undefined, {
+      onSuccess: (response) => {
+        const data = response?.data || {};
+        setChallengeToken(data.challengeToken ?? null);
+        setActions(Array.isArray(data.actions) ? data.actions : []);
+        setStage(STAGE.CAPTURE);
+      },
+      onError: (error) => {
+        const { message } = extractApiErrorMessage(error);
+        const errMsg = message || "Could not start face registration.";
+        toast.error(errMsg);
+        setStatusMessage({ message: errMsg, type: "error" });
+        resetToConsent();
+      },
+    });
+  }, [requestChallenge, resetToConsent]);
+
+  const handleCapture = useCallback(
+    (blobs) => {
+      if (!blobs || blobs.length < 6) {
+        toast.error("Could not capture enough frames. Please try again.");
+        return;
       }
+      if (!challengeToken) {
+        toast.error("Your session expired. Please start again.");
+        resetToConsent();
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("challengeToken", challengeToken);
+      formData.append("consent", "true");
+      blobs.forEach((blob, index) => {
+        formData.append("frames", blob, `frame-${index}.jpg`);
+      });
+
+      const toastId = toast.loading("Registering your face...");
+
+      addFaceScan(formData, {
+        onSuccess: (response) => {
+          const msg = response?.message || "Face registered successfully!";
+          toast.success(msg, { id: toastId });
+          setStatusMessage({ message: msg, type: "success" });
+
+          if (response?.data?.user) {
+            login(response.data.user);
+          }
+          navigate(`/dashboard`);
+        },
+        onError: (error) => {
+          const { message } = extractApiErrorMessage(error);
+          const errMsg = message || "Failed to register face.";
+          toast.error(errMsg, { id: toastId });
+          setStatusMessage({
+            message: `${errMsg} Please try again.`,
+            type: "error",
+          });
+          resetToConsent();
+        },
+      });
     },
-    [addFaceScan, consent, login, navigate]
+    [addFaceScan, challengeToken, login, navigate, resetToConsent]
   );
-
-  const { message } = extractApiErrorMessage(error);
-
-  const getExternalStatus = () => {
-    if (isPending) {
-      return {
-        message: "Registering face...",
-        type: "loading",
-      };
-    }
-    if (isSuccess) {
-      return {
-        message: "Face registered successfully!",
-        type: "success",
-      };
-    }
-    if (isError) {
-      return {
-        message: message || "Failed to register face.",
-        type: "error",
-      };
-    }
-    return null;
-  };
 
   // Self-enrollment is attendant-only: admins do not enroll their own face.
   if (user?.role === "ADMIN") {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const statusClasses = {
+    success: "bg-[#dcf5e9] border-[#1a7f53]/20 text-[#1a7f53]",
+    error: "bg-destructive/10 border-destructive/20 text-destructive",
+  };
+
+  const notice = (
+    <div className="bg-card border border-border p-4 rounded-xl h-fit">
+      <div className="flex items-start gap-3">
+        <TriangleAlert
+          className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+          strokeWidth={1.5}
+        />
+        <div>
+          <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
+            Important Notice
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            You can only register one face scan. After adding your face scan,
+            you will need to contact an administrator to reset it before you can
+            add a new one.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="container mx-auto max-w-6xl">
@@ -112,83 +172,90 @@ export default function AddUserFaceScan() {
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Side Card (Hidden on Mobile) */}
-          <div className="hidden lg:block">
-            {/* Important Notice */}
-            <div className="bg-card border border-border p-4 rounded-xl h-fit">
-              <div className="flex items-start gap-3">
-                <TriangleAlert
-                  className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
-                  strokeWidth={1.5}
-                />
-                <div>
-                  <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
-                    Important Notice
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    You can only register one face scan. After adding your face
-                    scan, you will need to contact an administrator to reset it
-                    before you can add a new one.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div className="hidden lg:block">{notice}</div>
 
-          {/* Center Column - Face Scanner */}
+          {/* Center Column - Consent then capture */}
           <div className="lg:col-span-2 space-y-6">
             {/* Mobile Card - Shown only on small screens */}
-            <div className="lg:hidden">
-              {/* Important Notice */}
-              <div className="bg-card border border-border p-4 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <TriangleAlert
-                    className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
-                    strokeWidth={1.5}
-                  />
-                  <div>
-                    <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
-                      Important Notice
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      You can only register one face scan. After adding your
-                      face scan, you will need to contact an administrator to
-                      reset it before you can add a new one.
-                    </p>
+            <div className="lg:hidden">{notice}</div>
+
+            {statusMessage && (
+              <div
+                role="status"
+                aria-live="polite"
+                className={`rounded-xl border p-4 text-center font-medium ${
+                  statusClasses[statusMessage.type] || statusClasses.error
+                }`}
+              >
+                {statusMessage.message}
+              </div>
+            )}
+
+            {stage === STAGE.CAPTURE ? (
+              <div className="flex justify-center">
+                <LivenessCapture
+                  actions={actions}
+                  onCapture={handleCapture}
+                  isSubmitting={isSubmitting}
+                  startLabel="Start Face Registration"
+                />
+              </div>
+            ) : stage === STAGE.REQUESTING ? (
+              <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-card py-16">
+                <div
+                  className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                  role="status"
+                  aria-label="Preparing face registration"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Preparing your registration...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Biometric consent - required before enrollment */}
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="biometric-consent"
+                      checked={consent}
+                      onCheckedChange={(value) => setConsent(value === true)}
+                      disabled={isRequestingChallenge}
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor="biometric-consent"
+                      className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
+                    >
+                      I consent to my facial biometric data being captured and
+                      stored to verify my attendance. It is encrypted and can be
+                      deleted on request.
+                    </Label>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Biometric consent - required before enrollment */}
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="biometric-consent"
-                  checked={consent}
-                  onCheckedChange={(value) => setConsent(value === true)}
-                  disabled={isPending}
-                  className="mt-0.5"
-                />
-                <Label
-                  htmlFor="biometric-consent"
-                  className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
+                    Before You Start
+                  </h3>
+                  <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                    <li>• Allow camera permission when prompted</li>
+                    <li>• Find a well-lit spot and face the camera</li>
+                    <li>• Remove sunglasses or anything covering your face</li>
+                    <li>• Follow the on-screen actions as they appear</li>
+                  </ul>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={!consent || isRequestingChallenge}
+                  className="w-full rounded-full py-6 font-mono text-sm font-bold uppercase tracking-tight sm:w-auto sm:px-8"
                 >
-                  I consent to my facial biometric data being captured and stored
-                  to verify my attendance. It is encrypted and can be deleted on
-                  request.
-                </Label>
+                  {isRequestingChallenge ? "Starting..." : "Continue"}
+                </Button>
               </div>
-            </div>
-
-            {/* Face Scanner Component - Centered */}
-            <div className="flex justify-center">
-              <FaceScanner
-                buttonText="Register Face"
-                onScanComplete={handleScanComplete}
-                disabled={isPending || !consent}
-                externalStatus={getExternalStatus()}
-              />
-            </div>
+            )}
           </div>
         </div>
       </div>

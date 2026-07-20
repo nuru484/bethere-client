@@ -1,6 +1,11 @@
 // src/hooks/useFaceScanApi.js
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { deleteFaceScan, addFaceScan, getUserFaceScan } from "@/api/faceScan";
+import {
+  deleteFaceScan,
+  addFaceScan,
+  createEnrollmentChallenge,
+  getUserFaceScan,
+} from "@/api/faceScan";
 
 export const useGetUserFaceScan = (userId) => {
   return useQuery({
@@ -14,14 +19,23 @@ export const useGetUserFaceScan = (userId) => {
   });
 };
 
+// Step 1 of enrollment: request the liveness challenge. Not cached - each
+// challenge is single-use, so this is a plain mutation with no invalidations.
+export const useRequestEnrollmentChallenge = () =>
+  useMutation({
+    mutationFn: () => createEnrollmentChallenge(),
+  });
+
+// Step 2 of enrollment: upload the captured frames. `formData` is a FormData
+// instance built by the caller.
 export const useAddFaceScan = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (userData) => addFaceScan(userData),
+    mutationFn: (formData) => addFaceScan(formData),
     onSuccess: (data) => {
       // Self-enrollment: the enrolled user id comes back on the response,
-      // not in the mutation variables ({ faceScan, consent }).
+      // not in the mutation variables (an opaque FormData).
       const userId = data?.data?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
       queryClient.invalidateQueries({ queryKey: ["user", userId] });

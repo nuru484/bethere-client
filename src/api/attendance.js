@@ -9,14 +9,16 @@ export const createAttendanceChallenge = async (eventId, { venueCode, mode }) =>
   api.post(`/attendance/${eventId}/challenge`, { venueCode, mode });
 
 // Step 2 of check-in: upload the captured frames. `formData` is a FormData
-// instance (challengeToken + `frames` files); passing it straight through lets
-// axios set the multipart boundary itself - do NOT hand-set Content-Type here.
+// instance (challengeToken + venueCode + `frames` files); passing it straight
+// through lets axios set the multipart boundary itself - do NOT hand-set
+// Content-Type here. The server re-validates the rotating venueCode at this
+// step too, so it must be sent again with the upload.
 export const createAttendance = async (eventId, formData) =>
   api.post(`/attendance/${eventId}`, formData);
 
 // Step 2 of check-out: same multipart shape as check-in (challengeToken +
-// `frames`), sent as a PUT. Pass the FormData straight through so axios keeps
-// the multipart boundary - do NOT hand-set Content-Type here.
+// venueCode + `frames`), sent as a PUT. Pass the FormData straight through so
+// axios keeps the multipart boundary - do NOT hand-set Content-Type here.
 export const updateAttendance = async (eventId, formData) =>
   api.put(`/attendance/${eventId}`, formData);
 

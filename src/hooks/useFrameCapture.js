@@ -2,11 +2,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
- * Lightweight webcam frame-burst capture for server-side liveness check-in.
+ * Lightweight webcam frame-burst capture for server-side liveness enrollment
+ * and check-in.
  *
- * Unlike useFaceScanner this loads NO face-api models and does NO client-side
- * detection - it just streams the camera and grabs a burst of JPEG blobs. The
- * server verifies liveness/identity across the whole burst.
+ * This does NO client-side face detection - it just streams the camera and
+ * grabs a burst of JPEG blobs. The server verifies liveness/identity across the
+ * whole burst and derives the face template from it.
  *
  * @param {object} opts
  * @param {number} [opts.frameCount=11]  number of frames to capture in the burst
