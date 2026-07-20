@@ -15,7 +15,7 @@ This repository is the **React frontend**: it runs the in-app QR scanner and cam
 ## 🧠 How It Works
 
 **1. Enrollment (consented).**
-The app runs **face-api.js** with TensorFlow models loaded from `/public/models` to compute a **128-dimension descriptor** at enrollment (with an explicit biometric-consent step). The descriptor is sent once to the server, which stores it **encrypted**; the raw vector is never sent back. Verification does not happen in the browser.
+After an explicit biometric-consent step, the browser requests a liveness challenge and uploads a short burst of captured frames. The **server** derives the face template from those frames and stores it **encrypted**; the template is never computed in - nor sent back to - the browser.
 
 **2. Presence: scan the rotating venue code.**
 An admin opens the **venue-code display** for an event on a screen at the location; it shows a QR that rotates every **30 seconds**. To check in or out, the attendant scans the current code with the in-app scanner. A screenshotted code is stale within seconds.
@@ -52,7 +52,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 
 * Login securely using credentials.
 * **Reset a forgotten password** via an emailed, time-limited link — request a reset, verify the link, and set a new password.
-* On first login, register your **facial scan** using **face-api.js** for future authentication.
+* On first login, register your **facial scan** by following a few on-screen actions while the camera captures a burst of frames for the server to verify and enrol.
 * Check in and out of **active event sessions** during their valid time windows.
 * View:
 
@@ -95,7 +95,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 | **Charts**             | recharts                                                        |
 | **Forms**              | react-hook-form + @hookform/resolvers                         |
 | **Validation**         | Zod                                                            |
-| **Face (enrollment)**  | face-api.js (in-browser descriptor at enrollment only)        |
+| **Face (enrollment)**  | Frame-burst capture only; the server derives the template     |
 | **QR display / scan**  | qrcode.react (venue display) + @zxing/browser (in-app scanner) |
 | **Image Conversion**   | heic2any (iPhone HEIC → JPEG before scanning)                 |
 | **Routing**            | react-router-dom                                              |
@@ -124,7 +124,7 @@ Redis (BullMQ Workers)
 **Key Flow:**
 
 1. Users authenticate with the backend via the frontend interface.
-2. First-time login triggers face scan capture using **face-api.js**.
+2. First-time login triggers a face-frame capture that the server verifies and enrols.
 3. Events and attendance data are fetched dynamically from the backend.
 4. Admins perform event and user management via protected dashboards.
 
@@ -163,7 +163,7 @@ Reset endpoints are **rate-limited** server-side to deter abuse.
 ```
 bethere-client/
 │
-├── public/                     # Static assets (face-api models, favicon, og.png)
+├── public/                     # Static assets (favicon, og.png)
 ├── scripts/                    # generate-seo.mjs (robots.txt + sitemap.xml, run on prebuild)
 │
 ├── src/

@@ -3,7 +3,7 @@ const STEPS = [
   {
     label: "Enrol",
     title: "One consented signature",
-    desc: "With your consent, the camera builds a single 128-point face descriptor. The server keeps it encrypted at rest; the raw vector never leaves it and is never sent back.",
+    desc: "With your consent, the camera captures a short burst of frames and the server builds a single face signature from them. It stays encrypted at rest; the raw signature never leaves the server and is never sent back.",
   },
   {
     label: "Check in",
