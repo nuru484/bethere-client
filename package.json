@@ -30,7 +30,6 @@
     "@sentry/react": "^10.66.0",
     "@tanstack/react-query": "^5.63.0",
     "@tanstack/react-table": "^8.21.3",
-    "@vercel/og": "^0.11.1",
     "@zxing/browser": "^0.2.1",
     "@zxing/library": "^0.23.0",
     "axios": "^1.7.9",
@@ -51,7 +50,6 @@
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.1.1",
     "recharts": "^2.15.4",
-    "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.1.12"

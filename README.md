@@ -1,6 +1,6 @@
 
 
-# <img src="public/assets/logo.png" alt="BeThere Logo" width="35" style="vertical-align: middle;"/> BeThere – Smart Attendance System Frontend
+# BeThere – Smart Attendance System Frontend
 
 **BeThere Client** is the web app for a full-stack **smart attendance system** that verifies **live presence**. Instead of signing a sheet or tapping a card, a person scans a **rotating code shown on a screen at the venue** to prove they are physically there, then performs a short **face-liveness capture** so the server can confirm it is really them, live. It is built for organizations, schools, and recurring events where attendance records need to be genuinely hard to fake: you have to *be there*, in person.
 
@@ -41,7 +41,6 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 * [Environment Variables](#-environment-variables)
 * [Getting Started](#-getting-started)
 * [Deployment](#-deployment)
-* [Screenshots](#-screenshots) 
 * [License](#-license)
 * [Contributing](#-contributing)
 
@@ -100,9 +99,9 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 | **QR display / scan**  | qrcode.react (venue display) + @zxing/browser (in-app scanner) |
 | **Image Conversion**   | heic2any (iPhone HEIC → JPEG before scanning)                 |
 | **Routing**            | react-router-dom                                              |
-| **Auth**               | Cookie-only httpOnly tokens (server-managed), jwt-decode      |
+| **Auth**               | Cookie-only httpOnly tokens (server-managed)                  |
 | **Date Handling**      | date-fns + react-day-picker                                   |
-| **Notifications**      | react-hot-toast / sonner                                       |
+| **Notifications**      | react-hot-toast                                                |
 | **Error Handling**     | React Error Boundaries                                         |
 | **Deployment**         | Vercel                                                         |
 
@@ -164,17 +163,18 @@ Reset endpoints are **rate-limited** server-side to deter abuse.
 ```
 bethere-client/
 │
-├── public/                     # Static assets
+├── public/                     # Static assets (face-api models, favicon, og.png)
+├── scripts/                    # generate-seo.mjs (robots.txt + sitemap.xml, run on prebuild)
 │
 ├── src/
 │   ├── api/                    # API interaction modules
-│   ├── assets/                 # Images, icons, static files
 │   ├── components/             # UI components (attendance, dashboard, event, users, etc.)
 │   ├── context/                # React context providers (AuthContext)
 │   ├── hooks/                  # Custom React hooks (useAuth, useEvent, etc.)
-│   ├── lib/                    # Core utilities (ErrorBoundary, encryption, face auth)
+│   ├── lib/                    # Core utilities (ErrorBoundary, face capture, site config)
 │   ├── pages/                  # Route-level pages
 │   ├── routes/                 # App routing and protected route definitions
+│   ├── test/                   # Test setup
 │   ├── utils/                  # Helper functions
 │   ├── validation/             # Zod validation schemas
 │   ├── index.css               # Global styles
@@ -191,8 +191,13 @@ Create a `.env` file in the root directory with the following:
 
 ```bash
 VITE_SERVER_URL="your backend uri"
+
 # Optional error tracking; unset disables it
 # VITE_SENTRY_DSN=
+
+# Optional canonical site origin used by the SEO generator and meta tags.
+# Defaults to https://bethere.manuru.dev
+# VITE_SITE_URL=
 ```
 
 ---
@@ -243,18 +248,6 @@ Deployed on **Vercel**
 | **Queue / Jobs** | Redis (BullMQ)     |
 
 > 🧩 The frontend automatically connects to the backend using the `VITE_SERVER_URL` environment variable.
-
----
-
-## 🖼️ Screenshots
-
-| View                | Screenshot                                            |
-| ------------------- | ----------------------------------------------------- |
-| **Login Page**      | ![Login Page](./screenshots/login.png)                |
-| **Face Scan**       | ![Face Scan](./screenshots/face-scan.png)             |
-| **User Dashboard**  | ![User Dashboard](./screenshots/dashboard.png)        |
-| **Admin Dashboard** | ![Admin Dashboard](./screenshots/admin-dashboard.png) |
-| **Attendance List** | ![Attendance List](./screenshots/attendance.png)      |
 
 ---
 
