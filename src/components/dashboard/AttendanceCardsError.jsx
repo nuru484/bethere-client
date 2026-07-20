@@ -10,12 +10,12 @@ const AttendanceCardsError = ({ error, onRetry }) => {
         (title) => (
           <Card key={title} className="overflow-hidden">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
                 {title}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CardErrorState message={error} onRetry={onRetry} compact />
+              <CardErrorState message={error} onRetry={onRetry} />
             </CardContent>
           </Card>
         )

@@ -40,27 +40,34 @@ const AttendanceLineChart = ({ data }) => {
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
           <LineChart data={formattedData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis
               dataKey="formattedDate"
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
               angle={-45}
               textAnchor="end"
               height={70}
             />
-            <YAxis tick={{ fontSize: 12 }} />
+            <YAxis
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
+                backgroundColor: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "0.5rem",
+                boxShadow: "none",
               }}
+              labelStyle={{ color: "hsl(var(--popover-foreground))" }}
             />
             <Legend />
             <Line
               type="monotone"
               dataKey="present"
-              stroke="#10b981"
+              stroke="hsl(var(--chart-1))"
               strokeWidth={2}
               name="Present"
               dot={{ r: 4 }}
@@ -68,7 +75,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="late"
-              stroke="#f59e0b"
+              stroke="hsl(var(--chart-4))"
               strokeWidth={2}
               name="Late"
               dot={{ r: 4 }}
@@ -76,7 +83,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="absent"
-              stroke="#ef4444"
+              stroke="hsl(var(--chart-3))"
               strokeWidth={2}
               name="Absent"
               dot={{ r: 4 }}
@@ -84,7 +91,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="total"
-              stroke="#3b82f6"
+              stroke="hsl(var(--chart-5))"
               strokeWidth={2}
               name="Total"
               dot={{ r: 4 }}

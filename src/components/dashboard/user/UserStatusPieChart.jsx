@@ -15,10 +15,18 @@ const UserStatusPieChart = ({ statusBreakdown }) => {
     {
       name: "Present",
       value: statusBreakdown?.present || 0,
-      color: "#10b981",
+      color: "hsl(var(--chart-1))",
     },
-    { name: "Late", value: statusBreakdown?.late || 0, color: "#f59e0b" },
-    { name: "Absent", value: statusBreakdown?.absent || 0, color: "#ef4444" },
+    {
+      name: "Late",
+      value: statusBreakdown?.late || 0,
+      color: "hsl(var(--chart-4))",
+    },
+    {
+      name: "Absent",
+      value: statusBreakdown?.absent || 0,
+      color: "hsl(var(--chart-3))",
+    },
   ].filter((item) => item.value > 0);
 
   if (data.length === 0) {
@@ -39,10 +47,14 @@ const UserStatusPieChart = ({ statusBreakdown }) => {
       const total = data.reduce((sum, item) => sum + item.value, 0);
       const percentage = ((payload[0].value / total) * 100).toFixed(2);
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-          <p className="font-semibold">{payload[0].name}</p>
-          <p className="text-sm">Count: {payload[0].value}</p>
-          <p className="text-sm">Percentage: {percentage}%</p>
+        <div className="bg-popover p-3 border border-border rounded-lg shadow-sm">
+          <p className="font-semibold text-foreground">{payload[0].name}</p>
+          <p className="text-sm text-muted-foreground">
+            Count: {payload[0].value}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Percentage: {percentage}%
+          </p>
         </div>
       );
     }
@@ -109,7 +121,7 @@ const UserStatusPieChart = ({ statusBreakdown }) => {
               labelLine={false}
               label={renderCustomLabel}
               outerRadius={120}
-              fill="#8884d8"
+              fill="hsl(var(--chart-1))"
               dataKey="value"
             >
               {data.map((entry, index) => (

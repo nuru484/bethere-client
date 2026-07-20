@@ -2,20 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <!-- Primary Meta Tags -->
-    <title>BeThere</title>
-    <meta name="title" content="BeThere - Smart Attendance System" />
-    <meta
-      name="description"
-      content="BeThere is a smart attendance system that uses face recognition for secure and accurate event attendance tracking. Admins can create recurring or one-time events, track sign-ins and sign-outs, and generate attendance reports."
-    />
-
-    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Favicon -->
-    <link rel="icon" href="/assets/logo.png" />
+    <!-- No-flash theme: apply the stored (or system) theme before first
+         paint. Keep the storage key in sync with src/context/ThemeContext.jsx. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("bethere-theme");
+          var isDark =
+            stored === "dark" ||
+            ((!stored || stored === "system") &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (isDark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- SEO / Open Graph values below mirror src/lib/site.js, which is the
+         source of truth. This file is static HTML, so the same strings are
+         hardcoded here; keep them in sync when site.js changes. -->
+
+    <!-- Primary meta -->
+    <title>BeThere - Attendance you can't fake</title>
+    <meta
+      name="description"
+      content="Face verification plus 50 m geofencing: a check-in only counts from the right person, standing in the right spot."
+    />
+    <meta name="author" content="Nurudeen Abdul-Majeed" />
+    <meta name="theme-color" content="#f1f1f1" />
+    <link rel="canonical" href="https://bethere.manuru.dev/" />
+
+    <!-- Favicon: SVG first, PNG fallback for older browsers -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/assets/logo.png" />
 
     <!-- Fonts: Outfit (display), Instrument Sans (body), Space Mono (labels) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,25 +45,47 @@
       rel="stylesheet"
     />
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://bethere.manuru.dev/" />
-    <meta property="og:title" content="BeThere - Smart Attendance System" />
+    <meta property="og:site_name" content="BeThere" />
+    <meta property="og:title" content="BeThere - Attendance you can't fake" />
     <meta
       property="og:description"
-      content="BeThere uses face recognition and geolocation verification to ensure secure, accurate, and location-based attendance tracking for all events."
+      content="Face verification plus 50 m geofencing: a check-in only counts from the right person, standing in the right spot."
     />
-    <meta property="og:image" content="https://bethere.manuru.dev/assets/logo.png" />
+    <!-- Code-generated OG image (Vercel Edge Function at api/og.jsx). -->
+    <meta property="og:image" content="https://bethere.manuru.dev/api/og" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://bethere.manuru.dev/" />
-    <meta name="twitter:title" content="BeThere - Smart Attendance System" />
+    <meta name="twitter:title" content="BeThere - Attendance you can't fake" />
     <meta
       name="twitter:description"
-      content="BeThere uses face recognition and geolocation verification to ensure secure, accurate, and location-based attendance tracking for all events."
+      content="Face verification plus 50 m geofencing: a check-in only counts from the right person, standing in the right spot."
     />
-    <meta name="twitter:image" content="https://bethere.manuru.dev/assets/logo.png" />
+    <meta name="twitter:image" content="https://bethere.manuru.dev/api/og" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "BeThere",
+        "url": "https://bethere.manuru.dev/",
+        "description": "Attendance tracking with on-device face recognition and 50 m GPS geofencing.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "author": {
+          "@type": "Person",
+          "name": "Nurudeen Abdul-Majeed",
+          "url": "https://manuru.dev"
+        }
+      }
+    </script>
   </head>
 
   <body>

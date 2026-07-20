@@ -9,19 +9,20 @@
 import { useRef } from "react";
 import PropTypes from "prop-types";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { dotsLight } from "./texture";
+import { useTheme } from "@/context/ThemeContext";
+import { dotsLight, dotsDark } from "./texture";
 import { PixelGlyph } from "./PixelGlyph";
 
 const FEATURES = [
   {
     glyph: "funnel",
-    title: "Face-verified check-ins",
-    desc: "face-api.js matches a live camera frame against the enrolled descriptor, right in the browser. Only the 128-number vector ever leaves the device - no photos are stored.",
+    title: "Face-verified, server-side",
+    desc: "The server checks a short liveness capture against the enrolled template from the raw frames, following randomized on-screen actions. The template is encrypted at rest and never leaves the server.",
   },
   {
     glyph: "diamond",
-    title: "Geofenced to 50 meters",
-    desc: "Every event has a location and a fence. Turf.js does the geodesic math server-side, so a check-in from the parking lot next door simply doesn't land.",
+    title: "Rotating venue code",
+    desc: "A screen at the event shows a code that changes every 30 seconds. Scanning the current code proves you're physically there, and a screenshotted code is stale within seconds.",
   },
   {
     glyph: "checker",
@@ -43,6 +44,8 @@ const FEATURES = [
 function StackCard({ feature, index }) {
   const ref = useRef(null);
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const dots = resolvedTheme === "dark" ? dotsDark : dotsLight;
 
   // 0 while the card is still below the viewport, 1 once it has docked.
   const { scrollYProgress } = useScroll({
@@ -64,22 +67,22 @@ function StackCard({ feature, index }) {
       }}
     >
       <motion.article
-        className="rounded-3xl border border-[#2b2b2b]/10 bg-[#fafafa] p-6 shadow-sm"
+        className="rounded-3xl border border-[var(--lp-border)] bg-[var(--lp-surface)] p-6 shadow-sm"
         style={
           reduceMotion ? undefined : { rotate, transformOrigin: "50% -20%" }
         }
       >
         <div
-          className="overflow-hidden rounded-xl bg-[#ececec] px-10 py-8"
-          style={dotsLight}
+          className="overflow-hidden rounded-xl bg-[var(--lp-chip)] px-10 py-8"
+          style={dots}
         >
           <PixelGlyph name={feature.glyph} className="mx-auto max-w-[220px]" />
         </div>
         <div className="px-2 pb-4 pt-8 text-left">
-          <h3 className="font-body text-2xl font-semibold tracking-tight text-[#2b2b2b] sm:text-[1.75rem]">
+          <h3 className="font-body text-2xl font-semibold tracking-tight text-[var(--lp-ink)] sm:text-[1.75rem]">
             {feature.title}
           </h3>
-          <p className="mt-3 max-w-[32em] font-body text-[15px] leading-relaxed text-[#656565]">
+          <p className="mt-3 max-w-[32em] font-body text-[15px] leading-relaxed text-[var(--lp-muted)]">
             {feature.desc}
           </p>
         </div>
@@ -103,10 +106,10 @@ export function FeatureStack() {
       {/* Pinned intro: reads alone for the first ~85svh of scroll, then the
           cards arrive over it and stack up. */}
       <div className="sticky top-0 z-0 flex h-[100svh] flex-col items-center justify-center px-4 text-center">
-        <h2 className="max-w-[8.5em] text-balance font-display text-5xl font-normal leading-[0.95] tracking-[-0.04em] text-[#2b2b2b] sm:text-6xl lg:text-7xl">
+        <h2 className="max-w-[8.5em] text-balance font-display text-5xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-6xl lg:text-7xl">
           Built to know who showed up.
         </h2>
-        <p className="mt-8 max-w-md font-body text-base leading-relaxed text-[#656565] sm:text-lg">
+        <p className="mt-8 max-w-md font-body text-base leading-relaxed text-[var(--lp-muted)] sm:text-lg">
           Every check-in is verified twice - the person and the place - so the
           record you report on is the record of who was really in the room.
         </p>

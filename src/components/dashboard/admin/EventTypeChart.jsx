@@ -17,12 +17,12 @@ const EventTypeChart = ({ eventTypeBreakdown }) => {
     {
       name: "Recurring Events",
       value: eventTypeBreakdown?.recurring || 0,
-      fill: "#8b5cf6",
+      fill: "hsl(var(--chart-1))",
     },
     {
       name: "Non-Recurring Events",
       value: eventTypeBreakdown?.nonRecurring || 0,
-      fill: "#06b6d4",
+      fill: "hsl(var(--chart-3))",
     },
   ];
 
@@ -42,16 +42,22 @@ const EventTypeChart = ({ eventTypeBreakdown }) => {
             barSize={40}
             maxBarSize={50}
           >
-            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--border))"
+              className="opacity-30"
+            />
             <XAxis
               type="number"
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
               className="text-xs sm:text-sm"
             />
             <YAxis
               dataKey="name"
               type="category"
-              tick={{ fontSize: 10 }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
               width={100}
               className="text-xs sm:text-sm"
               interval={0}
@@ -60,9 +66,14 @@ const EventTypeChart = ({ eventTypeBreakdown }) => {
               contentStyle={{
                 fontSize: "12px",
                 padding: "8px",
-                borderRadius: "6px",
+                backgroundColor: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "0.5rem",
+                boxShadow: "none",
               }}
-              cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
+              labelStyle={{ color: "hsl(var(--popover-foreground))" }}
+              cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
             />
             <Bar dataKey="value" radius={[0, 8, 8, 0]}>
               {data.map((entry, index) => (

@@ -15,12 +15,12 @@ const UserEventTypeChart = ({ eventTypeBreakdown }) => {
     {
       name: "Recurring Events",
       value: eventTypeBreakdown?.recurring || 0,
-      color: "#8b5cf6",
+      color: "hsl(var(--chart-1))",
     },
     {
       name: "Non-Recurring Events",
       value: eventTypeBreakdown?.nonRecurring || 0,
-      color: "#06b6d4",
+      color: "hsl(var(--chart-3))",
     },
   ].filter((item) => item.value > 0);
 
@@ -42,10 +42,14 @@ const UserEventTypeChart = ({ eventTypeBreakdown }) => {
       const total = data.reduce((sum, item) => sum + item.value, 0);
       const percentage = ((payload[0].value / total) * 100).toFixed(2);
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-          <p className="font-semibold">{payload[0].name}</p>
-          <p className="text-sm">Count: {payload[0].value}</p>
-          <p className="text-sm">Percentage: {percentage}%</p>
+        <div className="bg-popover p-3 border border-border rounded-lg shadow-sm">
+          <p className="font-semibold text-foreground">{payload[0].name}</p>
+          <p className="text-sm text-muted-foreground">
+            Count: {payload[0].value}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Percentage: {percentage}%
+          </p>
         </div>
       );
     }
@@ -112,7 +116,7 @@ const UserEventTypeChart = ({ eventTypeBreakdown }) => {
               labelLine={false}
               label={renderCustomLabel}
               outerRadius={120}
-              fill="#8884d8"
+              fill="hsl(var(--chart-1))"
               dataKey="value"
             >
               {data.map((entry, index) => (

@@ -7,7 +7,9 @@ const DashboardTotalsCardError = ({ error, onRetry }) => {
   return (
     <Card className="col-span-full">
       <CardHeader>
-        <h3 className="text-lg font-semibold">Dashboard Statistics</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Dashboard Statistics
+        </h3>
       </CardHeader>
       <CardContent>
         <CardErrorState message={error} onRetry={onRetry} />

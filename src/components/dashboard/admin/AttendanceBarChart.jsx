@@ -19,29 +19,33 @@ const AttendanceBarChart = ({ statusCounts, statusPercentages }) => {
       name: "Present",
       count: statusCounts?.present || 0,
       percentage: parseFloat(statusPercentages?.present || 0),
-      fill: "#10b981",
+      fill: "hsl(var(--chart-1))",
     },
     {
       name: "Late",
       count: statusCounts?.late || 0,
       percentage: parseFloat(statusPercentages?.late || 0),
-      fill: "#f59e0b",
+      fill: "hsl(var(--chart-4))",
     },
     {
       name: "Absent",
       count: statusCounts?.absent || 0,
       percentage: parseFloat(statusPercentages?.absent || 0),
-      fill: "#ef4444",
+      fill: "hsl(var(--chart-3))",
     },
   ];
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
-          <p className="font-semibold">{payload[0].payload.name}</p>
-          <p className="text-sm">Count: {payload[0].payload.count}</p>
-          <p className="text-sm">
+        <div className="bg-popover p-3 border border-border rounded-lg shadow-sm">
+          <p className="font-semibold text-foreground">
+            {payload[0].payload.name}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Count: {payload[0].payload.count}
+          </p>
+          <p className="text-sm text-muted-foreground">
             Percentage: {payload[0].payload.percentage.toFixed(2)}%
           </p>
         </div>
@@ -71,11 +75,21 @@ const AttendanceBarChart = ({ statusCounts, statusPercentages }) => {
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
+            />
             <YAxis
-              tick={{ fontSize: 12 }}
-              label={{ value: "Count", angle: -90, position: "insideLeft" }}
+              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              stroke="hsl(var(--border))"
+              label={{
+                value: "Count",
+                angle: -90,
+                position: "insideLeft",
+                fill: "hsl(var(--muted-foreground))",
+              }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />

@@ -6,13 +6,14 @@
 // cursor parallax over floating app fragments and the quote card carries a
 // cursor-following mint glow - same feel, no canvas.
 import { useRef } from "react";
-import { dotsLight } from "./texture";
+import { useTheme } from "@/context/ThemeContext";
+import { dotsLight, dotsDark } from "./texture";
 import { PixelGlyph } from "./PixelGlyph";
 
 const STATS = [
   { value: "128", label: "numbers in a face descriptor" },
   { value: "0.60", label: "max match distance accepted" },
-  { value: "50 m", label: "geofence radius per event" },
+  { value: "30 s", label: "venue code rotation window" },
   { value: "3", label: "states: present, late, absent" },
 ];
 
@@ -25,12 +26,12 @@ function Fragments() {
         className="lp-fragment absolute left-[8%] top-[30%] rotate-[-3deg]"
         style={{ "--depth": 18 }}
       >
-        <div className="flex items-center gap-2 rounded-xl border border-[#2b2b2b]/10 bg-white px-4 py-3 shadow-sm">
-          <span className="size-2 rounded-full bg-[#3ecf8e]" />
-          <span className="font-body text-sm font-semibold text-[#2b2b2b]">
+        <div className="flex items-center gap-2 rounded-xl border border-[var(--lp-border)] bg-[var(--lp-card)] px-4 py-3 shadow-sm">
+          <span className="size-2 rounded-full bg-[var(--lp-accent)]" />
+          <span className="font-body text-sm font-semibold text-[var(--lp-ink)]">
             Checked in
           </span>
-          <span className="rounded-full bg-[#dcf5e9] px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-[#1a7f53]">
+          <span className="rounded-full bg-[var(--lp-tint)] px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-[var(--lp-accent-ink)]">
             Present
           </span>
         </div>
@@ -40,12 +41,12 @@ function Fragments() {
         className="lp-fragment absolute right-[10%] top-[22%] rotate-[2deg]"
         style={{ "--depth": 30 }}
       >
-        <div className="rounded-xl border border-[#2b2b2b]/10 bg-white px-4 py-3 shadow-sm">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
+        <div className="rounded-xl border border-[var(--lp-border)] bg-[var(--lp-card)] px-4 py-3 shadow-sm">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
             Face match
           </p>
-          <p className="mt-1 font-body text-sm font-semibold text-[#2b2b2b]">
-            distance 0.42 <span className="text-[#3ecf8e]">&lt; 0.60</span>
+          <p className="mt-1 font-body text-sm font-semibold text-[var(--lp-ink)]">
+            distance 0.42 <span className="text-[var(--lp-accent)]">&lt; 0.60</span>
           </p>
         </div>
       </div>
@@ -54,12 +55,12 @@ function Fragments() {
         className="lp-fragment absolute bottom-[26%] left-[16%] rotate-[1.5deg]"
         style={{ "--depth": 26 }}
       >
-        <div className="rounded-xl border border-[#2b2b2b]/10 bg-white px-4 py-3 shadow-sm">
-          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
-            Geofence
+        <div className="rounded-xl border border-[var(--lp-border)] bg-[var(--lp-card)] px-4 py-3 shadow-sm">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
+            Venue code
           </p>
-          <p className="mt-1 font-body text-sm font-semibold text-[#2b2b2b]">
-            18 m from center <span className="text-[#3ecf8e]">inside</span>
+          <p className="mt-1 font-body text-sm font-semibold text-[var(--lp-ink)]">
+            scanned on-site <span className="text-[var(--lp-accent)]">valid</span>
           </p>
         </div>
       </div>
@@ -68,9 +69,9 @@ function Fragments() {
         className="lp-fragment absolute bottom-[18%] right-[14%] rotate-[-2deg]"
         style={{ "--depth": 14 }}
       >
-        <div className="w-40 rounded-xl border border-[#2b2b2b]/10 bg-white p-3 shadow-sm">
+        <div className="w-40 rounded-xl border border-[var(--lp-border)] bg-[var(--lp-card)] p-3 shadow-sm">
           <PixelGlyph name="bars" />
-          <p className="mt-2 font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
+          <p className="mt-2 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
             Weekly report
           </p>
         </div>
@@ -82,6 +83,8 @@ function Fragments() {
 export function SeeForYourself() {
   const leftRef = useRef(null);
   const quoteRef = useRef(null);
+  const { resolvedTheme } = useTheme();
+  const dots = resolvedTheme === "dark" ? dotsDark : dotsLight;
 
   const onLeftMove = (e) => {
     const el = leftRef.current;
@@ -105,20 +108,20 @@ export function SeeForYourself() {
         <div
           ref={leftRef}
           onMouseMove={onLeftMove}
-          className="lp-parallax relative min-h-[26rem] overflow-hidden rounded-2xl bg-[#fafafa] sm:min-h-[34rem]"
+          className="lp-parallax relative min-h-[26rem] overflow-hidden rounded-2xl bg-[var(--lp-surface)] sm:min-h-[34rem]"
         >
           <div
             aria-hidden="true"
             className="absolute inset-3 rounded-xl"
-            style={dotsLight}
+            style={dots}
           />
-          <h2 className="absolute left-7 top-7 z-10 font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[#2b2b2b] sm:left-9 sm:top-9 sm:text-5xl">
+          <h2 className="absolute left-7 top-7 z-10 font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:left-9 sm:top-9 sm:text-5xl">
             See for
             <br />
             yourself
           </h2>
           <Fragments />
-          <p className="absolute bottom-6 left-7 font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2] sm:left-9">
+          <p className="absolute bottom-6 left-7 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)] sm:left-9">
             Fragments from the live app
           </p>
         </div>
@@ -126,7 +129,7 @@ export function SeeForYourself() {
         <div
           ref={quoteRef}
           onMouseMove={onQuoteMove}
-          className="relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-2xl bg-[#2b2b2b] p-7 sm:min-h-[34rem] sm:p-9"
+          className="relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-2xl border border-[var(--lp-border)] bg-[var(--lp-ink)] p-7 dark:bg-[var(--lp-card)] sm:min-h-[34rem] sm:p-9"
         >
           <div
             aria-hidden="true"
@@ -138,27 +141,27 @@ export function SeeForYourself() {
           />
           <span
             aria-hidden="true"
-            className="font-display text-5xl leading-none text-[#3ecf8e]"
+            className="font-display text-5xl leading-none text-[var(--lp-accent)]"
           >
             &ldquo;
           </span>
           <blockquote className="relative">
-            <p className="font-display text-4xl font-normal leading-[1.04] tracking-[-0.03em] text-[#fafafa] sm:text-5xl">
+            <p className="font-display text-4xl font-normal leading-[1.04] tracking-[-0.03em] text-[var(--lp-surface)] dark:text-[var(--lp-ink)] sm:text-5xl">
               If you weren&apos;t there, it doesn&apos;t count.
             </p>
-            <footer className="mt-8 font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
+            <footer className="mt-8 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
               / The whole point of BeThere
             </footer>
           </blockquote>
         </div>
       </div>
 
-      <div className="mt-2 rounded-2xl bg-[#fafafa] p-5 sm:mt-3 sm:p-7">
+      <div className="mt-2 rounded-2xl bg-[var(--lp-surface)] p-5 sm:mt-3 sm:p-7">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="font-body text-xl font-semibold tracking-tight text-[#2b2b2b] sm:text-2xl">
+          <h3 className="font-body text-xl font-semibold tracking-tight text-[var(--lp-ink)] sm:text-2xl">
             Verification, quantified
           </h3>
-          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
             Straight from the codebase
           </p>
         </div>
@@ -166,12 +169,12 @@ export function SeeForYourself() {
           {STATS.map((s) => (
             <div
               key={s.label}
-              className="group rounded-xl bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-sm"
+              className="group rounded-xl bg-[var(--lp-card)] p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-sm"
             >
-              <dd className="font-display text-4xl font-normal tracking-[-0.02em] text-[#2b2b2b] transition-colors duration-300 group-hover:text-[#1a7f53] sm:text-5xl">
+              <dd className="font-display text-4xl font-normal tracking-[-0.02em] text-[var(--lp-ink)] transition-colors duration-300 group-hover:text-[var(--lp-accent-ink)] sm:text-5xl">
                 {s.value}
               </dd>
-              <dt className="mt-2 font-mono text-[10px] font-bold uppercase tracking-tight text-[#a2a2a2]">
+              <dt className="mt-2 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
                 {s.label}
               </dt>
             </div>

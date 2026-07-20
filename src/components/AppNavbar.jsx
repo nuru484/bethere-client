@@ -1,35 +1,26 @@
 import React, { useState, useEffect } from "react";
-import {
-  CalendarCheck2,
-  UserRoundPen,
-  Home,
-  Users,
-  ScanFace,
-  Menu,
-  X,
-  FileBarChart,
-  ShieldCheck,
-} from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import UserProfileDropdown from "@/components/users/user-profile/UserProfileDropdown";
-import logo from "/assets/logo.png";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 const getMenuItems = (user) => {
   const isAdmin = user?.role === "ADMIN";
   const shouldShowFaceScan = user?.hasFaceScan === false;
-
   return [
     {
       title: "Dashboard",
-      icon: Home,
       url: "",
       path: "/dashboard",
     },
     {
       title: "Events",
-      icon: CalendarCheck2,
       url: "events",
       path: "/dashboard/events",
     },
@@ -37,7 +28,6 @@ const getMenuItems = (user) => {
       ? [
           {
             title: "My Attendance",
-            icon: UserRoundPen,
             url: `attendance/${user.id}`,
             path: `/dashboard/attendance/${user.id}`,
           },
@@ -47,7 +37,6 @@ const getMenuItems = (user) => {
       ? [
           {
             title: "Add Face Scan",
-            icon: ScanFace,
             url: "add-facescan",
             path: "/dashboard/add-facescan",
           },
@@ -56,20 +45,23 @@ const getMenuItems = (user) => {
     ...(isAdmin
       ? [
           {
-            title: "Users",
-            icon: Users,
-            url: "users",
-            path: "/dashboard/users",
-          },
-          {
-            title: "Admins",
-            icon: ShieldCheck,
-            url: "admins",
-            path: "/dashboard/admins",
+            title: "Management",
+            type: "menu",
+            children: [
+              {
+                title: "Users",
+                url: "users",
+                path: "/dashboard/users",
+              },
+              {
+                title: "Admins",
+                url: "admins",
+                path: "/dashboard/admins",
+              },
+            ],
           },
           {
             title: "Reports",
-            icon: FileBarChart,
             url: "attendance/reports",
             path: "/dashboard/attendance/reports",
           },
@@ -77,32 +69,28 @@ const getMenuItems = (user) => {
       : []),
   ];
 };
-
 export function AppNavbar() {
   const { user } = useAuth();
   const location = useLocation();
   const items = React.useMemo(() => getMenuItems(user), [user]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
-
   // Check responsive layout
   useEffect(() => {
     const checkMobileView = () => {
       const estimatedWidth = items.length * 120 + 300;
       setIsMobileView(
-        window.innerWidth < estimatedWidth || window.innerWidth < 1024
+        window.innerWidth < estimatedWidth || window.innerWidth < 1024,
       );
     };
-
     checkMobileView();
     window.addEventListener("resize", checkMobileView);
     return () => window.removeEventListener("resize", checkMobileView);
   }, [items.length]);
-
   const isActiveTab = (item) => location.pathname === item.path;
-
+  const isMenuActive = (item) =>
+    item.children?.some((child) => location.pathname === child.path);
   const handleNavClick = () => setIsMenuOpen(false);
-
   // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -113,7 +101,6 @@ export function AppNavbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
-
   // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "unset";
@@ -121,38 +108,70 @@ export function AppNavbar() {
       document.body.style.overflow = "unset";
     };
   }, [isMenuOpen]);
-
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <NavLink
             to="/dashboard"
-            className="flex items-center space-x-3 group flex-shrink-0"
+            className="flex items-center gap-3 group flex-shrink-0"
             onClick={handleNavClick}
           >
-            <div className="relative">
-              <img
-                src={logo}
-                alt="BeThere Logo"
-                className="h-12 w-12 object-contain transition-transform duration-200 group-hover:scale-105"
-              />
-            </div>
+            <span className="flex size-10 items-center justify-center rounded-xl bg-foreground font-mono text-sm font-bold text-background transition-transform duration-200 group-hover:scale-105">
+              B/
+            </span>
             <div className="flex flex-col">
-              <span className="text-emerald-600 font-bold text-xl tracking-tight whitespace-nowrap">
+              <span className="font-body text-lg font-semibold tracking-tight text-foreground whitespace-nowrap">
                 BeThere
               </span>
-              <span className="text-xs text-gray-500 -mt-1 hidden sm:block whitespace-nowrap">
-                Attendance Management
+              <span className="-mt-0.5 hidden font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground sm:block whitespace-nowrap">
+                Attendance
               </span>
             </div>
           </NavLink>
-
           {/* Desktop Nav */}
           {!isMobileView && (
             <div className="flex items-center space-x-2">
               {items.map((item) => {
+                if (item.type === "menu") {
+                  const isActive = isMenuActive(item);
+                  return (
+                    <DropdownMenu key={item.title}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative whitespace-nowrap focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                            isActive
+                              ? "bg-secondary text-foreground"
+                              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                          }`}
+                        >
+                          <span>{item.title}</span>
+                          <ChevronDown className="h-4 w-4" />
+                          {isActive && (
+                            <motion.span
+                              layoutId="activeTab"
+                              className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full"
+                            />
+                          )}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-40">
+                        {item.children.map((child) => (
+                          <DropdownMenuItem key={child.title} asChild>
+                            <NavLink
+                              to={`/dashboard/${child.url}`}
+                              className="cursor-pointer"
+                            >
+                              {child.title}
+                            </NavLink>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
+
                 const isActive = isActiveTab(item);
                 return (
                   <NavLink
@@ -165,40 +184,36 @@ export function AppNavbar() {
                     <button
                       className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
                         isActive
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-emerald-600"
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                       }`}
                     >
-                      <item.icon className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span>{item.title}</span>
                       {isActive && (
                         <motion.span
                           layoutId="activeTab"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full"
                         />
                       )}
                     </button>
                   </NavLink>
                 );
               })}
-
               {/* Desktop User Profile */}
-              <div className="flex items-center ml-4 pl-4 border-l border-gray-200">
+              <div className="flex items-center gap-1 ml-4 pl-4 border-l border-border">
                 <UserProfileDropdown />
               </div>
             </div>
           )}
-
           {/* Mobile View - Profile and Menu Toggle */}
           {isMobileView && (
             <div className="flex items-center space-x-3">
               {/* Mobile User Profile */}
               <UserProfileDropdown />
-
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-emerald-600 transition-colors"
+                className="inline-flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -219,7 +234,6 @@ export function AppNavbar() {
           )}
         </div>
       </div>
-
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileView && isMenuOpen && (
@@ -227,10 +241,46 @@ export function AppNavbar() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-gray-200 bg-gray-50"
+            className="overflow-hidden border-t border-border bg-card"
           >
             <div className="px-4 pt-2 pb-4 space-y-1">
               {items.map((item, index) => {
+                if (item.type === "menu") {
+                  return (
+                    <motion.div
+                      key={item.title}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="space-y-1"
+                    >
+                      <p className="px-4 pt-2 pb-1 font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+                        {item.title}
+                      </p>
+                      {item.children.map((child) => {
+                        const isActive = isActiveTab(child);
+                        return (
+                          <NavLink
+                            key={child.title}
+                            to={`/dashboard/${child.url}`}
+                            onClick={handleNavClick}
+                          >
+                            <button
+                              className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
+                                isActive
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              }`}
+                            >
+                              <span>{child.title}</span>
+                            </button>
+                          </NavLink>
+                        );
+                      })}
+                    </motion.div>
+                  );
+                }
+
                 const isActive = isActiveTab(item);
                 return (
                   <motion.div
@@ -250,11 +300,10 @@ export function AppNavbar() {
                       <button
                         className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
                           isActive
-                            ? "bg-emerald-600 text-white shadow-sm"
-                            : "text-gray-700 hover:bg-white hover:text-emerald-600"
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                         }`}
                       >
-                        <item.icon className="mr-3 h-5 w-5" />
                         <span>{item.title}</span>
                       </button>
                     </NavLink>
@@ -268,5 +317,4 @@ export function AppNavbar() {
     </nav>
   );
 }
-
 export default AppNavbar;
