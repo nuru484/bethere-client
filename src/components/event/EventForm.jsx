@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import SectionHeader from "@/components/ui/FormSectionHeader";
+import { compressImage } from "@/lib/compress-image";
 
 export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024; // ~5MB
 
@@ -55,7 +56,7 @@ const EventForm = ({
         ? null
         : initialCoverImage;
 
-  const handleCoverChange = (e, field) => {
+  const handleCoverChange = async (e, field) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -68,17 +69,24 @@ const EventForm = ({
       return;
     }
 
-    if (file.size > MAX_COVER_IMAGE_BYTES) {
+    // Only guard absurdly large originals; the image is compressed below, so a
+    // normal multi-MB photo uploads as a couple hundred KB.
+    if (file.size > 25 * 1024 * 1024) {
       form.setError("coverImage", {
         type: "manual",
-        message: "Cover image must be 5MB or smaller.",
+        message: "Cover image is too large. Please choose one under 25MB.",
       });
       e.target.value = "";
       return;
     }
 
     form.clearErrors("coverImage");
-    field.onChange(file);
+    const compressed = await compressImage(file, {
+      maxDimension: 1600,
+      quality: 0.82,
+      fileName: `${(file.name || "cover").replace(/\.[^.]+$/, "")}.jpg`,
+    });
+    field.onChange(compressed);
   };
 
   const handleRemoveCover = (field) => {

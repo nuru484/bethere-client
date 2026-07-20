@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
-import heic2any from "heic2any";
+import { compressImage } from "@/lib/compress-image";
 import { Loader2 } from "lucide-react";
 import {
   Form,
@@ -74,6 +74,13 @@ const ProfileInfoTab = ({ user, kind }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Guard only against absurdly large originals (decoding cost); the image is
+    // compressed below, so a normal multi-MB phone photo is fine.
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Image is too large. Please choose one under 25MB.");
+      e.target.value = "";
+      return;
+    }
     setIsProcessingImage(true);
     try {
       const isHeic =
@@ -81,24 +88,30 @@ const ProfileInfoTab = ({ user, kind }) => {
         file.type === "image/heic" ||
         file.type === "image/heif" ||
         file.type === "";
-      let previewBlob = file;
+      let sourceBlob = file;
       if (isHeic) {
         try {
-          previewBlob = await heic2any({ blob: file, toType: "image/jpeg" });
+          // heic2any is ~1.2 MB; load it only when a HEIC file is picked so it
+          // stays out of the eager profile chunk.
+          const { default: heic2any } = await import("heic2any");
+          sourceBlob = await heic2any({ blob: file, toType: "image/jpeg" });
         } catch {
-          toast.error("Failed to preview HEIC file");
+          toast.error("Failed to read HEIC file");
           return;
         }
       }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
-      }
+      // Downscale + re-encode before upload so we ship ~a few hundred KB, not
+      // the full-resolution original. The COMPRESSED file is what gets uploaded.
+      const compressed = await compressImage(sourceBlob, {
+        maxDimension: 1024,
+        quality: 0.82,
+        fileName: `${(file.name || "avatar").replace(/\.[^.]+$/, "")}.jpg`,
+      });
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
       }
-      setImagePreview(URL.createObjectURL(previewBlob));
-      setSelectedAvatarFile(file);
+      setImagePreview(URL.createObjectURL(compressed));
+      setSelectedAvatarFile(compressed);
     } catch (error) {
       console.error("Error processing image:", error);
       toast.error("Failed to process image");
