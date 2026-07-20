@@ -1,9 +1,14 @@
 // src/components/users/user-profile/SecurityTab.jsx
-"use client";
+//
+// Security settings for the signed-in principal: password change and email
+// 2FA, each on its own paper sheet. The profile `kind` routes the password
+// change to /users or /admins - the two principals have mirrored endpoints.
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
+import PropTypes from "prop-types";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -15,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -23,26 +27,36 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Shield, Loader2, Eye, EyeOff, Lock, Save } from "lucide-react";
 import CodeForm from "@/components/auth/CodeForm";
-import { useChangePassword } from "@/hooks/useUsers";
-import { useChangeAdminPassword } from "@/hooks/useAdmins";
+import { microLabel, sheet } from "./profile-styles";
+import { useChangeProfilePassword } from "@/hooks/useProfile";
 import {
   useAuth,
   useTwoFactorChallenge,
   useTwoFactorToggle,
 } from "@/hooks/useAuth";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { passwordSchema } from "@/validation/user/profileValidation";
+import { buildPasswordSchema } from "@/validation/user/profileValidation";
 
-const SecurityTab = () => {
+const PASSWORD_FIELDS = [
+  { name: "currentPassword", label: "Current password" },
+  { name: "newPassword", label: "New password" },
+  { name: "confirmPassword", label: "Confirm new password" },
+];
+
+const SecurityTab = ({ kind }) => {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+
+  // Passwordless (OTP-only) accounts have no current password to confirm.
+  // The backend exposes `hasPassword`; treat a missing value as "has one"
+  // so the stricter path is the default. The backend enforces the rule too.
+  const hasPassword = user?.hasPassword !== false;
+  const passwordFields = hasPassword
+    ? PASSWORD_FIELDS
+    : PASSWORD_FIELDS.filter((field) => field.name !== "currentPassword");
 
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [visibleFields, setVisibleFields] = useState({});
 
   // 2FA toggle flow: challenge sends a code, the dialog collects it, then
   // enable/disable proves possession of the channel.
@@ -50,21 +64,15 @@ const SecurityTab = () => {
   const [twoFaChannel, setTwoFaChannel] = useState(null);
   const twoFactorEnabled = !!user?.twoFactorEnabled;
 
-  // Principal split: admins change their password on /admins, attendants
-  // on /users. Both endpoints share the same body shape.
-  const attendantChangePassword = useChangePassword();
-  const adminChangePassword = useChangeAdminPassword();
-  const { mutate: changePassword, isPending: isPasswordPending } = isAdmin
-    ? adminChangePassword
-    : attendantChangePassword;
-
+  const { mutate: changePassword, isPending: isPasswordPending } =
+    useChangeProfilePassword(kind);
   const { mutate: sendChallenge, isPending: isChallengePending } =
     useTwoFactorChallenge();
   const { mutate: toggleTwoFactor, isPending: isTogglePending } =
     useTwoFactorToggle();
 
   const form = useForm({
-    resolver: zodResolver(passwordSchema),
+    resolver: zodResolver(buildPasswordSchema(hasPassword)),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -72,26 +80,29 @@ const SecurityTab = () => {
     },
   });
 
-  const handlePasswordChange = async (data) => {
+  const toggleVisibility = (name) =>
+    setVisibleFields((prev) => ({ ...prev, [name]: !prev[name] }));
+
+  const closePasswordForm = () => {
+    form.reset();
+    setIsChangingPassword(false);
+    setVisibleFields({});
+  };
+
+  const handlePasswordChange = (data) => {
     const toastId = toast.loading("Changing password...");
 
-    changePassword(
-      {
-        data: {
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        },
-      },
-      {
+    const payload = { newPassword: data.newPassword };
+    // Only send currentPassword for accounts that actually have one.
+    if (hasPassword) {
+      payload.currentPassword = data.currentPassword;
+    }
+
+    changePassword(payload, {
         onSuccess: (response) => {
           toast.dismiss(toastId);
           toast.success(response.message || "Password changed successfully!");
-
-          form.reset();
-          setIsChangingPassword(false);
-          setShowCurrentPassword(false);
-          setShowNewPassword(false);
-          setShowConfirmPassword(false);
+          closePasswordForm();
         },
         onError: (err) => {
           console.error("Password change error:", err);
@@ -103,26 +114,14 @@ const SecurityTab = () => {
           if (hasFieldErrors && fieldErrors) {
             Object.entries(fieldErrors).forEach(([field, errorMessage]) => {
               if (field in form.getValues()) {
-                form.setError(field, {
-                  message: errorMessage,
-                });
+                form.setError(field, { message: errorMessage });
               }
             });
-            toast.error(message);
-          } else {
-            toast.error(message);
           }
+          toast.error(message);
         },
       }
     );
-  };
-
-  const handleCancel = () => {
-    form.reset();
-    setIsChangingPassword(false);
-    setShowCurrentPassword(false);
-    setShowNewPassword(false);
-    setShowConfirmPassword(false);
   };
 
   const handleTwoFactorSwitch = () => {
@@ -164,248 +163,126 @@ const SecurityTab = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header Section */}
-      <div className="space-y-1">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Shield className="h-6 w-6" />
-          Password and Security
-        </h2>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Manage your password and authentication settings
-        </p>
-      </div>
-
-      <Separator className="my-6" />
-
-      {/* Password Information Section */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-            <Lock className="h-5 w-5" />
-            Password Information
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Keep your account secure with a strong password
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Password sheet */}
+      <section className={sheet}>
+        <p className={microLabel}>Password</p>
 
         {!isChangingPassword ? (
-          <div className="flex justify-between items-center p-4 border-2 border-border rounded-lg bg-card shadow-sm">
-            <div>
-              <p className="text-sm font-medium text-foreground">Password</p>
-              <p className="text-xs text-muted-foreground">
-                Last changed recently
-              </p>
-            </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Keep your account secure with a strong, unique password.
+            </p>
             <Button
-              onClick={() => setIsChangingPassword(true)}
+              variant="outline"
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+              className="shrink-0"
+              onClick={() => setIsChangingPassword(true)}
             >
-              Change Password
+              Change password
             </Button>
           </div>
         ) : (
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handlePasswordChange)}
-              className="space-y-6"
+              noValidate
+              className="mt-4 space-y-6"
             >
-              {/* Edit Mode Indicator */}
-              <div className="bg-primary/10 dark:bg-primary/20 border-2 border-primary/40 dark:border-primary/50 rounded-lg p-4 animate-in fade-in-50 duration-300">
-                <p className="text-sm font-medium text-primary flex items-center gap-2">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                  </span>
-                  Password Change Mode Active - Enter your passwords below
-                </p>
-              </div>
-
-              {/* Password Fields */}
               <div className="grid grid-cols-1 gap-5">
-                <FormField
-                  control={form.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium flex items-center gap-2 text-foreground">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                        Current Password
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showCurrentPassword ? "text" : "password"}
-                            placeholder="Enter your current password"
-                            disabled={isPasswordPending}
-                            className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowCurrentPassword(!showCurrentPassword)
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showCurrentPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium flex items-center gap-2 text-foreground">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                        New Password
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showNewPassword ? "text" : "password"}
-                            placeholder="Enter your new password"
-                            disabled={isPasswordPending}
-                            className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium flex items-center gap-2 text-foreground">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                        Confirm New Password
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            {...field}
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm your new password"
-                            disabled={isPasswordPending}
-                            className="h-11 pr-10 border-2 border-primary/30 bg-primary/5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
+                {passwordFields.map(({ name, label }) => (
+                  <FormField
+                    key={name}
+                    control={form.control}
+                    name={name}
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className={microLabel}>{label}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              {...field}
+                              type={visibleFields[name] ? "text" : "password"}
+                              placeholder={label}
+                              disabled={isPasswordPending}
+                              className="h-11 bg-background pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleVisibility(name)}
+                              aria-label={
+                                visibleFields[name]
+                                  ? `Hide ${label.toLowerCase()}`
+                                  : `Show ${label.toLowerCase()}`
+                              }
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              {visibleFields[name] ? (
+                                <EyeOff className="h-4 w-4" strokeWidth={1.5} />
+                              ) : (
+                                <Eye className="h-4 w-4" strokeWidth={1.5} />
+                              )}
+                            </button>
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                ))}
               </div>
 
-              {/* Action Buttons */}
-              <Separator className="my-6" />
-              <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
+              <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleCancel}
-                  size="lg"
-                  className="w-full sm:w-auto font-medium"
+                  onClick={closePasswordForm}
                   disabled={isPasswordPending}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 font-semibold"
-                  disabled={isPasswordPending}
-                >
+                <Button type="submit" disabled={isPasswordPending}>
                   {isPasswordPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving Changes...
+                      <Loader2
+                        className="h-4 w-4 animate-spin"
+                        strokeWidth={1.5}
+                      />
+                      Saving...
                     </>
                   ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </>
+                    "Save changes"
                   )}
                 </Button>
               </div>
             </form>
           </Form>
         )}
-      </div>
+      </section>
 
-      <Separator className="my-6" />
-
-      {/* Two-Factor Authentication Section */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
-            <Shield className="h-5 w-5" />
-            Two-Factor Authentication
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Add an extra layer of security to your account
-          </p>
-        </div>
-
-        <div className="flex justify-between items-center p-4 border-2 border-border rounded-lg bg-card shadow-sm">
-          <div>
-            <p className="text-sm font-medium text-foreground">
+      {/* Two-factor authentication sheet */}
+      <section className={sheet}>
+        <p className={microLabel}>Two-factor authentication</p>
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm text-foreground">
               Two-factor authentication is{" "}
               <span className="font-semibold">
                 {twoFactorEnabled ? "on" : "off"}
               </span>
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               {twoFactorEnabled
-                ? "A verification code is required at every sign in"
-                : "Secure your account with a verification code at sign in"}
+                ? "A verification code is required at every sign in."
+                : "Secure your account with a verification code at sign in."}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {isChallengePending && (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Loader2
+                className="h-4 w-4 animate-spin text-muted-foreground"
+                strokeWidth={1.5}
+              />
             )}
             <Switch
               checked={twoFactorEnabled}
@@ -416,42 +293,9 @@ const SecurityTab = () => {
             />
           </div>
         </div>
-      </div>
+      </section>
 
-      <Separator className="my-6" />
-
-      {/* Danger Zone Section */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Danger Zone
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Irreversible and destructive actions
-          </p>
-        </div>
-
-        <div className="flex justify-between items-center p-4 border-2 border-destructive/30 rounded-lg bg-destructive/5 shadow-sm">
-          <div>
-            <p className="text-sm font-medium text-destructive">
-              Delete Account
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Permanently delete your account and all data
-            </p>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Delete Account
-          </Button>
-        </div>
-      </div>
-
-      {/* 2FA Verification Code Dialog */}
+      {/* 2FA verification code dialog */}
       <Dialog open={twoFaDialogOpen} onOpenChange={setTwoFaDialogOpen}>
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[440px]">
           <DialogHeader className="sr-only">
@@ -481,6 +325,10 @@ const SecurityTab = () => {
       </Dialog>
     </div>
   );
+};
+
+SecurityTab.propTypes = {
+  kind: PropTypes.oneOf(["user", "admin"]).isRequired,
 };
 
 export default SecurityTab;

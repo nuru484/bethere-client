@@ -156,19 +156,19 @@ export function UserActionsDropdown({ user }) {
 
           {hasFaceScan && (
             <DropdownMenuItem
-              className="text-orange-600 hover:cursor-pointer"
+              className="text-amber-800 hover:cursor-pointer"
               onClick={() => setFaceScanDialogOpen(true)}
             >
-              <ScanFace className="mr-2 h-4 w-4" />
+              <ScanFace className="mr-2 h-4 w-4" strokeWidth={1.5} />
               Reset Face Scan
             </DropdownMenuItem>
           )}
 
           <DropdownMenuItem
-            className="text-red-600 hover:cursor-pointer"
+            className="text-destructive hover:cursor-pointer"
             onClick={() => setDeleteDialogOpen(true)}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
             Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -281,7 +281,7 @@ export function UserActionsDropdown({ user }) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+          <div className="flex flex-wrap justify-end gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => {

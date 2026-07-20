@@ -5,15 +5,7 @@ import {
   useQueryClient,
   keepPreviousData,
 } from "@tanstack/react-query";
-import {
-  getUsers,
-  getUserById,
-  addUser,
-  updateUserProfile,
-  deleteUser,
-  updateUserProfilePicture,
-  changePassword,
-} from "@/api/users";
+import { getUsers, addUser, deleteUser } from "@/api/users";
 
 // Get all users with pagination and filters
 export const useGetAllUsers = (params = {}) => {
@@ -25,18 +17,6 @@ export const useGetAllUsers = (params = {}) => {
     staleTime: 1000 * 60 * 5,
     retry: 2,
     placeholderData: keepPreviousData,
-  });
-};
-
-// Get single user by ID
-export const useGetUser = (userId, options = {}) => {
-  return useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => getUserById(userId),
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-    enabled: !!userId,
-    ...options,
   });
 };
 
@@ -52,42 +32,8 @@ export const useAddUser = () => {
   });
 };
 
-// Update user profile
-export const useUpdateUserProfile = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ userId, userData }) => updateUserProfile(userId, userData),
-    onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-  });
-};
-
-export const useUpdateUserProfilePicture = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ userId, formData }) =>
-      updateUserProfilePicture(userId, formData),
-    onSuccess: (data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-  });
-};
-
-export const useChangePassword = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ data }) => changePassword(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-  });
-};
+// Profile read/update hooks (own profile + admin-viewing-attendant) live in
+// useProfile.js, which routes between the /users and /admins principals.
 
 // Delete single user
 export const useDeleteUser = () => {

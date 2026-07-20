@@ -8,6 +8,7 @@ import LoginPage from "@/pages/LoginPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import ErrorPage from "@/pages/ErrorPage";
+import NotFoundPage from "@/pages/NotFoundPage";
 import Layout from "@/components/Layout";
 
 // Dashboard pages are code-split so the initial bundle stays small.
@@ -23,6 +24,9 @@ const CreateEventPage = lazy(() =>
 );
 const UpdateEventPage = lazy(() =>
   import("@/pages/dashboard/events/UpdateEventPage")
+);
+const VenueCodePage = lazy(() =>
+  import("@/pages/dashboard/events/VenueCodePage")
 );
 const AddUserFaceScan = lazy(() =>
   import("@/pages/dashboard/AddUserFaceScan")
@@ -47,6 +51,9 @@ const AttendanceReportsPage = lazy(() =>
 );
 const Userspage = lazy(() => import("@/pages/dashboard/users/Users"));
 const AdminsPage = lazy(() => import("@/pages/dashboard/admins/Admins"));
+const AddAdminPage = lazy(() =>
+  import("@/pages/dashboard/admins/AddAdminPage")
+);
 const AddUserPage = lazy(() => import("@/pages/dashboard/users/AddUserPage"));
 const UserProfilePage = lazy(() =>
   import("@/pages/dashboard/users/UserProfilePage")
@@ -55,7 +62,7 @@ const UserProfilePage = lazy(() =>
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
     <div
-      className="h-10 w-10 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin"
+      className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"
       role="status"
       aria-label="Loading page"
     />
@@ -77,6 +84,7 @@ const Routes = () => {
     {
       path: "/",
       element: <ProtectedRoutes />,
+      errorElement: <ErrorPage />,
       children: [
         {
           path: "/dashboard",
@@ -105,6 +113,10 @@ const Routes = () => {
               element: adminPage(<EventAttendancePage />),
             },
             {
+              path: "/dashboard/events/:eventId/venue-code",
+              element: adminPage(<VenueCodePage />),
+            },
+            {
               path: "/dashboard/attendance/user/:userId/event/:eventId",
               element: page(<UserEventAttendancePage />),
             },
@@ -119,6 +131,10 @@ const Routes = () => {
             {
               path: "/dashboard/admins",
               element: adminPage(<AdminsPage />),
+            },
+            {
+              path: "/dashboard/admins/add",
+              element: adminPage(<AddAdminPage />),
             },
             {
               path: "/dashboard/users/:userId/profile",
@@ -160,16 +176,27 @@ const Routes = () => {
     {
       path: "/login",
       element: <LoginPage />,
+      errorElement: <ErrorPage />,
     },
 
     {
       path: "/forgot-password",
       element: <ForgotPasswordPage />,
+      errorElement: <ErrorPage />,
     },
 
     {
       path: "/reset-password",
       element: <ResetPasswordPage />,
+      errorElement: <ErrorPage />,
+    },
+
+    // Catch-all 404: any URL no other branch claims (including unknown
+    // /dashboard/* paths, which fall out of the protected branch).
+    {
+      path: "*",
+      element: <NotFoundPage />,
+      errorElement: <ErrorPage />,
     },
   ];
 

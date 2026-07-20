@@ -63,8 +63,8 @@ export function TableFilters({
               </Button>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
-              {totalCount} total attendants
+            <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+              {totalCount} total
             </div>
           )}
         </div>
@@ -83,7 +83,7 @@ export function TableFilters({
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
           {/* Clear Filters */}
           {hasFiltersApplied && (
             <Button

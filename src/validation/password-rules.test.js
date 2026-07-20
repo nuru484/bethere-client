@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { passwordRule } from "./password-rules";
 import { resetPasswordSchema } from "./password-reset-validation";
-import { addUserSchema } from "./user/addUserValidation";
+import { addAdminSchema, addUserSchema } from "./user/addUserValidation";
 import { passwordSchema } from "./user/profileValidation";
 
 const firstMessage = (result) => result.error?.issues?.[0]?.message;
@@ -59,7 +59,7 @@ describe("passwordRule", () => {
       }).success
     ).toBe(true);
 
-    // User creation
+    // Admin creation (attendant creation is passwordless)
     const baseUser = {
       firstName: "Ada",
       lastName: "Lovelace",
@@ -67,12 +67,15 @@ describe("passwordRule", () => {
       role: "USER",
     };
     expect(
-      addUserSchema.safeParse({ ...baseUser, password: "weakpass" }).success
+      addAdminSchema.safeParse({ ...baseUser, password: "weakpass" }).success
     ).toBe(false);
     expect(
-      addUserSchema.safeParse({ ...baseUser, password: "Str0ngPassword" })
+      addAdminSchema.safeParse({ ...baseUser, password: "Str0ngPassword" })
         .success
     ).toBe(true);
+
+    // Attendant creation requires no password at all
+    expect(addUserSchema.safeParse(baseUser).success).toBe(true);
 
     // Change password
     expect(

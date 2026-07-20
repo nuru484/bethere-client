@@ -66,7 +66,7 @@ export const useDeleteEvent = () => {
 
   return useMutation({
     mutationFn: ({ eventId }) => deleteEvent(eventId),
-    onSuccess: (eventId) => {
+    onSuccess: (_data, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
     },

@@ -4,51 +4,22 @@
 // the /admins endpoints, reusing the shared DataTable. Only reachable by
 // ADMIN users (route-guarded).
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
-import PropTypes from "prop-types";
-import {
-  ShieldCheck,
-  ShieldOff,
-  Trash2,
-  UserPlus,
-  Loader2,
-} from "lucide-react";
 import { DataTable } from "@/components/data-table/DataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  useGetAllAdmins,
-  useAddAdmin,
-  useDeleteAdmin,
-} from "@/hooks/useAdmins";
+import { useGetAllAdmins, useDeleteAdmin } from "@/hooks/useAdmins";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { addUserSchema } from "@/validation/user/addUserValidation";
 
 const renderSkeletonCells = () => (
   <>
@@ -68,7 +39,7 @@ const renderSkeletonCells = () => (
       <Skeleton className="h-4 w-24" />
     </TableCell>
     <TableCell>
-      <Skeleton className="h-8 w-8 rounded" />
+      <Skeleton className="h-8 w-16 rounded" />
     </TableCell>
   </>
 );
@@ -100,15 +71,9 @@ const createAdminColumns = ({ currentUserId, onDelete }) => [
     header: "2FA",
     cell: ({ row }) =>
       row.original.twoFactorEnabled ? (
-        <Badge className="text-xs gap-1" variant="default">
-          <ShieldCheck className="h-3 w-3" />
-          On
-        </Badge>
+        <Badge variant="default">On</Badge>
       ) : (
-        <Badge className="text-xs gap-1" variant="outline">
-          <ShieldOff className="h-3 w-3" />
-          Off
-        </Badge>
+        <Badge variant="outline">Off</Badge>
       ),
   },
   {
@@ -134,203 +99,25 @@ const createAdminColumns = ({ currentUserId, onDelete }) => [
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           disabled={isSelf}
           title={isSelf ? "You cannot delete your own account" : "Delete admin"}
           onClick={() => onDelete(row.original)}
         >
-          <span className="sr-only">Delete admin</span>
-          <Trash2 className="h-4 w-4" />
+          Delete
         </Button>
       );
     },
   },
 ];
 
-const AddAdminDialog = ({ open, onOpenChange }) => {
-  const { mutateAsync: createAdmin, isPending } = useAddAdmin();
-
-  const form = useForm({
-    resolver: zodResolver(addUserSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      password: "",
-    },
-  });
-
-  const handleClose = (nextOpen) => {
-    if (!nextOpen) form.reset();
-    onOpenChange(nextOpen);
-  };
-
-  const onSubmit = async (values) => {
-    try {
-      const payload = {
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        password: values.password,
-      };
-      if (values.phone) payload.phone = values.phone;
-
-      const response = await createAdmin(payload);
-      toast.success(response.message || "Admin created successfully");
-      handleClose(false);
-    } catch (error) {
-      const { message, fieldErrors, hasFieldErrors } =
-        extractApiErrorMessage(error);
-
-      if (hasFieldErrors && fieldErrors) {
-        Object.entries(fieldErrors).forEach(([field, errorMessage]) => {
-          form.setError(field, { message: errorMessage });
-        });
-      }
-      toast.error(message || "Failed to create admin");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add Admin</DialogTitle>
-          <DialogDescription>
-            Create a new administrator account. They can sign in with the
-            email and password below.
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="john.doe@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Phone Number{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (Optional)
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="+233 54 648 8115"
-                      {...field}
-                      value={field.value || ""}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Create a strong password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleClose(false)}
-                disabled={isPending}
-                className="w-full sm:w-auto"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="w-full sm:w-auto"
-              >
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Admin
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-AddAdminDialog.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onOpenChange: PropTypes.func.isRequired,
-};
-
 const AdminsPage = () => {
   usePageTitle("Admins");
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
 
   const {
@@ -387,30 +174,27 @@ const AdminsPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto space-y-4 sm:space-y-6">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-          <div className="flex items-start gap-2.5 sm:gap-3 flex-1 min-w-0">
-            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg flex-shrink-0">
-              <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight break-words">
-                Admins Management
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-muted-foreground mt-1 sm:mt-1.5 leading-snug">
-                Manage administrator accounts ({totalAdmins} total)
-              </p>
-            </div>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header: mono eyebrow + display title */}
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+              People
+            </p>
+            <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+              Admins
+            </h1>
+            <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
+              Staff accounts with dashboard access
+            </p>
           </div>
 
           <Button
-            onClick={() => setAddDialogOpen(true)}
-            className="bg-foreground text-background hover:bg-foreground/90 text-xs sm:text-sm font-semibold flex-shrink-0"
+            size="sm"
+            onClick={() => navigate("/dashboard/admins/add")}
+            className="flex-shrink-0"
           >
-            <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-            Add Admin
+            Add admin
           </Button>
         </div>
 
@@ -428,15 +212,23 @@ const AdminsPage = () => {
               setPageSize(newPageSize);
               setPage(1);
             }}
+            renderFilters={() => (
+              <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+                {totalAdmins} total
+              </div>
+            )}
             renderSkeletonCells={renderSkeletonCells}
-            emptyTitle="No admins found"
-            emptyDescription="Create an administrator account to get started"
+            emptyState={
+              <EmptyState
+                eyebrow="People"
+                title="No admins yet"
+                description="Use the add button above to create the first administrator account."
+              />
+            }
+            emptyMessage="No admins to show on this page."
           />
         </div>
       </div>
-
-      {/* Create Admin Dialog */}
-      <AddAdminDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog

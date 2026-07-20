@@ -2,27 +2,32 @@
 
 # <img src="public/assets/logo.png" alt="BeThere Logo" width="35" style="vertical-align: middle;"/> BeThere – Smart Attendance System Frontend
 
-**BeThere Client** is the web app for a full-stack **smart attendance system** that verifies attendance using **facial recognition** combined with **GPS geolocation**. Instead of signing a sheet or tapping a card, a person looks into their device camera, the app matches their face against an enrolled scan, confirms they are physically within **50 meters** of the event location, and only then records them as present. It is built for organizations, schools, and recurring events where attendance records need to be genuinely hard to fake — you have to *be there*, in person.
+**BeThere Client** is the web app for a full-stack **smart attendance system** that verifies **live presence**. Instead of signing a sheet or tapping a card, a person scans a **rotating code shown on a screen at the venue** to prove they are physically there, then performs a short **face-liveness capture** so the server can confirm it is really them, live. It is built for organizations, schools, and recurring events where attendance records need to be genuinely hard to fake: you have to *be there*, in person.
 
-This repository is the **React frontend**: it runs the in-browser face recognition, captures live GPS, manages events and sessions, and renders the user and admin dashboards. It talks to the [BeThere-server](https://github.com/nuru484/BeThere-server.git) API for everything else.
+This repository is the **React frontend**: it runs the in-app QR scanner and camera capture, renders the admin **venue-code display**, manages events and sessions, and renders the user and admin dashboards. It talks to the [BeThere-server](https://github.com/nuru484/BeThere-server.git) API, which does all verification server-side.
 
-> **One-line pitch:** Attendance you can't fake — face recognition + GPS verification confirm the right person showed up at the right place, in real time.
+> **One-line pitch:** Verified live presence. Scan the venue's live code, then a real-time face check confirms it's you, all verified on the server, not your phone.
+
+> **On the security claim:** no browser-based system is literally unfakeable (only a native app with hardware attestation fully closes live-relay collusion). BeThere aims to be *as close as a web app gets* and to leave a reviewable evidence trail for the rest.
 
 ---
 
 ## 🧠 How It Works
 
-**1. In-browser face recognition.**
-The app runs **face-api.js** with TensorFlow models loaded locally from `/public/models` (Tiny Face Detector, 68-point landmarks, face recognition, expression net). On first login a user enrolls their face: the app captures **3 samples**, extracts a **128-dimension descriptor** from each, and **averages them** into one stable face signature (`FaceAuthSystem.scanFace`). Verification compares two descriptors by **Euclidean distance** against a `0.6` threshold (`verifyFaceScan`). A **liveness check** (`performLivenessCheck`) watches for natural head movement and expression variance over ~2 seconds to resist someone holding up a static photo.
+**1. Enrollment (consented).**
+The app runs **face-api.js** with TensorFlow models loaded from `/public/models` to compute a **128-dimension descriptor** at enrollment (with an explicit biometric-consent step). The descriptor is sent once to the server, which stores it **encrypted**; the raw vector is never sent back. Verification does not happen in the browser.
 
-**2. Location-gated check-in.**
-When a user checks in or out, the app captures live GPS coordinates and sends them to the backend, which validates the user is **within 50 meters** of the event location (via `@turf/turf`) and within the session's daily time window before recording a **PRESENT / LATE / ABSENT** status.
+**2. Presence: scan the rotating venue code.**
+An admin opens the **venue-code display** for an event on a screen at the location; it shows a QR that rotates every **30 seconds**. To check in or out, the attendant scans the current code with the in-app scanner. A screenshotted code is stale within seconds.
 
-**3. Roles & dashboards.**
-Two roles (`ADMIN`, `USER`). **Users** check in/out of active sessions and view their own attendance history, event records, and dashboard insights. **Admins** create/update/delete events, manage user records, **reset a user's face scan** when needed, and view organization-wide analytics — attendance by user, by event, and totals of users / events / active sessions, with charts (Recharts) and date-range filters.
+**3. Identity: server-side liveness.**
+After a valid scan, the app requests a challenge and the server returns a **randomized action sequence** (turn, blink, smile). The app captures a short burst of camera frames performing those actions and uploads them; the **server** verifies liveness and identity from the raw frames. Check-in and check-out both use this flow. The result is **PRESENT / LATE**.
 
-**4. Secure client experience.**
-Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AES-encrypted** local storage for tokens and sensitive data, **Zod** form validation, **context-based auth** with protected routes (`AuthContext` + `ProtectedRoutes.jsx`), React **Error Boundaries**, and a consistent UI built with **shadcn/ui** + **TailwindCSS**.
+**4. Roles & dashboards.**
+Two roles (`ADMIN`, `USER`). **Users** check in/out and view their own history. **Admins** create/update/delete events, open the venue-code display, manage users, reset a user's face template, and view organization-wide analytics with charts (Recharts) and date-range filters.
+
+**5. Secure client experience.**
+Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **Zod** form validation, **context-based auth** with protected routes (`AuthContext` + `ProtectedRoutes.jsx`), React **Error Boundaries**, and a consistent UI built with **shadcn/ui** + **TailwindCSS**.
 
 ---
 
@@ -69,7 +74,8 @@ Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AE
 ### 💡 Smart Client Features
 
 * Real-time communication with the backend API using **@tanstack/react-query**.
-* Secure local storage of tokens and sensitive data using **AES-encrypted storage**.
+* Cookie-only auth (httpOnly tokens) with a silent-refresh **axios** interceptor; no tokens in JS-readable storage.
+* In-app **QR scanner** (`@zxing/browser`) and an admin **venue-code display** (`qrcode.react`).
 * Robust form validation powered by **Zod**.
 * Consistent and elegant UI built with **Shadcn components** and **TailwindCSS**.
 * Smooth user experience with **protected routes**, context-based authentication, and optimized component loading.
@@ -90,11 +96,11 @@ Real-time data via **@tanstack/react-query** and **@tanstack/react-table**, **AE
 | **Charts**             | recharts                                                        |
 | **Forms**              | react-hook-form + @hookform/resolvers                         |
 | **Validation**         | Zod                                                            |
-| **Face Recognition**   | face-api.js (in-browser TensorFlow models)                    |
+| **Face (enrollment)**  | face-api.js (in-browser descriptor at enrollment only)        |
+| **QR display / scan**  | qrcode.react (venue display) + @zxing/browser (in-app scanner) |
 | **Image Conversion**   | heic2any (iPhone HEIC → JPEG before scanning)                 |
 | **Routing**            | react-router-dom                                              |
-| **Auth Tokens**        | jwt-decode + encrypted local storage                         |
-| **Storage Encryption** | AES via `encrypt-storage` (wrapped in `encryptedStorage.js`) |
+| **Auth**               | Cookie-only httpOnly tokens (server-managed), jwt-decode      |
 | **Date Handling**      | date-fns + react-day-picker                                   |
 | **Notifications**      | react-hot-toast / sonner                                       |
 | **Error Handling**     | React Error Boundaries                                         |
@@ -129,9 +135,9 @@ Redis (BullMQ Workers)
 
 **Login → Face Enrollment → Access App**
 
-1. On login, users receive an **access token** and **refresh token**.
-2. Tokens are securely stored using encrypted local storage.
-3. First-time users are prompted to **register their face**.
+1. On login, the server sets **httpOnly access + refresh cookies** (never readable by page JavaScript).
+2. The axios interceptor silently refreshes on expiry and redirects to login on failure.
+3. First-time users are prompted to **register their face** (with consent).
 4. Once verified, they gain full access to features like:
 
    * Mark attendance
@@ -185,7 +191,8 @@ Create a `.env` file in the root directory with the following:
 
 ```bash
 VITE_SERVER_URL="your backend uri"
-VITE_STORAGE_ENCRYPTION_KEY="your encryption key"
+# Optional error tracking; unset disables it
+# VITE_SENTRY_DSN=
 ```
 
 ---

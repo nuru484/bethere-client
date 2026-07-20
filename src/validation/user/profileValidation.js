@@ -9,13 +9,20 @@ export const profileFormSchema = z.object({
   phone: z.string().optional().nullable(),
 });
 
-export const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: passwordRule,
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+// Passwordless (OTP-only) accounts can set a first password without providing
+// a current one, so the current-password requirement is conditional.
+export const buildPasswordSchema = (requireCurrentPassword = true) =>
+  z
+    .object({
+      currentPassword: requireCurrentPassword
+        ? z.string().min(1, "Current password is required")
+        : z.string().optional(),
+      newPassword: passwordRule,
+      confirmPassword: z.string().min(1, "Please confirm your password"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
+
+export const passwordSchema = buildPasswordSchema(true);

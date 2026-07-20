@@ -41,19 +41,22 @@ const PasswordField = ({ control, name, label, placeholder, disabled }) => {
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="block text-sm font-semibold text-gray-700">
+          <FormLabel className="block font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
             {label}
           </FormLabel>
           <FormControl>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Lock
+                  className="h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors"
+                  strokeWidth={1.5}
+                />
               </div>
               <Input
                 type={show ? "text" : "password"}
                 placeholder={placeholder}
                 autoComplete="new-password"
-                className="w-full pl-12 pr-12 py-3.5 h-auto rounded-xl border-2 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-100 outline-none transition-all duration-200 text-gray-700 placeholder-gray-400 bg-white"
+                className="w-full pl-11 pr-11 h-11"
                 disabled={disabled}
                 {...field}
               />
@@ -65,9 +68,15 @@ const PasswordField = ({ control, name, label, placeholder, disabled }) => {
                 aria-label={show ? "Hide password" : "Show password"}
               >
                 {show ? (
-                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer" />
+                  <EyeOff
+                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    strokeWidth={1.5}
+                  />
                 ) : (
-                  <Eye className="h-5 w-5 text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer" />
+                  <Eye
+                    className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    strokeWidth={1.5}
+                  />
                 )}
               </button>
             </div>
@@ -130,27 +139,26 @@ const ResetPasswordPage = () => {
     return (
       <AuthShell>
         <div className="text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+            <AlertCircle className="h-8 w-8 text-destructive" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="font-display text-2xl font-normal tracking-[-0.02em] text-foreground">
             Invalid or expired link
           </h1>
-          <p className="mt-3 text-gray-600">
+          <p className="mt-3 text-muted-foreground">
             This password reset link is no longer valid. Please request a new one.
           </p>
-          <Link
-            to="/forgot-password"
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-3.5 font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:from-emerald-700 hover:to-emerald-800"
-          >
-            Request a new link
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+          <Button asChild className="mt-6 w-full h-11">
+            <Link to="/forgot-password">
+              Request a new link
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+            </Link>
+          </Button>
           <Link
             to="/login"
-            className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+            className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             Back to login
           </Link>
         </div>
@@ -163,8 +171,13 @@ const ResetPasswordPage = () => {
     return (
       <AuthShell>
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
-          <p className="mt-4 text-gray-600">Verifying your reset link...</p>
+          <Loader2
+            className="h-10 w-10 animate-spin text-foreground"
+            strokeWidth={1.5}
+          />
+          <p className="mt-4 text-muted-foreground">
+            Verifying your reset link...
+          </p>
         </div>
       </AuthShell>
     );
@@ -175,16 +188,20 @@ const ResetPasswordPage = () => {
   return (
     <AuthShell>
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="font-display text-2xl font-normal tracking-[-0.02em] text-foreground">
           {firstName ? `Hi ${firstName}, set a new password` : "Set a new password"}
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-muted-foreground">
           Choose a strong password you haven&apos;t used before.
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-6"
+        >
           <PasswordField
             control={form.control}
             name="newPassword"
@@ -200,17 +217,13 @@ const ResetPasswordPage = () => {
             disabled={isPending}
           />
 
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3.5 px-6 h-auto rounded-xl transition-all duration-200 focus:ring-4 focus:ring-emerald-200 focus:outline-none flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
+          <Button type="submit" disabled={isPending} className="w-full h-11">
             {isPending ? (
               <span>Resetting...</span>
             ) : (
               <>
                 <span>Reset password</span>
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
               </>
             )}
           </Button>
@@ -219,9 +232,9 @@ const ResetPasswordPage = () => {
 
       <Link
         to="/login"
-        className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+        className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
         Back to login
       </Link>
     </AuthShell>

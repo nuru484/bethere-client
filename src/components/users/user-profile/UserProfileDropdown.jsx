@@ -10,16 +10,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Power } from "lucide-react";
+import { User, Power, Home, Moon, Sun } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useLogout } from "@/hooks/useAuth";
+import { useTheme } from "@/context/ThemeContext";
 
 const UserProfileDropdown = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const logout = useLogout();
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   if (!user) return null;
@@ -51,13 +54,13 @@ const UserProfileDropdown = () => {
               src={user.profilePicture ?? undefined}
               alt={fullName}
             />
-            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+            <AvatarFallback className="bg-foreground text-background font-semibold">
               {userInitials}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="p-0 my-2 bg-popover border-border shadow-lg"
+          className="p-0 my-2 bg-popover border-border"
           align="end"
           forceMount
         >
@@ -69,7 +72,7 @@ const UserProfileDropdown = () => {
                   src={user.profilePicture ?? undefined}
                   alt={`${fullName} Profile`}
                 />
-                <AvatarFallback className="bg-primary text-primary-foreground text-lg font-semibold">
+                <AvatarFallback className="bg-foreground text-background text-lg font-semibold">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -98,6 +101,31 @@ const UserProfileDropdown = () => {
           >
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
+          </DropdownMenuItem>
+
+          {/* Home Link */}
+          <DropdownMenuItem
+            onClick={() => handleNavigation("/")}
+            className="cursor-pointer px-4 py-2 hover:bg-accent focus:bg-accent text-foreground flex items-center"
+          >
+            <Home className="mr-2 h-4 w-4" />
+            <span>Home</span>
+          </DropdownMenuItem>
+
+          {/* Theme Toggle - keep the menu open so the flip is visible */}
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              toggleTheme();
+            }}
+            className="cursor-pointer px-4 py-2 hover:bg-accent focus:bg-accent text-foreground flex items-center"
+          >
+            {isDark ? (
+              <Sun className="mr-2 h-4 w-4" />
+            ) : (
+              <Moon className="mr-2 h-4 w-4" />
+            )}
+            <span>{isDark ? "Light mode" : "Dark mode"}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-border" />

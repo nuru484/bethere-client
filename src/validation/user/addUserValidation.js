@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { passwordRule } from "@/validation/password-rules";
 
-// Strong Password Validation Schema
+// Attendant creation is passwordless: POST /users rejects a password field.
+// Attendants sign in via the one-time-code (OTP) flow instead.
 export const addUserSchema = z.object({
   firstName: z
     .string()
@@ -15,5 +16,9 @@ export const addUserSchema = z.object({
     .max(50, "Last name must not exceed 50 characters"),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   phone: z.string().optional().nullable(),
+});
+
+// Admins still authenticate with email + password.
+export const addAdminSchema = addUserSchema.extend({
   password: passwordRule,
 });

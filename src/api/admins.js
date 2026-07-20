@@ -13,9 +13,26 @@ export const getAdmins = async (params = {}) => {
   return await api.get(url);
 };
 
+// Get single admin by ID ({ message, data } envelope, mirrors /users/:id)
+export const getAdminById = async (adminId) =>
+  await api.get(`/admins/${adminId}`);
+
 // Create a new admin (same body shape as attendant creation)
 export const addAdmin = async (adminData) =>
   await api.post("/admins", adminData);
+
+// Update an admin's profile (body: firstName, lastName, email, phone)
+export const updateAdminProfile = async (adminId, adminData) =>
+  await api.put(`/admins/${adminId}`, adminData);
+
+// Update an admin's profile picture (multipart field "profilePicture")
+export const updateAdminProfilePicture = async (adminId, formData) =>
+  await api.patch(`/admins/${adminId}/profile-picture`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    transformRequest: (data) => data,
+  });
 
 // Delete an admin
 export const deleteAdmin = async (adminId) =>

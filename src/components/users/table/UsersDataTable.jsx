@@ -5,6 +5,7 @@ import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUser } from "@/hooks/useUsers";
 import { DataTable } from "@/components/data-table/DataTable";
+import EmptyState from "@/components/ui/EmptyState";
 import { createUserColumns } from "./columns";
 import { TableFilters } from "./TableFilters";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -60,6 +61,8 @@ export function UsersDataTable({
 
   const columns = useMemo(() => createUserColumns(), []);
 
+  const hasActiveFilters = filters.search !== undefined;
+
   const selectedUsers = useMemo(
     () =>
       Object.keys(rowSelection)
@@ -84,22 +87,28 @@ export function UsersDataTable({
       `Deleting ${selectedCount} users..., please wait`
     );
 
-    try {
-      const deletePromises = selectedUsers.map((user) =>
-        deleteUserMutation.mutateAsync(user.id)
+    const results = await Promise.allSettled(
+      selectedUsers.map((user) => deleteUserMutation.mutateAsync(user.id))
+    );
+    toast.dismiss(toastId);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.length - succeeded;
+
+    if (failed === 0) {
+      toast.success(`${succeeded} users deleted successfully`);
+    } else if (succeeded === 0) {
+      toast.error(`Failed to delete ${failed} users`);
+    } else {
+      toast.error(
+        `Deleted ${succeeded} users, but ${failed} could not be deleted`
       );
-      const response = await Promise.all(deletePromises);
-      toast.dismiss(toastId);
-      toast.success(
-        response.message || `${selectedCount} users deleted successfully`
-      );
-      setRowSelection({});
-      onRefresh?.();
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.dismiss(toastId);
-      toast.error(error.message || "Failed to delete users");
     }
+
+    // Clear selection and refresh so the table reflects whatever was removed,
+    // even on partial failure.
+    setRowSelection({});
+    onRefresh?.();
   };
 
   return (
@@ -125,8 +134,15 @@ export function UsersDataTable({
           />
         )}
         renderSkeletonCells={renderSkeletonCells}
-        emptyTitle="No users found"
-        emptyDescription="Try adjusting your search or filter criteria"
+        hasActiveFilters={hasActiveFilters}
+        emptyState={
+          <EmptyState
+            eyebrow="People"
+            title="No attendants yet"
+            description="Registered attendants will appear here once they are added."
+          />
+        }
+        emptyMessage="No attendants match the current filters - clear the filters to see everyone."
       />
 
       {/* Delete Selected Users Dialog */}

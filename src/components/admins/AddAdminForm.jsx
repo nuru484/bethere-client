@@ -1,7 +1,8 @@
-// src/components/users/AddUserForm.jsx
+// src/components/admins/AddAdminForm.jsx
 //
-// Minimal attendant creation: one card sheet with name, email and phone.
-// No password - attendants sign in via the passwordless OTP flow.
+// Administrator creation: name, email, optional phone and a password.
+// Unlike attendants, admins sign in with email + password, so the password
+// field is required here.
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ import { Loader2 } from "lucide-react";
 const MICRO_LABEL =
   "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
 
-export default function AddUserForm({ form, onSubmit, isLoading }) {
+export default function AddAdminForm({ form, onSubmit, isLoading }) {
   const navigate = useNavigate();
 
   return (
@@ -107,11 +108,31 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
                 )}
               />
             </div>
+
+            {/* Password */}
+            <div className="mt-6">
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={MICRO_LABEL}>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Create a strong password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <p className="font-body text-sm text-muted-foreground">
-            No password needed - the attendant signs in with a one-time code
-            sent to their email or phone.
+            The administrator signs in with the email and password above.
           </p>
 
           {/* Form Actions */}
@@ -119,7 +140,7 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/dashboard/users")}
+              onClick={() => navigate("/dashboard/admins")}
               disabled={isLoading}
               className="flex-1 h-11"
             >
@@ -128,7 +149,7 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
 
             <Button type="submit" disabled={isLoading} className="flex-1 h-11">
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Attendant Account
+              Create Admin
             </Button>
           </div>
         </form>
@@ -137,7 +158,7 @@ export default function AddUserForm({ form, onSubmit, isLoading }) {
   );
 }
 
-AddUserForm.propTypes = {
+AddAdminForm.propTypes = {
   form: PropTypes.shape({
     control: PropTypes.any.isRequired,
     handleSubmit: PropTypes.func.isRequired,

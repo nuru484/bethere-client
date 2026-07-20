@@ -1,18 +1,20 @@
-// src/pages/dashboard/users/AddUserPage.jsx
+// src/pages/dashboard/admins/AddAdminPage.jsx
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import AddUserForm from "@/components/users/AddUserForm";
+import AddAdminForm from "@/components/admins/AddAdminForm";
 import { Button } from "@/components/ui/button";
-import { useAddUser } from "@/hooks/useUsers";
+import { useAddAdmin } from "@/hooks/useAdmins";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { addUserSchema } from "@/validation/user/addUserValidation";
+import { addAdminSchema } from "@/validation/user/addUserValidation";
 
-export default function AddUserPage() {
+export default function AddAdminPage() {
+  usePageTitle("Add Admin");
   const navigate = useNavigate();
-  const { mutateAsync: createUser, isPending } = useAddUser();
+  const { mutateAsync: createAdmin, isPending } = useAddAdmin();
 
   const defaultValues = useMemo(
     () => ({
@@ -20,12 +22,13 @@ export default function AddUserPage() {
       lastName: "",
       email: "",
       phone: "",
+      password: "",
     }),
     []
   );
 
   const form = useForm({
-    resolver: zodResolver(addUserSchema),
+    resolver: zodResolver(addAdminSchema),
     defaultValues,
   });
 
@@ -35,33 +38,28 @@ export default function AddUserPage() {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
+        password: values.password,
       };
       if (values.phone) payload.phone = values.phone;
 
-      const response = await createUser(payload);
-      toast.success(response.message || "User created successfully");
-      navigate(`/dashboard/users/${response.data.id}/profile`);
+      const response = await createAdmin(payload);
+      toast.success(response.message || "Admin created successfully");
+      navigate("/dashboard/admins");
     } catch (error) {
-      console.error("User form submission error:", error);
-
       const { message, fieldErrors, hasFieldErrors } =
         extractApiErrorMessage(error);
 
       if (hasFieldErrors && fieldErrors) {
         Object.entries(fieldErrors).forEach(([field, errorMessage]) => {
-          form.setError(field, {
-            message: errorMessage,
-          });
+          form.setError(field, { message: errorMessage });
         });
-        toast.error(message);
-      } else {
-        toast.error(message);
       }
+      toast.error(message || "Failed to create admin");
     }
   };
 
   const handleGoBack = () => {
-    navigate("/dashboard/users");
+    navigate("/dashboard/admins");
   };
 
   return (
@@ -70,13 +68,13 @@ export default function AddUserPage() {
       <div className="flex items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
-            New attendant
+            New admin
           </p>
           <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-            Create Attendant
+            Create Admin
           </h1>
           <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
-            Fill in details to add a new attendant to the system
+            Create a new administrator account with dashboard access
           </p>
         </div>
 
@@ -90,7 +88,7 @@ export default function AddUserPage() {
         </Button>
       </div>
 
-      <AddUserForm form={form} onSubmit={onSubmit} isLoading={isPending} />
+      <AddAdminForm form={form} onSubmit={onSubmit} isLoading={isPending} />
     </div>
   );
 }

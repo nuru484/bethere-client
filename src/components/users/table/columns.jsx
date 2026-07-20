@@ -58,10 +58,10 @@ export const createUserColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent text-left justify-start"
+        className="p-0 h-auto text-[10px] text-muted-foreground hover:bg-transparent hover:text-foreground text-left justify-start"
       >
         Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ArrowUpDown className="ml-2 h-4 w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -94,11 +94,11 @@ export const createUserColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent"
+        className="p-0 h-auto text-[10px] text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
-        <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1.5} />
         <span className="hidden sm:inline">Created At</span>
-        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {

@@ -5,12 +5,7 @@ import {
   useQueryClient,
   keepPreviousData,
 } from "@tanstack/react-query";
-import {
-  getAdmins,
-  addAdmin,
-  deleteAdmin,
-  changeAdminPassword,
-} from "@/api/admins";
+import { getAdmins, addAdmin, deleteAdmin } from "@/api/admins";
 
 // Get all admins with pagination
 export const useGetAllAdmins = (params = {}) => {
@@ -47,9 +42,5 @@ export const useDeleteAdmin = () => {
   });
 };
 
-// Change the signed-in admin's password
-export const useChangeAdminPassword = () => {
-  return useMutation({
-    mutationFn: ({ data }) => changeAdminPassword(data),
-  });
-};
+// The signed-in admin's password change lives in useProfile.js
+// (useChangeProfilePassword), shared with the attendant flow.
