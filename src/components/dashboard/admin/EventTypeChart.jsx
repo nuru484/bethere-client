@@ -11,18 +11,19 @@ import {
   Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EVENT_TYPE_COLOR } from "@/lib/chart-colors";
 
 const EventTypeChart = ({ eventTypeBreakdown }) => {
   const data = [
     {
       name: "Recurring Events",
       value: eventTypeBreakdown?.recurring || 0,
-      fill: "hsl(var(--chart-1))",
+      fill: EVENT_TYPE_COLOR.recurring,
     },
     {
       name: "Non-Recurring Events",
       value: eventTypeBreakdown?.nonRecurring || 0,
-      fill: "hsl(var(--chart-3))",
+      fill: EVENT_TYPE_COLOR.nonRecurring,
     },
   ];
 

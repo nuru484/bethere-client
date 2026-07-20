@@ -10,9 +10,9 @@ import DashboardTotalsCardSkeleton from "@/components/dashboard/skeletons/Dashbo
 import DashboardTotalsCardError from "@/components/dashboard/DashboardTotalsCardError";
 import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
 import UserAttendanceSummaryCards from "@/components/dashboard/user/UserAttendanceSummaryCards";
-import UserAttendanceLineChart from "@/components/dashboard/user/UserAttendanceLineChart";
-import UserStatusPieChart from "@/components/dashboard/user/UserStatusPieChart";
-import UserEventTypeChart from "@/components/dashboard/user/UserEventTypeChart";
+import AttendanceLineChart from "@/components/dashboard/charts/AttendanceLineChart";
+import StatusPieChart from "@/components/dashboard/charts/StatusPieChart";
+import { statusPieData, eventTypePieData } from "@/lib/chart-colors";
 import RecentEventsList from "@/components/dashboard/RecentEventsList";
 import AttendanceDataSkeleton from "@/components/dashboard/skeletons/AttendanceDataSkeleton";
 import AttendanceCardsError from "@/components/dashboard/AttendanceCardsError";
@@ -106,19 +106,29 @@ const UserDashboard = () => {
                 <div className="space-y-6">
                   {/* Line Chart */}
                   <div className="w-full overflow-hidden">
-                    <UserAttendanceLineChart data={attendanceByDate} />
+                    <AttendanceLineChart
+                      data={attendanceByDate}
+                      title="My Attendance Trends"
+                      emptyTitle="My Attendance Over Time"
+                      totalLabel="Total Events"
+                    />
                   </div>
 
                   {/* Pie Charts */}
                   <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                     <div className="w-full overflow-hidden">
-                      <UserStatusPieChart
-                        statusBreakdown={summary.statusBreakdown}
+                      <StatusPieChart
+                        data={statusPieData(summary.statusBreakdown)}
+                        title="My Attendance Status"
+                        emptyTitle="My Attendance Status"
                       />
                     </div>
                     <div className="w-full overflow-hidden">
-                      <UserEventTypeChart
-                        eventTypeBreakdown={summary.eventTypeBreakdown}
+                      <StatusPieChart
+                        data={eventTypePieData(summary.eventTypeBreakdown)}
+                        title="My Event Type Distribution"
+                        emptyTitle="Event Type Distribution"
+                        emptyMessage="No event data available"
                       />
                     </div>
                   </div>

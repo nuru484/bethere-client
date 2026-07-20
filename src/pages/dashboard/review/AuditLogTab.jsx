@@ -6,11 +6,10 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import EmptyState from "@/components/ui/EmptyState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import Pagination from "@/components/ui/Pagination";
 import { useAuditLogs } from "@/hooks/useReview";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 const humanize = (action) =>
   (action ?? "")
@@ -37,27 +36,23 @@ export default function AuditLogTab() {
 
   const logs = data?.data ?? [];
 
-  if (isLoading) return <DataTableSkeleton />;
-  if (isError) {
-    return (
-      <ErrorMessage
-        error={extractApiErrorMessage(error).message}
-        onRetry={refetch}
-      />
-    );
-  }
-  if (logs.length === 0) {
-    return (
-      <EmptyState
-        eyebrow="Review"
-        title="No audit entries"
-        description="Check-ins, enrollments and admin actions will be recorded here."
-      />
-    );
-  }
-
   return (
-    <div className="space-y-4">
+    <AsyncBoundary
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+      errorClassName={null}
+    >
+      {logs.length === 0 ? (
+        <EmptyState
+          eyebrow="Review"
+          title="No audit entries"
+          description="Check-ins, enrollments and admin actions will be recorded here."
+        />
+      ) : (
+        <div className="space-y-4">
       {/* Below md: stacked rows. */}
       <ul className="space-y-2 md:hidden">
         {logs.map((log) => (
@@ -127,7 +122,9 @@ export default function AuditLogTab() {
         </table>
       </div>
 
-      <Pagination meta={data.meta} onPageChange={setPage} />
-    </div>
+          <Pagination meta={data.meta} onPageChange={setPage} />
+        </div>
+      )}
+    </AsyncBoundary>
   );
 }

@@ -12,6 +12,7 @@ import {
   Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { STATUS_COLOR } from "@/lib/chart-colors";
 
 const AttendanceBarChart = ({ statusCounts, statusPercentages }) => {
   const data = [
@@ -19,19 +20,19 @@ const AttendanceBarChart = ({ statusCounts, statusPercentages }) => {
       name: "Present",
       count: statusCounts?.present || 0,
       percentage: parseFloat(statusPercentages?.present || 0),
-      fill: "hsl(var(--chart-1))",
+      fill: STATUS_COLOR.present,
     },
     {
       name: "Late",
       count: statusCounts?.late || 0,
       percentage: parseFloat(statusPercentages?.late || 0),
-      fill: "hsl(var(--chart-4))",
+      fill: STATUS_COLOR.late,
     },
     {
       name: "Absent",
       count: statusCounts?.absent || 0,
       percentage: parseFloat(statusPercentages?.absent || 0),
-      fill: "hsl(var(--chart-3))",
+      fill: STATUS_COLOR.absent,
     },
   ];
 

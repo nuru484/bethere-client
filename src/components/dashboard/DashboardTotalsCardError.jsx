@@ -1,6 +1,6 @@
 // src/components/dashboard/DashboardTotalsCardError.jsx
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import CardErrorState from "./CardErrorState";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import PropTypes from "prop-types";
 
 const DashboardTotalsCardError = ({ error, onRetry }) => {
@@ -12,7 +12,7 @@ const DashboardTotalsCardError = ({ error, onRetry }) => {
         </h3>
       </CardHeader>
       <CardContent>
-        <CardErrorState message={error} onRetry={onRetry} />
+        <ErrorMessage variant="card" error={error} onRetry={onRetry} />
       </CardContent>
     </Card>
   );

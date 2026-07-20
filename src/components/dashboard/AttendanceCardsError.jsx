@@ -1,6 +1,6 @@
 // src/components/dashboard/AttendanceCardsError.jsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CardErrorState from "./CardErrorState";
+import ErrorMessage from "@/components/ui/ErrorMessage";
 import PropTypes from "prop-types";
 
 const AttendanceCardsError = ({ error, onRetry }) => {
@@ -15,7 +15,7 @@ const AttendanceCardsError = ({ error, onRetry }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CardErrorState message={error} onRetry={onRetry} />
+              <ErrorMessage variant="card" error={error} onRetry={onRetry} />
             </CardContent>
           </Card>
         )

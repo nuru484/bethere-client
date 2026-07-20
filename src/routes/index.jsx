@@ -6,13 +6,20 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import ProtectedRoutes from "./ProtectedRoutes";
 import RequireRole from "./RequireRole";
-import LandingPage from "@/pages/LandingPage";
-import LoginPage from "@/pages/LoginPage";
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
+// Small always-needed shells stay static: the router needs them synchronously
+// and they are tiny. ErrorPage/NotFoundPage are error surfaces we never want to
+// have to lazy-load, and Layout wraps every dashboard route.
 import ErrorPage from "@/pages/ErrorPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import Layout from "@/components/Layout";
+
+// The landing page (which pulls in lenis) and the auth pages are code-split so
+// an authenticated user going straight to /dashboard never downloads the
+// marketing page, and a first-time visitor on / never downloads auth code.
+const LandingPage = lazy(() => import("@/pages/LandingPage"));
+const LoginPage = lazy(() => import("@/pages/LoginPage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 
 // Dashboard pages are code-split so the initial bundle stays small.
 const DashboardRedirect = lazy(() =>
@@ -177,25 +184,25 @@ const Routes = () => {
   const publicRoutes = [
     {
       path: "/",
-      element: <LandingPage />,
+      element: page(<LandingPage />),
       errorElement: <ErrorPage />,
     },
 
     {
       path: "/login",
-      element: <LoginPage />,
+      element: page(<LoginPage />),
       errorElement: <ErrorPage />,
     },
 
     {
       path: "/forgot-password",
-      element: <ForgotPasswordPage />,
+      element: page(<ForgotPasswordPage />),
       errorElement: <ErrorPage />,
     },
 
     {
       path: "/reset-password",
-      element: <ResetPasswordPage />,
+      element: page(<ResetPasswordPage />),
       errorElement: <ErrorPage />,
     },
 

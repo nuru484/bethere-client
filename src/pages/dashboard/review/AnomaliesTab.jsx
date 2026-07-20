@@ -10,11 +10,10 @@ import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import EmptyState from "@/components/ui/EmptyState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import Pagination from "@/components/ui/Pagination";
 import { useAnomalies, useResolveAnomaly } from "@/hooks/useReview";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 const FILTERS = [
   { key: "false", label: "Unresolved" },
@@ -167,33 +166,35 @@ export default function AnomaliesTab() {
         ))}
       </div>
 
-      {isLoading ? (
-        <DataTableSkeleton />
-      ) : isError ? (
-        <ErrorMessage
-          error={extractApiErrorMessage(error).message}
-          onRetry={refetch}
-        />
-      ) : anomalies.length === 0 ? (
-        <EmptyState
-          eyebrow="Review"
-          title="No anomalies"
-          description={
-            filter === "false"
-              ? "No unresolved anomalies. Failed or suspicious check-ins would appear here."
-              : "Nothing matches this filter."
-          }
-        />
-      ) : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {anomalies.map((a) => (
-              <AnomalyCard key={a.id} anomaly={a} />
-            ))}
-          </div>
-          <Pagination meta={data.meta} onPageChange={setPage} />
-        </>
-      )}
+      <AsyncBoundary
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={refetch}
+        skeleton={<DataTableSkeleton />}
+        errorClassName={null}
+      >
+        {anomalies.length === 0 ? (
+          <EmptyState
+            eyebrow="Review"
+            title="No anomalies"
+            description={
+              filter === "false"
+                ? "No unresolved anomalies. Failed or suspicious check-ins would appear here."
+                : "Nothing matches this filter."
+            }
+          />
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {anomalies.map((a) => (
+                <AnomalyCard key={a.id} anomaly={a} />
+              ))}
+            </div>
+            <Pagination meta={data.meta} onPageChange={setPage} />
+          </>
+        )}
+      </AsyncBoundary>
     </div>
   );
 }

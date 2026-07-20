@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import EmptyState from "@/components/ui/EmptyState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetAllAdmins, useDeleteAdmin } from "@/hooks/useAdmins";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
@@ -161,21 +161,15 @@ const AdminsPage = () => {
     }
   };
 
-  if (isLoading && !adminsData) {
-    return <DataTableSkeleton />;
-  }
-
-  if (isError) {
-    const { message } = extractApiErrorMessage(error);
-    return (
-      <div className="flex items-center justify-center min-h-96 px-4">
-        <ErrorMessage error={message} onRetry={refetch} />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <AsyncBoundary
+      isLoading={isLoading && !adminsData}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+    >
+      <div className="min-h-screen">
       <div className="space-y-4 sm:space-y-6">
         {/* Header: mono eyebrow + display title */}
         <div className="flex items-end justify-between gap-3">
@@ -247,7 +241,8 @@ const AdminsPage = () => {
         cancelText="Cancel"
         isDestructive={true}
       />
-    </div>
+      </div>
+    </AsyncBoundary>
   );
 };
 

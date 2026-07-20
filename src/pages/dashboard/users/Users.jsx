@@ -8,9 +8,8 @@ import { UsersDataTable } from "@/components/users/table/UsersDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { useGetAllUsers } from "@/hooks/useUsers";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { Button } from "@/components/ui/button";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 // Filter fields this page owns (stable identity for the URL-state hook).
 const FILTER_KEYS = ["search"];
@@ -49,22 +48,15 @@ const Userspage = () => {
 
   const handleRefresh = () => refetch();
 
-  if (isLoading && !users) {
-    return <DataTableSkeleton />;
-  }
-
-  const { message } = extractApiErrorMessage(error);
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-96 px-4">
-        <ErrorMessage error={message} onRetry={refetch} />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <AsyncBoundary
+      isLoading={isLoading && !users}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+    >
+      <div className="min-h-screen">
       <div className="space-y-4 sm:space-y-6">
         {/* Header: mono eyebrow + display title */}
         <div className="flex items-end justify-between gap-3">
@@ -102,7 +94,8 @@ const Userspage = () => {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </AsyncBoundary>
   );
 };
 

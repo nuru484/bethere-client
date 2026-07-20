@@ -4,10 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { useGetEventAttendance } from "@/hooks/useAttendance";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 // Filter fields this page owns (a numeric search term also matches the
 // session id server-side, so there is no separate sessionId filter).
@@ -67,22 +66,15 @@ const EventAttendancePage = () => {
   const handlePageSizeChange = setPageSize;
   const handleFiltersChange = setFilters;
 
-  if (isLoading && !attendanceRecords) {
-    return <DataTableSkeleton />;
-  }
-
-  const { message } = extractApiErrorMessage(error);
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-96 px-4">
-        <ErrorMessage error={message} onRetry={refetch} />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <AsyncBoundary
+      isLoading={isLoading && !attendanceRecords}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+    >
+      <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6 py-4 sm:py-6">
         {/* Header: mono eyebrow + display title */}
         <div className="flex items-end justify-between gap-3">
@@ -172,7 +164,8 @@ const EventAttendancePage = () => {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </AsyncBoundary>
   );
 };
 

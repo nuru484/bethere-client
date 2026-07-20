@@ -7,10 +7,11 @@ import {
 import DashboardTotalsCard from "@/components/dashboard/DashboardTotalsCard";
 import AttendanceCardsError from "@/components/dashboard/AttendanceCardsError";
 import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
-import AttendanceLineChart from "@/components/dashboard/admin/AttendanceLineChart";
+import AttendanceLineChart from "@/components/dashboard/charts/AttendanceLineChart";
 import AttendanceBarChart from "@/components/dashboard/admin/AttendanceBarChart";
-import AttendancePieChart from "@/components/dashboard/admin/AttendancePieChart";
+import StatusPieChart from "@/components/dashboard/charts/StatusPieChart";
 import EventTypeChart from "@/components/dashboard/admin/EventTypeChart";
+import { statusPieData } from "@/lib/chart-colors";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { format, subDays } from "date-fns";
 import DashboardTotalsCardSkeleton from "@/components/dashboard/skeletons/DashboardTotalsCardSkeleton";
@@ -85,7 +86,12 @@ const AdminDashboard = () => {
               {timeSeriesData && (
                 <div className="space-y-6">
                   <div className="w-full overflow-hidden">
-                    <AttendanceLineChart data={timeSeriesData} />
+                    <AttendanceLineChart
+                      data={timeSeriesData}
+                      title="Attendance Trends Over Time"
+                      emptyTitle="Attendance Over Time"
+                      totalLabel="Total"
+                    />
                   </div>
 
                   <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
@@ -96,7 +102,12 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="w-full overflow-hidden">
-                      <AttendancePieChart statusCounts={statusCounts} />
+                      <StatusPieChart
+                        data={statusPieData(statusCounts)}
+                        title="Attendance Status Breakdown"
+                        emptyTitle="Attendance Status Breakdown"
+                        labelClassName="font-semibold"
+                      />
                     </div>
                   </div>
 

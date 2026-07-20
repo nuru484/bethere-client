@@ -40,6 +40,18 @@ export default defineConfig({
     target: 'esnext',
     minify: 'esbuild',
     sourcemap: 'hidden',
+    rollupOptions: {
+      output: {
+        // Split the heavy, rarely-changing libraries into their own chunks so
+        // they are cached across deploys and parsed once. recharts is shared by
+        // both dashboards; @zxing (barcode/QR scanning) is only pulled in by the
+        // attendance capture screens.
+        manualChunks: {
+          recharts: ['recharts'],
+          zxing: ['@zxing/browser', '@zxing/library'],
+        },
+      },
+    },
   },
   esbuild: {
     target: 'esnext',

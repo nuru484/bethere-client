@@ -1,23 +1,51 @@
 // src/components/ui/ErrorMessage.jsx
+//
+// The single canonical error surface. Two shapes:
+//   - variant="page" (default): a full designed error panel with go-back and
+//     retry actions, used for whole-view failures.
+//   - variant="card": a compact inline error meant to sit inside a Card body
+//     (replaces the former dashboard CardErrorState).
 import PropTypes from "prop-types";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+
+const getErrorMessage = (error) => {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  return "An unexpected error occurred. Please try again.";
+};
 
 const ErrorMessage = ({
   error,
   onRetry,
   title = "Something went wrong",
   className = "",
+  variant = "page",
 }) => {
   const navigate = useNavigate();
-
-  const getErrorMessage = (error) => {
-    if (typeof error === "string") return error;
-    if (error instanceof Error) return error.message;
-    return "An unexpected error occurred. Please try again.";
-  };
-
   const errorMessage = getErrorMessage(error);
+
+  // Compact variant for use inside dashboard cards.
+  if (variant === "card") {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center py-8 px-4 ${className}`}
+      >
+        <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-tight text-destructive">
+          Error
+        </p>
+        <p className="text-sm text-muted-foreground text-center mb-4 max-w-xs">
+          {errorMessage}
+        </p>
+        {onRetry && (
+          <Button size="sm" onClick={onRetry}>
+            Retry
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -81,6 +109,7 @@ ErrorMessage.propTypes = {
   onRetry: PropTypes.func,
   title: PropTypes.string,
   className: PropTypes.string,
+  variant: PropTypes.oneOf(["page", "card"]),
 };
 
 export default ErrorMessage;

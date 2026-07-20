@@ -5,7 +5,7 @@ import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { useGetUserAttendance } from "@/hooks/useAttendance";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import EmptyState from "@/components/ui/EmptyState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { Button } from "@/components/ui/button";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
@@ -45,14 +45,11 @@ const UserAttendancePage = () => {
     ? `${userDetails.firstName} ${userDetails.lastName}`
     : "User";
 
-  if (isLoading && !attendanceRecords) {
-    return <DataTableSkeleton />;
-  }
-
   const { message } = extractApiErrorMessage(error);
 
   // Known case: the user does not exist (404). Render a designed empty
   // state inside the page layout instead of the generic error surface.
+  // Checked before the AsyncBoundary so it wins over the generic error panel.
   if (isError && error?.status === 404) {
     return (
       <div className="min-h-screen">
@@ -81,16 +78,15 @@ const UserAttendancePage = () => {
     );
   }
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-96 px-4">
-        <ErrorMessage error={message} onRetry={refetch} />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <AsyncBoundary
+      isLoading={isLoading && !attendanceRecords}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+    >
+      <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6">
         {/* Header: mono eyebrow + display title */}
         <div className="flex items-end justify-between gap-3">
@@ -133,7 +129,8 @@ const UserAttendancePage = () => {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </AsyncBoundary>
   );
 };
 

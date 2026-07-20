@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { useGetUserEventAttendance } from "@/hooks/useAttendance";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
@@ -64,14 +64,11 @@ const UserEventAttendancePage = () => {
   const attendanceRate =
     totalCount > 0 ? ((sessionsAttended / totalCount) * 100).toFixed(1) : 0;
 
-  if (isLoading && !attendanceRecords) {
-    return <DataTableSkeleton />;
-  }
-
   const { message } = extractApiErrorMessage(error);
 
   // Known case: the user or event does not exist (404). Render a designed
   // empty state inside the page layout instead of the generic error surface.
+  // Checked before the AsyncBoundary so it wins over the generic error panel.
   if (isError && error?.status === 404) {
     return (
       <div className="min-h-screen">
@@ -100,16 +97,16 @@ const UserEventAttendancePage = () => {
     );
   }
 
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <ErrorMessage error={message} onRetry={refetch} />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
+    <AsyncBoundary
+      isLoading={isLoading && !attendanceRecords}
+      isError={isError}
+      error={error}
+      onRetry={refetch}
+      skeleton={<DataTableSkeleton />}
+      errorClassName="flex items-center justify-center min-h-96"
+    >
+      <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6 py-4 sm:py-6">
         {/* Header: mono eyebrow + display title */}
         <div className="flex items-end justify-between gap-3">
@@ -216,7 +213,8 @@ const UserEventAttendancePage = () => {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </AsyncBoundary>
   );
 };
 

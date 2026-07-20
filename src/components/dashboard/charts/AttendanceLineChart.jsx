@@ -1,4 +1,9 @@
-// src/components/dashboard/AttendanceLineChart.jsx
+// src/components/dashboard/charts/AttendanceLineChart.jsx
+//
+// Shared attendance-over-time line chart used by both the admin and user
+// dashboards. The two dashboards differ only in the card titles and the label
+// of the dashed "total" series, so those are props; everything else is shared.
+import { useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   LineChart,
@@ -11,31 +16,38 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import EmptyState from "@/components/ui/EmptyState";
 import { format } from "date-fns";
+import { STATUS_COLOR } from "@/lib/chart-colors";
 
-const AttendanceLineChart = ({ data }) => {
+const AttendanceLineChart = ({
+  data,
+  title,
+  emptyTitle,
+  totalLabel = "Total",
+}) => {
+  // Derived series is memoised so the array identity is stable across renders
+  // (recharts otherwise re-runs its animation/layout on every parent render).
+  const formattedData = useMemo(
+    () =>
+      (data ?? []).map((item) => ({
+        ...item,
+        formattedDate: format(new Date(item.date), "MMM dd"),
+      })),
+    [data]
+  );
+
   if (!data || data.length === 0) {
+    // Shared empty-state card instead of a bespoke "no data" card.
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Attendance Over Time</CardTitle>
-        </CardHeader>
-        <CardContent className="h-80 flex items-center justify-center">
-          <p className="text-muted-foreground">No attendance data available</p>
-        </CardContent>
-      </Card>
+      <EmptyState title={emptyTitle} description="No attendance data available" />
     );
   }
-
-  const formattedData = data.map((item) => ({
-    ...item,
-    formattedDate: format(new Date(item.date), "MMM dd"),
-  }));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Attendance Trends Over Time</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>
@@ -67,7 +79,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="present"
-              stroke="hsl(var(--chart-1))"
+              stroke={STATUS_COLOR.present}
               strokeWidth={2}
               name="Present"
               dot={{ r: 4 }}
@@ -75,7 +87,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="late"
-              stroke="hsl(var(--chart-4))"
+              stroke={STATUS_COLOR.late}
               strokeWidth={2}
               name="Late"
               dot={{ r: 4 }}
@@ -83,7 +95,7 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="absent"
-              stroke="hsl(var(--chart-3))"
+              stroke={STATUS_COLOR.absent}
               strokeWidth={2}
               name="Absent"
               dot={{ r: 4 }}
@@ -91,9 +103,9 @@ const AttendanceLineChart = ({ data }) => {
             <Line
               type="monotone"
               dataKey="total"
-              stroke="hsl(var(--chart-5))"
+              stroke={STATUS_COLOR.total}
               strokeWidth={2}
-              name="Total"
+              name={totalLabel}
               dot={{ r: 4 }}
               strokeDasharray="5 5"
             />
@@ -115,6 +127,9 @@ AttendanceLineChart.propTypes = {
       total: PropTypes.number,
     })
   ),
+  title: PropTypes.string.isRequired,
+  emptyTitle: PropTypes.string.isRequired,
+  totalLabel: PropTypes.string,
 };
 
 export default AttendanceLineChart;
