@@ -1,6 +1,5 @@
 // src/lib/FaceAuthSystem.js
 import * as faceapi from "face-api.js";
-import { compareDescriptors, DESCRIPTOR_LENGTH } from "@/lib/face-math";
 
 export class FaceAuthSystem {
   constructor(options = {}) {
@@ -24,7 +23,6 @@ export class FaceAuthSystem {
       await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
       await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
       await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
-      await faceapi.nets.faceExpressionNet.loadFromUri("/models");
 
       this.modelsLoaded = true;
       return true;
@@ -115,110 +113,5 @@ export class FaceAuthSystem {
         message: "Face scanning failed: " + error.message,
       };
     }
-  }
-
-  verifyFaceScan(descriptor1, descriptor2) {
-    try {
-      if (
-        !descriptor1 ||
-        !descriptor2 ||
-        descriptor1.length !== descriptor2.length ||
-        descriptor1.length !== DESCRIPTOR_LENGTH
-      ) {
-        return {
-          success: false,
-          message: "Invalid descriptors provided for comparison",
-        };
-      }
-
-      const { isMatch, distance } = compareDescriptors(
-        descriptor1,
-        descriptor2,
-        this.config.distanceThreshold
-      );
-
-      return {
-        success: true,
-        isMatch,
-        message: isMatch
-          ? "Face scan verified successfully"
-          : "Face scan does not match",
-        distance,
-      };
-    } catch (error) {
-      console.error("Error in face scan verification:", error);
-      return {
-        success: false,
-        message: "Verification failed: " + error.message,
-      };
-    }
-  }
-
-  async performLivenessCheck(imageSource, duration = 2000) {
-    try {
-      const centers = [];
-      const expressionVariances = [];
-      const startTime = Date.now();
-
-      while (Date.now() - startTime < duration) {
-        const results = await faceapi
-          .detectSingleFace(imageSource, this.config.faceDetectorOptions)
-          .withFaceLandmarks()
-          .withFaceExpressions();
-
-        if (!results) {
-          console.warn("No face detected in liveness check frame");
-          continue;
-        }
-
-        const box = results.detection.box;
-        const centerX = box.x + box.width / 2;
-        const centerY = box.y + box.height / 2;
-        centers.push({ x: centerX, y: centerY });
-
-        const expressions = results.expressions;
-        const exprValues = Object.values(expressions);
-        const variance = this.calculateVariance(exprValues);
-        expressionVariances.push(variance);
-
-        await new Promise((resolve) => setTimeout(resolve, 200));
-      }
-
-      if (centers.length < 2) {
-        console.warn("Insufficient frames for liveness check");
-        return false;
-      }
-
-      const xMean = centers.reduce((sum, c) => sum + c.x, 0) / centers.length;
-      const yMean = centers.reduce((sum, c) => sum + c.y, 0) / centers.length;
-      const xVariance =
-        centers.reduce((sum, c) => sum + Math.pow(c.x - xMean, 2), 0) /
-        centers.length;
-      const yVariance =
-        centers.reduce((sum, c) => sum + Math.pow(c.y - yMean, 2), 0) /
-        centers.length;
-      const movementVariance = xVariance + yVariance;
-
-      const avgExpressionVariance =
-        expressionVariances.reduce((sum, v) => sum + v, 0) /
-        expressionVariances.length;
-
-      const movementThreshold = 10;
-      const expressionThreshold = 0.01;
-      const isLive =
-        movementVariance > movementThreshold ||
-        avgExpressionVariance > expressionThreshold;
-
-      return isLive;
-    } catch (error) {
-      console.error("Error in liveness check:", error);
-      return false;
-    }
-  }
-
-  calculateVariance(array) {
-    const mean = array.reduce((a, b) => a + b, 0) / array.length;
-    const squareDiffs = array.map((value) => Math.pow(value - mean, 2));
-    return squareDiffs.reduce((a, b) => a + b, 0) / array.length;
   }
 }

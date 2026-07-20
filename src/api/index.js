@@ -1,15 +1,5 @@
 import axios from "axios";
 
-class APIError extends Error {
-  constructor(message, status, type, details = null) {
-    super(message);
-    this.name = "APIError";
-    this.status = status;
-    this.type = type;
-    this.details = details;
-  }
-}
-
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
 // Auth is cookie-only: httpOnly cookies carry the tokens, so every request
@@ -63,7 +53,8 @@ api.interceptors.response.use(
         return axios(originalRequest);
       } catch (err) {
         console.error("Session refresh failed", err);
-        localStorage.removeItem("user");
+        // Clear the non-sensitive presence hint so the app boots logged-out.
+        localStorage.removeItem("bethere.authed");
         window.location.assign("/login");
         return Promise.reject({
           status: 401,
@@ -193,4 +184,4 @@ api.interceptors.response.use(
   }
 );
 
-export { api, APIError };
+export { api };

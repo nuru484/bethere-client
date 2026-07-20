@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { UserEventAttendanceDataTable } from "@/components/attendance/tables/userEventAttendance/UserEventAttendanceDataTable";
+import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
@@ -216,7 +216,8 @@ const UserEventAttendancePage = () => {
 
         {/* Attendance Data Table */}
         <div className="overflow-hidden">
-          <UserEventAttendanceDataTable
+          <AttendanceDataTable
+            context="userEvent"
             data={attendanceRecords || []}
             loading={isLoading}
             totalCount={totalCount}

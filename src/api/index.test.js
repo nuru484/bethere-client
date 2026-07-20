@@ -41,7 +41,7 @@ const expiredError = (config = { headers: {} }) => ({
 describe("refresh interceptor (cookie flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.setItem("user", JSON.stringify({ id: 1, role: "ADMIN" }));
+    localStorage.setItem("bethere.authed", "1");
   });
 
   afterEach(() => {
@@ -76,7 +76,7 @@ describe("refresh interceptor (cookie flow)", () => {
     expect(result).toEqual({ data: "retried-response" });
 
     // The persisted user is untouched by a successful refresh.
-    expect(localStorage.getItem("user")).not.toBeNull();
+    expect(localStorage.getItem("bethere.authed")).not.toBeNull();
   });
 
   it("shares one in-flight refresh across concurrent 401s", async () => {
@@ -111,7 +111,7 @@ describe("refresh interceptor (cookie flow)", () => {
       data: { code: "AUTH_ERROR" },
     });
 
-    expect(localStorage.getItem("user")).toBeNull();
+    expect(localStorage.getItem("bethere.authed")).toBeNull();
   });
 
   it("does not attempt a refresh for other auth error codes", async () => {

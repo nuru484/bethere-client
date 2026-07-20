@@ -4,29 +4,7 @@ import PropTypes from "prop-types";
 import { BrowserQRCodeReader } from "@zxing/browser";
 import { Button } from "@/components/ui/button";
 import { QrCode, RefreshCw, TriangleAlert } from "lucide-react";
-
-// The venue display encodes each QR as `BETHERE1:<eventId>:<code>`. We parse
-// that, confirm the prefix and that the eventId matches the event the user is
-// checking into, then hand back the raw 16-hex `code` as the venueCode.
-const QR_PREFIX = "BETHERE1";
-
-const parseVenuePayload = (text, expectedEventId) => {
-  if (typeof text !== "string") return { error: "Unrecognized QR code." };
-
-  const parts = text.trim().split(":");
-  if (parts.length !== 3 || parts[0] !== QR_PREFIX) {
-    return { error: "That is not a BeThere venue code." };
-  }
-
-  const [, eventIdPart, code] = parts;
-  if (String(expectedEventId) !== String(eventIdPart)) {
-    return { error: "This code is for a different event." };
-  }
-
-  if (!code) return { error: "That venue code is incomplete." };
-
-  return { code };
-};
+import { parseVenuePayload } from "./venue-payload";
 
 /**
  * Continuously scans the rear camera for the venue's rotating QR code. On a
