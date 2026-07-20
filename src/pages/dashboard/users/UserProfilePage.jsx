@@ -1,6 +1,6 @@
 // src/pages/dashboard/users/UserProfilePage.jsx
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileInfoTab from "@/components/users/user-profile/ProfileInfoTab";
 import SecurityTab from "@/components/users/user-profile/SecurityTab";
@@ -42,6 +42,15 @@ const UserProfilePage = () => {
   });
 
   const { message: errorMessage } = extractApiErrorMessage(error);
+
+  // A non-admin can only view their own profile. Rendering currentUser's data
+  // under someone else's URL silently lied about whose profile it was - send
+  // them to their own canonical URL instead.
+  if (currentUser && !isAdmin && !isViewingOwnProfile) {
+    return (
+      <Navigate to={`/dashboard/users/${currentUser.id}/profile`} replace />
+    );
+  }
 
   const displayUser =
     shouldFetchProfile && profileData?.data ? profileData.data : currentUser;

@@ -1,5 +1,5 @@
 // src/components/attendance/reports/Filters.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -30,31 +30,62 @@ import { cn } from "@/lib/utils";
 import { useGetAllUsers } from "@/hooks/useUsers";
 import { useDebounce } from "@/hooks/useDebounce";
 
+// The free-text filters that are debounced before reaching the parent.
+const TEXT_FILTER_KEYS = [
+  "search",
+  "eventName",
+  "eventType",
+  "locationName",
+  "city",
+  "country",
+];
+
+const initialLocalState = (filters) => ({
+  search: filters.search || "",
+  eventName: filters.eventName || "",
+  eventType: filters.eventType || "",
+  locationName: filters.locationName || "",
+  city: filters.city || "",
+  country: filters.country || "",
+  userSearchTerm: "",
+  checkInStartDate: undefined,
+  checkInEndDate: undefined,
+  sessionStartDate: undefined,
+  sessionEndDate: undefined,
+});
+
 export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
-  const [checkInStartDate, setCheckInStartDate] = useState();
-  const [checkInEndDate, setCheckInEndDate] = useState();
-  const [sessionStartDate, setSessionStartDate] = useState();
-  const [sessionEndDate, setSessionEndDate] = useState();
-  const [userSearchTerm, setUserSearchTerm] = useState("");
+  // All local (not-yet-committed) state lives in one object: the free-text
+  // inputs (debounced so typing doesn't fire a report request on every
+  // keystroke), the user picker search, and the date-picker selections.
+  const [local, setLocal] = useState(() => initialLocalState(filters));
 
-  // Local state for the free-text filters so typing is debounced and doesn't
-  // fire a report request on every keystroke.
-  const [searchInput, setSearchInput] = useState(filters.search || "");
-  const [eventNameInput, setEventNameInput] = useState(filters.eventName || "");
-  const [eventTypeInput, setEventTypeInput] = useState(filters.eventType || "");
-  const [locationNameInput, setLocationNameInput] = useState(
-    filters.locationName || ""
+  const setLocalField = (key, value) =>
+    setLocal((prev) => ({ ...prev, [key]: value }));
+
+  // Memoized on the individual strings so a date selection doesn't re-arm
+  // the text debounce timer.
+  const textValues = useMemo(
+    () => ({
+      search: local.search,
+      eventName: local.eventName,
+      eventType: local.eventType,
+      locationName: local.locationName,
+      city: local.city,
+      country: local.country,
+    }),
+    [
+      local.search,
+      local.eventName,
+      local.eventType,
+      local.locationName,
+      local.city,
+      local.country,
+    ]
   );
-  const [cityInput, setCityInput] = useState(filters.city || "");
-  const [countryInput, setCountryInput] = useState(filters.country || "");
 
-  const debouncedUserSearch = useDebounce(userSearchTerm, 400);
-  const debouncedSearch = useDebounce(searchInput, 500);
-  const debouncedEventName = useDebounce(eventNameInput, 500);
-  const debouncedEventType = useDebounce(eventTypeInput, 500);
-  const debouncedLocationName = useDebounce(locationNameInput, 500);
-  const debouncedCity = useDebounce(cityInput, 500);
-  const debouncedCountry = useDebounce(countryInput, 500);
+  const debouncedText = useDebounce(textValues, 500);
+  const debouncedUserSearch = useDebounce(local.userSearchTerm, 400);
 
   // Fetch users with debounced search
   const { data: usersData, isLoading: isUsersLoading } = useGetAllUsers({
@@ -67,81 +98,47 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  // Commit each debounced text value up to the parent once it settles. An empty
-  // string clears the filter (sends no param) rather than serializing "".
+  // Commit the debounced text values up to the parent once they settle, in a
+  // single emission carrying only the keys that changed. An empty string
+  // clears a filter (sends no param) rather than serializing "".
   useEffect(() => {
-    if ((debouncedSearch || undefined) !== filters.search) {
-      onFiltersChange({ search: debouncedSearch || undefined });
+    const changed = {};
+    for (const key of TEXT_FILTER_KEYS) {
+      const next = debouncedText[key] || undefined;
+      if (next !== filters[key]) changed[key] = next;
     }
-  }, [debouncedSearch, filters.search, onFiltersChange]);
-
-  useEffect(() => {
-    if ((debouncedEventName || undefined) !== filters.eventName) {
-      onFiltersChange({ eventName: debouncedEventName || undefined });
+    if (Object.keys(changed).length > 0) {
+      onFiltersChange(changed);
     }
-  }, [debouncedEventName, filters.eventName, onFiltersChange]);
-
-  useEffect(() => {
-    if ((debouncedEventType || undefined) !== filters.eventType) {
-      onFiltersChange({ eventType: debouncedEventType || undefined });
-    }
-  }, [debouncedEventType, filters.eventType, onFiltersChange]);
-
-  useEffect(() => {
-    if ((debouncedLocationName || undefined) !== filters.locationName) {
-      onFiltersChange({ locationName: debouncedLocationName || undefined });
-    }
-  }, [debouncedLocationName, filters.locationName, onFiltersChange]);
-
-  useEffect(() => {
-    if ((debouncedCity || undefined) !== filters.city) {
-      onFiltersChange({ city: debouncedCity || undefined });
-    }
-  }, [debouncedCity, filters.city, onFiltersChange]);
-
-  useEffect(() => {
-    if ((debouncedCountry || undefined) !== filters.country) {
-      onFiltersChange({ country: debouncedCountry || undefined });
-    }
-  }, [debouncedCountry, filters.country, onFiltersChange]);
+  }, [debouncedText, filters, onFiltersChange]);
 
   // Reset clears the parent filters and all local state, including the date
   // pickers (which otherwise keep stale selections after a reset).
   const handleReset = () => {
-    setSearchInput("");
-    setEventNameInput("");
-    setEventTypeInput("");
-    setLocationNameInput("");
-    setCityInput("");
-    setCountryInput("");
-    setUserSearchTerm("");
-    setCheckInStartDate(undefined);
-    setCheckInEndDate(undefined);
-    setSessionStartDate(undefined);
-    setSessionEndDate(undefined);
+    setLocal(initialLocalState({}));
     onReset();
   };
 
   const applyCheckInDateRange = () => {
-    if (checkInStartDate) {
-      set("checkInStartDate", format(checkInStartDate, "yyyy-MM-dd"));
+    if (local.checkInStartDate) {
+      set("checkInStartDate", format(local.checkInStartDate, "yyyy-MM-dd"));
     }
-    if (checkInEndDate) {
-      set("checkInEndDate", format(checkInEndDate, "yyyy-MM-dd"));
+    if (local.checkInEndDate) {
+      set("checkInEndDate", format(local.checkInEndDate, "yyyy-MM-dd"));
     }
   };
 
   const applySessionDateRange = () => {
-    if (sessionStartDate) {
-      set("sessionStartDate", format(sessionStartDate, "yyyy-MM-dd"));
+    if (local.sessionStartDate) {
+      set("sessionStartDate", format(local.sessionStartDate, "yyyy-MM-dd"));
     }
-    if (sessionEndDate) {
-      set("sessionEndDate", format(sessionEndDate, "yyyy-MM-dd"));
+    if (local.sessionEndDate) {
+      set("sessionEndDate", format(local.sessionEndDate, "yyyy-MM-dd"));
     }
   };
 
   const handleUserSearch = (val) => {
-    setUserSearchTerm(val);
+    setLocalField("userSearchTerm", val);
   };
 
   const availableUsers = usersData?.data || [];
@@ -173,8 +170,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               />
             <Input
               placeholder="Search users, events, locations..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              value={local.search}
+              onChange={(e) => setLocalField("search", e.target.value)}
               className="pl-9"
             />
           </div>
@@ -191,7 +188,7 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               />
               <Input
                 placeholder="Search users by name or email..."
-                value={userSearchTerm}
+                value={local.userSearchTerm}
                 onChange={(e) => handleUserSearch(e.target.value)}
                 className="pl-9"
               />
@@ -269,8 +266,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
             <Label className="text-sm">Event Name</Label>
             <Input
               placeholder="Search by event title..."
-              value={eventNameInput}
-              onChange={(e) => setEventNameInput(e.target.value)}
+              value={local.eventName}
+              onChange={(e) => setLocalField("eventName", e.target.value)}
             />
           </div>
 
@@ -278,8 +275,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
             <Label className="text-sm">Event Type</Label>
             <Input
               placeholder="e.g., Conference, Workshop..."
-              value={eventTypeInput}
-              onChange={(e) => setEventTypeInput(e.target.value)}
+              value={local.eventType}
+              onChange={(e) => setLocalField("eventType", e.target.value)}
             />
           </div>
 
@@ -317,8 +314,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
             <Label className="text-sm">Location Name</Label>
             <Input
               placeholder="Search by location name..."
-              value={locationNameInput}
-              onChange={(e) => setLocationNameInput(e.target.value)}
+              value={local.locationName}
+              onChange={(e) => setLocalField("locationName", e.target.value)}
             />
           </div>
 
@@ -327,8 +324,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               <Label className="text-sm">City</Label>
               <Input
                 placeholder="e.g., Accra"
-                value={cityInput}
-                onChange={(e) => setCityInput(e.target.value)}
+                value={local.city}
+                onChange={(e) => setLocalField("city", e.target.value)}
               />
             </div>
 
@@ -336,8 +333,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               <Label className="text-sm">Country</Label>
               <Input
                 placeholder="e.g., Ghana"
-                value={countryInput}
-                onChange={(e) => setCountryInput(e.target.value)}
+                value={local.country}
+                onChange={(e) => setLocalField("country", e.target.value)}
               />
             </div>
           </div>
@@ -355,19 +352,19 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !checkInStartDate && "text-muted-foreground"
+                    !local.checkInStartDate && "text-muted-foreground"
                   )}
                 >
-                  {checkInStartDate
-                    ? format(checkInStartDate, "MMM d, yyyy")
+                  {local.checkInStartDate
+                    ? format(local.checkInStartDate, "MMM d, yyyy")
                     : "Start Date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={checkInStartDate}
-                  onSelect={setCheckInStartDate}
+                  selected={local.checkInStartDate}
+                  onSelect={(d) => setLocalField("checkInStartDate", d)}
                   initialFocus
                 />
               </PopoverContent>
@@ -379,19 +376,19 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !checkInEndDate && "text-muted-foreground"
+                    !local.checkInEndDate && "text-muted-foreground"
                   )}
                 >
-                  {checkInEndDate
-                    ? format(checkInEndDate, "MMM d, yyyy")
+                  {local.checkInEndDate
+                    ? format(local.checkInEndDate, "MMM d, yyyy")
                     : "End Date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={checkInEndDate}
-                  onSelect={setCheckInEndDate}
+                  selected={local.checkInEndDate}
+                  onSelect={(d) => setLocalField("checkInEndDate", d)}
                   initialFocus
                 />
               </PopoverContent>
@@ -399,7 +396,7 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
           </div>
           <Button
             onClick={applyCheckInDateRange}
-            disabled={!checkInStartDate && !checkInEndDate}
+            disabled={!local.checkInStartDate && !local.checkInEndDate}
             size="sm"
             className="w-full sm:w-auto"
           >
@@ -419,19 +416,19 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !sessionStartDate && "text-muted-foreground"
+                    !local.sessionStartDate && "text-muted-foreground"
                   )}
                 >
-                  {sessionStartDate
-                    ? format(sessionStartDate, "MMM d, yyyy")
+                  {local.sessionStartDate
+                    ? format(local.sessionStartDate, "MMM d, yyyy")
                     : "Start Date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={sessionStartDate}
-                  onSelect={setSessionStartDate}
+                  selected={local.sessionStartDate}
+                  onSelect={(d) => setLocalField("sessionStartDate", d)}
                   initialFocus
                 />
               </PopoverContent>
@@ -443,19 +440,19 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !sessionEndDate && "text-muted-foreground"
+                    !local.sessionEndDate && "text-muted-foreground"
                   )}
                 >
-                  {sessionEndDate
-                    ? format(sessionEndDate, "MMM d, yyyy")
+                  {local.sessionEndDate
+                    ? format(local.sessionEndDate, "MMM d, yyyy")
                     : "End Date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={sessionEndDate}
-                  onSelect={setSessionEndDate}
+                  selected={local.sessionEndDate}
+                  onSelect={(d) => setLocalField("sessionEndDate", d)}
                   initialFocus
                 />
               </PopoverContent>
@@ -463,7 +460,7 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
           </div>
           <Button
             onClick={applySessionDateRange}
-            disabled={!sessionStartDate && !sessionEndDate}
+            disabled={!local.sessionStartDate && !local.sessionEndDate}
             size="sm"
             className="w-full sm:w-auto"
           >

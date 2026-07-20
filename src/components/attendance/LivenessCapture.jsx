@@ -34,6 +34,8 @@ export default function LivenessCapture({
     videoRef,
     cameraReady,
     cameraError,
+    captureError,
+    cameraReleased,
     isCapturing,
     capturedCount,
     frameCount,
@@ -53,6 +55,21 @@ export default function LivenessCapture({
       : 0;
 
   const busy = isCapturing || isSubmitting;
+  // The camera is released on purpose once a burst is captured, so the primary
+  // action then becomes bringing it back rather than an unreachable "start".
+  const needsCameraRestart = cameraReleased && !cameraReady;
+
+  const buttonLabel = isSubmitting
+    ? "Verifying..."
+    : isCapturing
+    ? `Capturing ${capturedCount}/${frameCount}...`
+    : needsCameraRestart
+    ? "Restart Camera"
+    : !cameraReady
+    ? "Starting camera..."
+    : captureError
+    ? "Try Again"
+    : startLabel;
 
   return (
     <div className="w-full max-w-2xl">
@@ -88,6 +105,19 @@ export default function LivenessCapture({
                   strokeWidth={1.5}
                 />
                 <p className="text-sm text-white/90">{cameraError}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Burst abandoned because the screen was backgrounded/locked */}
+          {!cameraError && captureError && !isCapturing && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
+              <div className="text-center">
+                <TriangleAlert
+                  className="mx-auto mb-3 h-8 w-8 text-amber-400"
+                  strokeWidth={1.5}
+                />
+                <p className="text-sm text-white/90">{captureError}</p>
               </div>
             </div>
           )}
@@ -129,18 +159,12 @@ export default function LivenessCapture({
         ) : (
           <Button
             type="button"
-            onClick={startCapture}
-            disabled={!cameraReady || busy}
+            onClick={needsCameraRestart ? retryCamera : startCapture}
+            disabled={busy || (!cameraReady && !needsCameraRestart)}
             className="w-full rounded-full bg-[#fafafa] py-6 font-mono text-sm font-bold uppercase tracking-tight text-[#2b2b2b] hover:bg-white"
           >
             <Camera className="mr-2 h-4 w-4" strokeWidth={2} />
-            {isSubmitting
-              ? "Verifying..."
-              : isCapturing
-              ? `Capturing ${capturedCount}/${frameCount}...`
-              : !cameraReady
-              ? "Starting camera..."
-              : startLabel}
+            {buttonLabel}
           </Button>
         )}
       </div>

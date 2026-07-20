@@ -1,22 +1,29 @@
 // src/pages/EventsPage.jsx
-import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGetEvents } from "@/hooks/useEvent";
 import { useAuth } from "@/hooks/useAuth";
+import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import EventList from "@/components/event/EventList";
+
+// Filter fields this page owns (stable identity for the URL-state hook).
+const FILTER_KEYS = ["search", "type"];
 
 export default function EventsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [filters, setFilters] = useState({
-    search: undefined,
-    type: undefined,
-  });
+  // Page, page size and filters live in the URL so refresh/back/share keep
+  // the same view.
+  const {
+    page,
+    pageSize: limit,
+    filters,
+    setPage,
+    setPageSize,
+    setFilters,
+  } = usePaginatedListState({ filterKeys: FILTER_KEYS });
 
   const {
     data: eventsData,
@@ -32,20 +39,10 @@ export default function EventsPage() {
     ),
   });
 
-  const handlePageChange = (newPage) => setPage(newPage);
-
-  const handleLimitChange = (newLimit) => {
-    setLimit(newLimit);
-    setPage(1);
-  };
-
-  const handleFiltersChange = useCallback((newFilters) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-    }));
-    setPage(1);
-  }, []);
+  // setPageSize and setFilters already reset the page to 1.
+  const handlePageChange = setPage;
+  const handleLimitChange = setPageSize;
+  const handleFiltersChange = setFilters;
 
   const handleCreateEvent = () => {
     navigate("/dashboard/events/create");

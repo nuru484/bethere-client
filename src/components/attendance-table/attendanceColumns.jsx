@@ -9,7 +9,6 @@
 import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AttendanceActionsDropdown } from "./AttendanceActionsDropdown";
 
@@ -17,14 +16,16 @@ const STATUS_CHIP_BASE =
   "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight";
 
 // Status chip helper - shared by the tables and reusable elsewhere.
+// Tint-plus-themed-text (the AnomaliesTab pattern) so the chips stay legible
+// on both themes instead of hardcoded light-only palettes.
 export const getStatusChipClass = (status) => {
   switch (status) {
     case "PRESENT":
-      return `${STATUS_CHIP_BASE} bg-[#dcf5e9] text-[#1a7f53]`;
+      return `${STATUS_CHIP_BASE} bg-emerald-500/10 text-emerald-700 dark:text-emerald-400`;
     case "LATE":
-      return `${STATUS_CHIP_BASE} bg-amber-100 text-amber-800`;
+      return `${STATUS_CHIP_BASE} bg-amber-500/10 text-amber-700 dark:text-amber-400`;
     case "ABSENT":
-      return `${STATUS_CHIP_BASE} bg-red-100 text-red-700`;
+      return `${STATUS_CHIP_BASE} bg-red-500/10 text-red-700 dark:text-red-400`;
     default:
       return `${STATUS_CHIP_BASE} bg-muted text-muted-foreground`;
   }
@@ -54,33 +55,6 @@ const plainHeader = (label) =>
       <span className={`whitespace-nowrap ${HEADER_LABEL_CLASS}`}>{label}</span>
     );
   };
-
-const selectColumn = (dense) => ({
-  id: "select",
-  header: ({ table }) => (
-    <Checkbox
-      checked={
-        table.getIsAllPageRowsSelected()
-          ? true
-          : table.getIsSomePageRowsSelected()
-          ? "indeterminate"
-          : false
-      }
-      onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-      aria-label="Select all"
-    />
-  ),
-  cell: ({ row }) => (
-    <Checkbox
-      checked={row.getIsSelected()}
-      onCheckedChange={(value) => row.toggleSelected(!!value)}
-      aria-label="Select row"
-    />
-  ),
-  enableSorting: false,
-  enableHiding: false,
-  ...(dense ? { size: 40, minSize: 40, maxSize: 40 } : {}),
-});
 
 // Entity column: the event a record belongs to (user context).
 const eventColumn = () => ({
@@ -313,14 +287,35 @@ const checkInColumn = (dense) => ({
   ...(dense ? { size: 150, minSize: 150 } : {}),
 });
 
+// Micro-chip marking a checkout the SYSTEM performed (session ended before
+// the user signed out). Muted so it reads as metadata, legible in both themes.
+const systemCheckoutChip = (
+  <span
+    title="Signed out automatically by the system when the session ended"
+    className="mt-1 inline-flex w-fit items-center rounded-full bg-muted px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-tight text-muted-foreground"
+  >
+    By system
+  </span>
+);
+
 const checkOutColumn = (dense) => ({
   accessorKey: "checkOutTime",
   header: plainHeader("Check Out"),
   cell: ({ row }) => {
     const value = row.getValue("checkOutTime");
-    return dense
+    const isAuto = Boolean(row.original.autoCheckedOut);
+    const time = dense
       ? renderDenseTime(value, "Not checked out")
       : renderDefaultTime(value, "Not checked out");
+
+    if (!isAuto) return time;
+
+    return (
+      <div className="flex flex-col">
+        {time}
+        {systemCheckoutChip}
+      </div>
+    );
   },
   ...(dense ? { size: 150, minSize: 150 } : {}),
 });
@@ -333,15 +328,13 @@ const actionsColumn = (dense) => ({
   ...(dense ? { size: 80, minSize: 80 } : {}),
 });
 
-// Assemble the ordered column set for a context. `isRecurring` only matters
-// for the userEvent context, where a non-recurring event hides the select box.
-export const createAttendanceColumns = ({ context, isRecurring = true }) => {
+// Assemble the ordered column set for a context. (The former row-selection
+// checkboxes were removed: no bulk action exists on these tables, so the
+// selection state was dead UI that only invited confusion.)
+export const createAttendanceColumns = ({ context }) => {
   const dense = context === "userEvent";
-  const showSelect = context === "userEvent" ? isRecurring : true;
 
   const columns = [];
-
-  if (showSelect) columns.push(selectColumn(dense));
 
   if (context === "user") columns.push(eventColumn());
   if (context === "event") columns.push(userColumn());

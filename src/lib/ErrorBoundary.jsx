@@ -18,6 +18,17 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  // A caller can hand us a value that changes on every navigation (see
+  // Layout.jsx). Clearing the error here rather than via a `key` is
+  // deliberate: a changing key would also remount a HEALTHY subtree, and
+  // filter/page changes are same-pathname navigations now, so every debounced
+  // keystroke would tear the list page down mid-typing.
+  componentDidUpdate(prevProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    }
+  }
+
   componentDidCatch(error, errorInfo) {
     console.error("Error caught by ErrorBoundary:", error, errorInfo);
     // No-op unless Sentry was initialized (VITE_SENTRY_DSN set).
@@ -57,6 +68,8 @@ class ErrorBoundary extends React.Component {
 
 ErrorBoundary.propTypes = {
   children: PropTypes.node,
+  // Any value that changes per navigation; a change clears a shown error.
+  resetKey: PropTypes.string,
 };
 
 export default ErrorBoundary;

@@ -114,7 +114,6 @@ export const createUserColumns = () => [
   {
     id: "actions",
     enableHiding: false,
-    accessorKey: "createdAt",
     header: "Actions",
     cell: ({ row }) => <UserActionsDropdown user={row.original} />,
   },

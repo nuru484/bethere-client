@@ -5,8 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 
 /**
  * Route guard that only renders its children when the authenticated
- * user has the required role. Everyone else is sent back to the
- * dashboard landing page.
+ * user has (one of) the required role(s). `role` accepts a single role
+ * string or an array of allowed roles. Everyone else is sent back to
+ * the dashboard landing page.
  */
 const RequireRole = ({ role = "ADMIN", children }) => {
   const { user, isLoading } = useAuth();
@@ -15,7 +16,9 @@ const RequireRole = ({ role = "ADMIN", children }) => {
   // but guard here too so this component is safe to use standalone.
   if (isLoading) return null;
 
-  if (!user || user.role !== role) {
+  const allowedRoles = Array.isArray(role) ? role : [role];
+
+  if (!user || !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -23,7 +26,10 @@ const RequireRole = ({ role = "ADMIN", children }) => {
 };
 
 RequireRole.propTypes = {
-  role: PropTypes.string,
+  role: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
   children: PropTypes.node.isRequired,
 };
 

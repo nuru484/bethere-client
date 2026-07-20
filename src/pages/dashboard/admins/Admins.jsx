@@ -18,6 +18,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetAllAdmins, useDeleteAdmin } from "@/hooks/useAdmins";
+import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
@@ -116,13 +117,14 @@ const AdminsPage = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  // Page and page size live in the URL so refresh/back/share keep the view.
+  const { page, pageSize, setPage, setPageSize } = usePaginatedListState();
   const [adminToDelete, setAdminToDelete] = useState(null);
 
   const {
     data: adminsData,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -204,14 +206,12 @@ const AdminsPage = () => {
             columns={columns}
             data={admins}
             loading={isLoading}
+            fetching={isFetching && !isLoading}
             totalCount={totalAdmins}
             page={page}
             pageSize={pageSize}
             onPageChange={setPage}
-            onPageSizeChange={(newPageSize) => {
-              setPageSize(newPageSize);
-              setPage(1);
-            }}
+            onPageSizeChange={setPageSize}
             renderFilters={() => (
               <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
                 {totalAdmins} total

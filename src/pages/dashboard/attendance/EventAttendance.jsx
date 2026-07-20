@@ -1,5 +1,4 @@
 // src/pages/dashboard/EventAttendancePage.jsx
-import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,22 +6,21 @@ import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDat
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { useGetEventAttendance } from "@/hooks/useAttendance";
+import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+
+// Filter fields this page owns (a numeric search term also matches the
+// session id server-side, so there is no separate sessionId filter).
+const FILTER_KEYS = ["search", "status", "startDate", "endDate"];
 
 const EventAttendancePage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
-  // Filter states (a numeric search term also matches the session id
-  // server-side, so there is no separate sessionId filter)
-  const [filters, setFilters] = useState({
-    search: undefined,
-    status: undefined,
-    startDate: undefined,
-    endDate: undefined,
-  });
+  // Page, page size and filters live in the URL so refresh/back/share keep
+  // the same view.
+  const { page, pageSize, filters, setPage, setPageSize, setFilters } =
+    usePaginatedListState({ filterKeys: FILTER_KEYS });
 
   const queryParams = {
     page,
@@ -35,6 +33,7 @@ const EventAttendancePage = () => {
   const {
     data: attendanceData,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -63,20 +62,10 @@ const EventAttendancePage = () => {
   const attendanceRate =
     pageCount > 0 ? ((presentCount / pageCount) * 100).toFixed(1) : 0;
 
-  const handlePageChange = (newPage) => setPage(newPage);
-
-  const handlePageSizeChange = (newPageSize) => {
-    setPageSize(newPageSize);
-    setPage(1);
-  };
-
-  const handleFiltersChange = useCallback((newFilters) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-    }));
-    setPage(1);
-  }, []);
+  // setPageSize and setFilters already reset the page to 1.
+  const handlePageChange = setPage;
+  const handlePageSizeChange = setPageSize;
+  const handleFiltersChange = setFilters;
 
   if (isLoading && !attendanceRecords) {
     return <DataTableSkeleton />;
@@ -172,6 +161,7 @@ const EventAttendancePage = () => {
             context="event"
             data={attendanceRecords || []}
             loading={isLoading}
+            fetching={isFetching && !isLoading}
             totalCount={totalCount}
             page={page}
             pageSize={pageSize}

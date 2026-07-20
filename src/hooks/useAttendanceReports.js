@@ -1,6 +1,7 @@
 // src/hooks/useAttendanceReports.jsx
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getAttendanceReport } from "@/api/attendance-reports.js";
+import { queryKeys } from "@/api/query-keys";
 
 /**
  * Hook to fetch comprehensive attendance report
@@ -8,14 +9,13 @@ import { getAttendanceReport } from "@/api/attendance-reports.js";
  * @param {Object} options - Additional react-query options
  */
 export const useGetAttendanceReport = (params = {}, options = {}) => {
-  const queryKey = ["attendanceReport", params];
-
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.attendance.report(params),
     queryFn: () => getAttendanceReport(params),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
+    // Focus refetch on (against the global default): the report aggregates
+    // live check-ins, so a tab returned to mid-event must not keep showing
+    // pre-event totals for the full 5-minute staleTime.
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
     refetchOnReconnect: false,
     ...options,

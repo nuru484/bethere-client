@@ -1,15 +1,15 @@
 // src/components/event/EventListItem.jsx
 //
-// One card in the events grid. The whole card is a link to the event detail
-// page; the only buttons are Sign in / Sign out, mirroring the attendance
-// logic used on the detail page. Edit/delete live on the detail page.
-import { useMemo } from "react";
+// One card in the events grid. The whole card navigates to the event detail
+// page via a stretched overlay link - the Sign in / Sign out buttons are
+// SIBLINGS of the link, not children, because interactive content inside an
+// anchor is invalid HTML and hostile to keyboard and screen-reader users.
+// Button state comes from the attendance fields embedded in the events list
+// response (see useAttendanceActions) - no per-card fetching.
 import { Link, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
-import { useGetUserEventAttendance } from "@/hooks/useAttendance";
-import { useAuth } from "@/hooks/useAuth";
-import { getCurrentSession } from "@/utils/getCurrentSession";
+import { useAttendanceActions } from "@/hooks/useAttendanceActions";
 import { dotsLight } from "@/components/landing/texture";
 import { PixelGlyph } from "@/components/landing/PixelGlyph";
 import {
@@ -27,11 +27,8 @@ const glyphFor = (id) => {
 
 const EventListItem = ({ event }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
-  // Only USER-role principals are attendants: admins never see personal
-  // sign-in / sign-out controls.
-  const isAttendant = user?.role === "USER";
+  const { isAttendant, showSignIn, showSignOut, wasAutoCheckedOut } =
+    useAttendanceActions(event);
 
   const {
     id,
@@ -42,81 +39,22 @@ const EventListItem = ({ event }) => {
     endDate,
     startTime,
     endTime,
-    isRecurring,
   } = event;
-
-  // Fetch user's attendance for this event
-  const { data: userAttendanceData, isLoading: isLoadingAttendance } =
-    useGetUserEventAttendance(user?.id, id, {
-      limit: 100,
-    });
-
-  const userAttendances = userAttendanceData?.data || [];
-
-  // Determine the current session for recurring events
-  const currentSession = useMemo(() => {
-    if (isRecurring) {
-      return getCurrentSession(event);
-    }
-    return null;
-  }, [event, isRecurring]);
-
-  // Find attendance for the current session
-  const currentSessionAttendance = currentSession
-    ? userAttendances.find((att) => att.sessionId === currentSession.id)
-    : null;
-
-  // For non-recurring events, find the most recent attendance
-  const latestAttendance =
-    !isRecurring && userAttendances.length > 0
-      ? userAttendances.reduce((latest, current) => {
-          const latestTime = new Date(latest.checkInTime).getTime();
-          const currentTime = new Date(current.checkInTime).getTime();
-          return currentTime > latestTime ? current : latest;
-        }, userAttendances[0])
-      : null;
-
-  // Determine sign-in/sign-out status based on event type
-  let hasSignedIn, hasSignedOut, showSignInButton, showSignOutButton;
-
-  if (isRecurring && currentSession) {
-    // For recurring events: check current session attendance
-    hasSignedIn = currentSessionAttendance?.checkInTime;
-    hasSignedOut = currentSessionAttendance?.checkOutTime;
-
-    showSignInButton = !hasSignedIn;
-    showSignOutButton = hasSignedIn && !hasSignedOut;
-  } else if (!isRecurring) {
-    // For non-recurring events: check latest attendance
-    hasSignedIn = latestAttendance?.checkInTime;
-    hasSignedOut = latestAttendance?.checkOutTime;
-
-    // Only show sign-in if user has never signed in
-    showSignInButton = !hasSignedIn;
-    // Only show sign-out if user has signed in but hasn't signed out yet
-    showSignOutButton = hasSignedIn && !hasSignedOut;
-  } else {
-    // If recurring but no current session, show both buttons
-    showSignInButton = true;
-    showSignOutButton = true;
-  }
-
-  // Card-level buttons must not trigger the surrounding link.
-  const handleAction = (e, path) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(path);
-  };
 
   const status = getEventStatus(event);
   const dateRange = formatDateRange(startDate, endDate);
   const timeWindow = formatTimeWindow(startTime, endTime);
 
   return (
-    <Link
-      to={`/dashboard/events/${id}`}
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    >
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 focus-within:border-foreground/30">
+      {/* Stretched link: keeps the whole-card tap target (important on
+          phones) without nesting the buttons inside the anchor. */}
+      <Link
+        to={`/dashboard/events/${id}`}
+        aria-label={`View event: ${title}`}
+        className="absolute inset-0 z-[1] rounded-2xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      />
+
       {/* Cover */}
       <div className="aspect-video w-full overflow-hidden border-b border-border bg-muted">
         {coverImage ? (
@@ -159,27 +97,32 @@ const EventListItem = ({ event }) => {
           {timeWindow && <p className="truncate">{timeWindow}</p>}
         </div>
 
-        {/* Attendance actions (attendants only) */}
-        {isAttendant && (showSignInButton || showSignOutButton) && (
-          <div className="mt-auto flex flex-wrap gap-2 pt-4">
-            {showSignInButton && (
+        {/* Auto-checkout attribution: closed by the system, not the user */}
+        {isAttendant && wasAutoCheckedOut && (
+          <p className="mt-auto pt-4 font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+            Signed out by system
+          </p>
+        )}
+
+        {/* Attendance actions (attendants only) - above the overlay link */}
+        {isAttendant && (showSignIn || showSignOut) && (
+          <div className="relative z-[2] mt-auto flex flex-wrap gap-2 pt-4">
+            {showSignIn && (
               <Button
                 size="sm"
-                disabled={isLoadingAttendance}
-                onClick={(e) =>
-                  handleAction(e, `/dashboard/events/${id}/attendance-in`)
+                onClick={() =>
+                  navigate(`/dashboard/events/${id}/attendance-in`)
                 }
               >
                 Sign in
               </Button>
             )}
-            {showSignOutButton && (
+            {showSignOut && (
               <Button
                 variant="outline"
                 size="sm"
-                disabled={isLoadingAttendance}
-                onClick={(e) =>
-                  handleAction(e, `/dashboard/events/${id}/attendance-out`)
+                onClick={() =>
+                  navigate(`/dashboard/events/${id}/attendance-out`)
                 }
               >
                 Sign out
@@ -188,7 +131,7 @@ const EventListItem = ({ event }) => {
           </div>
         )}
       </div>
-    </Link>
+    </div>
   );
 };
 
@@ -203,6 +146,18 @@ EventListItem.propTypes = {
     startTime: PropTypes.string,
     endTime: PropTypes.string,
     isRecurring: PropTypes.bool,
+    currentSession: PropTypes.shape({
+      id: PropTypes.number,
+      startDate: PropTypes.string,
+      endDate: PropTypes.string,
+    }),
+    viewerAttendance: PropTypes.shape({
+      sessionId: PropTypes.number,
+      status: PropTypes.string,
+      checkInTime: PropTypes.string,
+      checkOutTime: PropTypes.string,
+      autoCheckedOut: PropTypes.bool,
+    }),
   }).isRequired,
 };
 

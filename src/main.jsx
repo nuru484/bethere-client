@@ -12,7 +12,34 @@ import { initSentry } from "./lib/sentry";
 // No-op unless VITE_SENTRY_DSN is set (lazy-loads the SDK when it is).
 initSentry();
 
-const client = new QueryClient();
+// Retry only what a retry can fix: 5xx and network-class failures. 4xx
+// answers (403 forbidden, 404 deleted record, 400 bad input) are final -
+// retrying them just triples server load and delays the error panel by
+// seconds of pointless backoff.
+const isRetryableError = (error) =>
+  (typeof error?.status === "number" && error.status >= 500) ||
+  error?.status === "FETCH_ERROR" ||
+  error?.status === "TIMEOUT_ERROR";
+
+// Global caching conventions, hoisted from what most hooks used to repeat
+// per-query: dashboards and lists tolerate 5 minutes of staleness, linger in
+// the cache for 30, and retry twice before erroring a panel. Focus refetches
+// are off - data here changes through explicit actions, and those mutations
+// invalidate exactly what they touched. Anything that also changes from
+// ANOTHER session - attendance rows, the moderation queue, the user/admin/
+// event directories, profiles - sets refetchOnWindowFocus: true back on
+// locally, and every override carries a comment explaining why.
+const client = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+      retry: (failureCount, error) =>
+        failureCount < 2 && isRetryableError(error),
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -49,7 +76,7 @@ createRoot(document.getElementById("root")).render(
                   },
                 },
                 loading: {
-                  duration: 10000 * 3,
+                  duration: 1000 * 30,
                 },
               }}
             />

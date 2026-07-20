@@ -12,6 +12,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import Pagination from "@/components/ui/Pagination";
+import { normalizeFilterValue } from "@/lib/filter-value";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,16 +54,19 @@ const EventList = ({
   headerActions,
 }) => {
   const [searchInput, setSearchInput] = useState(filters?.search || "");
+  const debouncedSearch = useDebounce(searchInput, 500);
 
+  // Normalize both sides: an empty box is "" while an absent URL filter is
+  // undefined, and comparing those raw made this fire 500ms after every mount,
+  // which reset the list to page 1 (see src/lib/filter-value.js).
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchInput !== filters?.search) {
-        onFiltersChange({ search: searchInput || undefined });
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchInput, filters?.search, onFiltersChange]);
+    if (
+      normalizeFilterValue(debouncedSearch) !==
+      normalizeFilterValue(filters?.search)
+    ) {
+      onFiltersChange({ search: debouncedSearch || undefined });
+    }
+  }, [debouncedSearch, filters?.search, onFiltersChange]);
 
   const handleClearFilters = () => {
     setSearchInput("");

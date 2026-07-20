@@ -1,4 +1,4 @@
-// src/utils/extractApiError.js
+// src/utils/extract-api-error-message.js
 
 export const extractApiErrorMessage = (error) => {
   if (!error) {

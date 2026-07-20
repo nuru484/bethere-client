@@ -43,4 +43,12 @@ export default [
       'react/prop-types': 'off',
     },
   },
+  {
+    // Node-run build/config scripts (vite config, SEO generator): process
+    // and friends are legitimate here.
+    files: ['vite.config.js', 'scripts/**'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ]

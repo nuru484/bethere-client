@@ -41,6 +41,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useDeleteUser } from "@/hooks/useUsers";
 import { useGetEvents } from "@/hooks/useEvent";
 import { useDeleteFaceScan } from "@/hooks/useFaceScanApi";
+import { useDebounce } from "@/hooks/useDebounce";
 import PropTypes from "prop-types";
 
 export function UserActionsDropdown({ user }) {
@@ -54,12 +55,18 @@ export function UserActionsDropdown({ user }) {
   const deleteUserMutation = useDeleteUser();
   const deleteFaceScanMutation = useDeleteFaceScan();
 
-  // Fetch events with search
-  const { data: eventsData, isLoading: isEventsLoading } = useGetEvents({
-    page: 1,
-    limit: 50,
-    search: searchTerm,
-  });
+  // This dropdown is mounted for EVERY row of the users table, so the events
+  // query only runs once the dialog is actually open, and the search is
+  // debounced instead of refetching per keystroke.
+  const debouncedSearchTerm = useDebounce(searchTerm, 400);
+  const { data: eventsData, isLoading: isEventsLoading } = useGetEvents(
+    {
+      page: 1,
+      limit: 50,
+      search: debouncedSearchTerm || undefined,
+    },
+    { enabled: eventSelectionOpen }
+  );
 
   const handleDeleteUser = async () => {
     const toastId = toast.loading("Deleting user...");

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useUpdateEvent, useGetEvent } from "@/hooks/useEvent";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { eventValidationSchema } from "@/validation/eventValidation";
+import { buildEventPayload } from "@/components/event/event-payload";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,19 +64,8 @@ const UpdateEventPage = () => {
   });
 
   const handleSubmit = (data) => {
-    const transformedData = {
-      ...data,
-      startDate: new Date(data.startDate).toISOString(),
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
-      ...(data.isRecurring &&
-        data.recurrenceInterval && {
-          recurrenceInterval: data.recurrenceInterval,
-        }),
-      ...(data.durationDays && { durationDays: data.durationDays }),
-    };
-
     updateEvent(
-      { eventId, data: transformedData },
+      { eventId, data: buildEventPayload(data) },
       {
         onSuccess: (response) => {
           toast.success(response.message || "Event updated successfully!");
@@ -150,6 +140,7 @@ const UpdateEventPage = () => {
           onSubmit={handleSubmit}
           isLoading={isUpdating}
           mode="update"
+          cancelPath={`/dashboard/events/${eventId}`}
           initialCoverImage={eventData?.data?.coverImage || null}
         />
       )}

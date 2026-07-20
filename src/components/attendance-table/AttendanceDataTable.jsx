@@ -64,14 +64,11 @@ TwoLineSkeleton.propTypes = {
 };
 
 // Skeleton row whose cell count matches the column set for the context.
-const buildSkeletonRenderer = (context, isRecurring) =>
+const buildSkeletonRenderer = (context) =>
   function renderSkeletonCells() {
     if (context === "user") {
       return (
         <>
-          <TableCell>
-            <Skeleton className="h-4 w-4" />
-          </TableCell>
           <TableCell>
             <div className="space-y-2">
               <Skeleton className="h-4 w-full max-w-[200px]" />
@@ -98,9 +95,6 @@ const buildSkeletonRenderer = (context, isRecurring) =>
       return (
         <>
           <TableCell>
-            <Skeleton className="h-4 w-4" />
-          </TableCell>
-          <TableCell>
             <div className="flex items-center gap-3">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="space-y-2">
@@ -125,11 +119,6 @@ const buildSkeletonRenderer = (context, isRecurring) =>
     // userEvent
     return (
       <>
-        {isRecurring && (
-          <TableCell>
-            <Skeleton className="h-4 w-4" />
-          </TableCell>
-        )}
         <TableCell>
           <Skeleton className="h-6 w-16 rounded-full" />
         </TableCell>
@@ -148,6 +137,7 @@ export function AttendanceDataTable({
   context,
   data,
   loading = false,
+  fetching = false,
   totalCount = 0,
   page = 1,
   pageSize = 10,
@@ -157,14 +147,11 @@ export function AttendanceDataTable({
   onFiltersChange,
   isRecurring = true,
 }) {
-  const columns = useMemo(
-    () => createAttendanceColumns({ context, isRecurring }),
-    [context, isRecurring]
-  );
+  const columns = useMemo(() => createAttendanceColumns({ context }), [context]);
 
   const renderSkeletonCells = useMemo(
-    () => buildSkeletonRenderer(context, isRecurring),
-    [context, isRecurring]
+    () => buildSkeletonRenderer(context),
+    [context]
   );
 
   const config = CONTEXT_CONFIG[context];
@@ -195,6 +182,7 @@ export function AttendanceDataTable({
       columns={columns}
       data={data}
       loading={loading}
+      fetching={fetching}
       totalCount={totalCount}
       page={page}
       pageSize={pageSize}
@@ -232,6 +220,7 @@ AttendanceDataTable.propTypes = {
   context: PropTypes.oneOf(["user", "event", "userEvent"]).isRequired,
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
+  fetching: PropTypes.bool,
   totalCount: PropTypes.number,
   page: PropTypes.number,
   pageSize: PropTypes.number,

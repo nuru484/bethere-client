@@ -45,7 +45,7 @@ export const getEventAttendance = async (eventId, params = {}) => {
 export const getUserEventAttendance = async (userId, eventId, params = {}) => {
   const queryString = buildSearchParams(params);
 
-  const url = `attendance/users/${userId}/events/${eventId}${
+  const url = `/attendance/users/${userId}/events/${eventId}${
     queryString ? `?${queryString}` : ""
   }`;
 

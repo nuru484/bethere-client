@@ -11,11 +11,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
+import { normalizeFilterValue } from "@/lib/filter-value";
 import PropTypes from "prop-types";
 
 export function TableFilters({
   table,
-  filters,
+  filters = { search: "" },
   onFiltersChange,
   totalCount,
   onDeleteSelected,
@@ -26,8 +27,14 @@ export function TableFilters({
 
   const debouncedSearch = useDebounce(searchInput, 500);
 
+  // Normalize both sides: an empty box is "" while an absent URL filter is
+  // undefined, and comparing those raw made this fire on every mount, which
+  // reset the list to page 1 (see src/lib/filter-value.js).
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
+    if (
+      normalizeFilterValue(debouncedSearch) !==
+      normalizeFilterValue(filters.search)
+    ) {
       onFiltersChange({ search: debouncedSearch || undefined });
     }
   }, [debouncedSearch, filters.search, onFiltersChange]);
@@ -167,10 +174,4 @@ TableFilters.propTypes = {
   onFiltersChange: PropTypes.func.isRequired,
   totalCount: PropTypes.number.isRequired,
   onDeleteSelected: PropTypes.func.isRequired,
-};
-
-TableFilters.defaultProps = {
-  filters: {
-    search: "",
-  },
 };

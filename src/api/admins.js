@@ -25,14 +25,10 @@ export const addAdmin = async (adminData) =>
 export const updateAdminProfile = async (adminId, adminData) =>
   await api.put(`/admins/${adminId}`, adminData);
 
-// Update an admin's profile picture (multipart field "profilePicture")
+// Update an admin's profile picture (multipart field "profilePicture"). The
+// FormData goes through untouched so the browser sets the multipart boundary.
 export const updateAdminProfilePicture = async (adminId, formData) =>
-  await api.patch(`/admins/${adminId}/profile-picture`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    transformRequest: (data) => data,
-  });
+  await api.patch(`/admins/${adminId}/profile-picture`, formData);
 
 // Delete an admin
 export const deleteAdmin = async (adminId) =>

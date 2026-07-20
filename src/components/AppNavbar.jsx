@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/hooks/useAuth";
 import UserProfileDropdown from "@/components/users/user-profile/UserProfileDropdown";
 import {
@@ -168,29 +168,27 @@ export function AppNavbar() {
                 }
 
                 const isActive = isActiveTab(item);
+                // Styled NavLink directly: a button nested inside an anchor
+                // is invalid HTML (double tab stop, confusing SR announce).
                 return (
                   <NavLink
                     key={item.title}
                     to={
                       item.url === "" ? "/dashboard" : `/dashboard/${item.url}`
                     }
-                    className="group"
+                    className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative whitespace-nowrap focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                      isActive
+                        ? "bg-secondary text-foreground"
+                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    }`}
                   >
-                    <button
-                      className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
-                        isActive
-                          ? "bg-secondary text-foreground"
-                          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                      }`}
-                    >
-                      <span>{item.title}</span>
-                      {isActive && (
-                        <motion.span
-                          layoutId="activeTab"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full"
-                        />
-                      )}
-                    </button>
+                    <span>{item.title}</span>
+                    {isActive && (
+                      <motion.span
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full"
+                      />
+                    )}
                   </NavLink>
                 );
               })}
@@ -208,7 +206,10 @@ export function AppNavbar() {
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMenuOpen}
+                aria-controls="mobile-menu"
+                className="inline-flex items-center justify-center p-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -233,6 +234,7 @@ export function AppNavbar() {
       <AnimatePresence>
         {isMobileView && isMenuOpen && (
           <motion.div
+            id="mobile-menu"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -259,16 +261,13 @@ export function AppNavbar() {
                             key={child.title}
                             to={`/dashboard/${child.url}`}
                             onClick={handleNavClick}
+                            className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
+                              isActive
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            }`}
                           >
-                            <button
-                              className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                                isActive
-                                  ? "bg-primary text-primary-foreground"
-                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                              }`}
-                            >
-                              <span>{child.title}</span>
-                            </button>
+                            <span>{child.title}</span>
                           </NavLink>
                         );
                       })}
@@ -291,16 +290,13 @@ export function AppNavbar() {
                           : `/dashboard/${item.url}`
                       }
                       onClick={handleNavClick}
+                      className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }`}
                     >
-                      <button
-                        className={`w-full flex items-center px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                          isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }`}
-                      >
-                        <span>{item.title}</span>
-                      </button>
+                      <span>{item.title}</span>
                     </NavLink>
                   </motion.div>
                 );

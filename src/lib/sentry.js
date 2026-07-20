@@ -16,6 +16,13 @@ export const initSentry = () => {
       Sentry.init({
         dsn,
         environment: import.meta.env.MODE,
+        // Release id injected at build time by @sentry/vite-plugin (the
+        // commit SHA on Vercel). Ties events to the deploy that produced
+        // them and lets Sentry resolve the uploaded source maps.
+        release:
+          typeof window !== "undefined" && window.SENTRY_RELEASE?.id
+            ? window.SENTRY_RELEASE.id
+            : undefined,
       });
       return Sentry;
     })

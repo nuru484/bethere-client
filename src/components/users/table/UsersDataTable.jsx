@@ -42,6 +42,7 @@ const renderSkeletonCells = () => (
 export function UsersDataTable({
   data,
   loading = false,
+  fetching = false,
   totalCount = 0,
   page = 1,
   pageSize = 10,
@@ -126,6 +127,7 @@ export function UsersDataTable({
         columns={columns}
         data={data}
         loading={loading}
+        fetching={fetching}
         totalCount={totalCount}
         page={page}
         pageSize={pageSize}
@@ -173,6 +175,7 @@ export function UsersDataTable({
 UsersDataTable.propTypes = {
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
+  fetching: PropTypes.bool,
   totalCount: PropTypes.number,
   page: PropTypes.number,
   pageSize: PropTypes.number,

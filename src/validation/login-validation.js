@@ -3,8 +3,10 @@ import { z } from 'zod';
 
 export const loginFormSchema = z.object({
   email: z.email('Email must be a valid email address'),
+  // Presence-only on purpose: composition rules (passwordRule) apply where
+  // passwords are SET; enforcing them at login would lock out legacy passwords.
   password: z
     .string()
-    .min(4, 'Password must be at least 4 characters')
+    .min(1, 'Password is required')
     .max(255, 'Password must be 255 characters or less'),
 });

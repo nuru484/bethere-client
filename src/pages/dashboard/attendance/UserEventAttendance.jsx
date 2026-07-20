@@ -1,5 +1,4 @@
 // src/pages/dashboard/UserEventAttendancePage.jsx
-import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,21 +7,20 @@ import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { useGetUserEventAttendance } from "@/hooks/useAttendance";
+import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+
+// Module-level constant: usePaginatedListState needs a stable identity.
+const FILTER_KEYS = ["status", "sessionId", "startDate", "endDate"];
 
 const UserEventAttendancePage = () => {
   const { userId, eventId } = useParams();
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
-  // Filter states
-  const [filters, setFilters] = useState({
-    status: undefined,
-    sessionId: undefined,
-    startDate: undefined,
-    endDate: undefined,
-  });
+  // URL-backed like the sibling list pages: refresh, back/forward and shared
+  // links keep the page and filters (this page previously used useState).
+  const { page, pageSize, filters, setPage, setPageSize, setFilters } =
+    usePaginatedListState({ filterKeys: FILTER_KEYS });
 
   const queryParams = {
     page,
@@ -35,6 +33,7 @@ const UserEventAttendancePage = () => {
   const {
     data: attendanceData,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -64,21 +63,6 @@ const UserEventAttendancePage = () => {
 
   const attendanceRate =
     totalCount > 0 ? ((sessionsAttended / totalCount) * 100).toFixed(1) : 0;
-
-  const handlePageChange = (newPage) => setPage(newPage);
-
-  const handlePageSizeChange = (newPageSize) => {
-    setPageSize(newPageSize);
-    setPage(1);
-  };
-
-  const handleFiltersChange = useCallback((newFilters) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-    }));
-    setPage(1);
-  }, []);
 
   if (isLoading && !attendanceRecords) {
     return <DataTableSkeleton />;
@@ -220,13 +204,14 @@ const UserEventAttendancePage = () => {
             context="userEvent"
             data={attendanceRecords || []}
             loading={isLoading}
+            fetching={isFetching && !isLoading}
             totalCount={totalCount}
             page={page}
             pageSize={pageSize}
             filters={filters}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onFiltersChange={handleFiltersChange}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            onFiltersChange={setFilters}
             isRecurring={isRecurring}
           />
         </div>

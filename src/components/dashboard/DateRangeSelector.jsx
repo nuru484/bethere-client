@@ -6,7 +6,15 @@
 // onDateChange, same contract the dashboard queries already expect.
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
+import {
+  format,
+  subDays,
+  addDays,
+  startOfMonth,
+  endOfMonth,
+  parseISO,
+  differenceInCalendarDays,
+} from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -44,6 +52,15 @@ const getPresetRange = (preset) => {
   }
 };
 
+// The server rejects a dashboard range longer than this with a 400, which the
+// panels render as a full-panel error. Constrain the picker instead so the UI
+// cannot build a request the API will refuse.
+const MAX_RANGE_DAYS = 400;
+
+// The date inputs hold "yyyy-MM-dd"; parseISO reads that as LOCAL midnight,
+// unlike new Date("yyyy-MM-dd") which is UTC and shifts a day west of GMT.
+const fromDay = (value) => (value ? parseISO(value) : null);
+
 const dateInputClassName =
   "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 sm:w-36";
 
@@ -63,7 +80,24 @@ const DateRangeSelector = ({ onDateChange, isLoading }) => {
     onDateChange(range);
   };
 
+  // The min/max attributes below keep the native picker inside the window, but
+  // a typed-in or keyboard-entered date can still land outside it, so the same
+  // limit is enforced here (Apply stays disabled) with an inline explanation.
+  const rangeDays =
+    startDate && endDate
+      ? differenceInCalendarDays(fromDay(endDate), fromDay(startDate))
+      : 0;
+  const isRangeTooLong = rangeDays > MAX_RANGE_DAYS;
+
+  const earliestStart = endDate
+    ? toDay(subDays(fromDay(endDate), MAX_RANGE_DAYS))
+    : undefined;
+  const latestEnd = startDate
+    ? toDay(addDays(fromDay(startDate), MAX_RANGE_DAYS))
+    : undefined;
+
   const handleApply = () => {
+    if (isRangeTooLong) return;
     onDateChange({ startDate, endDate });
   };
 
@@ -114,6 +148,7 @@ const DateRangeSelector = ({ onDateChange, isLoading }) => {
               id="dashboard-period-from"
               type="date"
               value={startDate}
+              min={earliestStart}
               max={endDate || undefined}
               onChange={(e) => setStartDate(e.target.value)}
               className={dateInputClassName}
@@ -132,6 +167,7 @@ const DateRangeSelector = ({ onDateChange, isLoading }) => {
               type="date"
               value={endDate}
               min={startDate || undefined}
+              max={latestEnd}
               onChange={(e) => setEndDate(e.target.value)}
               className={dateInputClassName}
               disabled={isLoading}
@@ -141,10 +177,18 @@ const DateRangeSelector = ({ onDateChange, isLoading }) => {
             size="sm"
             className="h-9"
             onClick={handleApply}
-            disabled={isLoading || !startDate || !endDate}
+            disabled={isLoading || !startDate || !endDate || isRangeTooLong}
           >
             Apply
           </Button>
+          {isRangeTooLong && (
+            <p
+              role="alert"
+              className="w-full text-xs leading-snug text-destructive"
+            >
+              Pick a range of {MAX_RANGE_DAYS} days or fewer.
+            </p>
+          )}
         </>
       )}
     </div>

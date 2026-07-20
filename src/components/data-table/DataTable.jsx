@@ -28,6 +28,7 @@ export function DataTable({
   columns,
   data,
   loading = false,
+  fetching = false,
   totalCount = 0,
   page = 1,
   pageSize = 10,
@@ -92,8 +93,15 @@ export function DataTable({
     <div className="w-full max-w-full space-y-6">
       {renderFilters && renderFilters(table)}
 
-      {/* Table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      {/* Table. With keepPreviousData a page change keeps `loading` false
+          and re-renders the previous rows; the opacity dip is the "something
+          is happening" cue until the new page lands. */}
+      <div
+        aria-busy={fetching || loading}
+        className={`rounded-2xl border border-border bg-card overflow-hidden transition-opacity ${
+          fetching && !loading ? "opacity-60 pointer-events-none" : ""
+        }`}
+      >
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
@@ -181,6 +189,7 @@ DataTable.propTypes = {
   columns: PropTypes.arrayOf(PropTypes.object).isRequired,
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
+  fetching: PropTypes.bool,
   totalCount: PropTypes.number,
   page: PropTypes.number,
   pageSize: PropTypes.number,

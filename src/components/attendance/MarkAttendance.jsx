@@ -65,6 +65,12 @@ export default function MarkAttendance({ type = "in" }) {
   // the backend rejects these endpoints for them, so send them back.
   const isAdmin = user?.role === "ADMIN";
 
+  // The route param is a string and can be anything the user typed. Strict
+  // digits-only: parseInt would accept "12abc" as 12 and quietly mark
+  // attendance against event 12.
+  const hasValidEventId = /^\d+$/.test(eventId ?? "");
+  const numericEventId = hasValidEventId ? Number.parseInt(eventId, 10) : NaN;
+
   // Codes rotate and challenges are single-use, so always restart clean.
   const resetToScan = useCallback(() => {
     setStage(STAGE.SCAN);
@@ -84,7 +90,7 @@ export default function MarkAttendance({ type = "in" }) {
       });
 
       requestChallenge(
-        { eventId: parseInt(eventId), venueCode: scannedCode, mode },
+        { eventId: numericEventId, venueCode: scannedCode, mode },
         {
           onSuccess: (response) => {
             const data = response?.data || {};
@@ -105,7 +111,7 @@ export default function MarkAttendance({ type = "in" }) {
         }
       );
     },
-    [requestChallenge, eventId, mode, resetToScan]
+    [requestChallenge, numericEventId, mode, resetToScan]
   );
 
   // Stage 4: upload the captured frames. POST to check in, PUT to check out -
@@ -113,7 +119,13 @@ export default function MarkAttendance({ type = "in" }) {
   const handleCapture = useCallback(
     (blobs) => {
       if (!blobs || blobs.length < 6) {
-        toast.error("Could not capture enough frames. Please try again.");
+        // The challenge is single-use and keeps ageing, so never leave the user
+        // parked on the capture screen holding it - start over from the scan.
+        const errMsg =
+          "Could not capture enough frames. Please scan the venue code again.";
+        toast.error(errMsg);
+        setStatusMessage({ message: errMsg, type: "error" });
+        resetToScan();
         return;
       }
       if (!challengeToken || !venueCode) {
@@ -133,7 +145,7 @@ export default function MarkAttendance({ type = "in" }) {
       const toastId = toast.loading("Verifying your face...");
 
       submit(
-        { eventId: parseInt(eventId), formData },
+        { eventId: numericEventId, formData },
         {
           onSuccess: (response) => {
             const msg =
@@ -167,6 +179,7 @@ export default function MarkAttendance({ type = "in" }) {
       isCheckIn,
       createAttendance,
       updateAttendance,
+      numericEventId,
       eventId,
       navigate,
       resetToScan,
@@ -177,10 +190,17 @@ export default function MarkAttendance({ type = "in" }) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Malformed URL (e.g. /dashboard/events/abc/attendance-in): nothing here
+  // can work without a real event id, so bail to the events list.
+  if (!hasValidEventId) {
+    return <Navigate to="/dashboard/events" replace />;
+  }
+
   const statusClasses = {
     loading: "bg-card border-border text-muted-foreground",
     info: "bg-card border-border text-muted-foreground",
-    success: "bg-[#dcf5e9] border-[#1a7f53]/20 text-[#1a7f53]",
+    success:
+      "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400",
     error: "bg-destructive/10 border-destructive/20 text-destructive",
   };
 
@@ -213,9 +233,12 @@ export default function MarkAttendance({ type = "in" }) {
           </Button>
         </div>
 
-        {/* Status message */}
+        {/* Status message: narrated for screen-reader users - this is the
+            flow where a blind user most needs the state changes read out. */}
         {statusMessage && (
           <div
+            role="status"
+            aria-live="polite"
             className={`rounded-xl border p-4 text-center font-medium ${
               statusClasses[statusMessage.type] || statusClasses.info
             }`}
@@ -260,7 +283,7 @@ export default function MarkAttendance({ type = "in" }) {
             <div className="flex justify-center">
               <QrScanner
                 key={scanKey}
-                eventId={parseInt(eventId)}
+                eventId={numericEventId}
                 onScan={handleScan}
                 disabled={!user?.id || isRequestingChallenge}
               />

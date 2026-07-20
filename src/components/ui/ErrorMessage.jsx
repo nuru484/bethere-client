@@ -25,7 +25,7 @@ const ErrorMessage = ({
     >
       {/* Icon */}
       <div className="relative mb-5 sm:mb-6">
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-border">
+        <div className="bg-background p-3 sm:p-4 rounded-2xl border border-border">
           <AlertCircle
             className="w-7 h-7 sm:w-8 sm:h-8 text-muted-foreground"
             strokeWidth={1.5}
@@ -61,7 +61,7 @@ const ErrorMessage = ({
         {onRetry && (
           <button
             onClick={onRetry}
-            className="group hover:cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 rounded-full bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-tight hover:bg-black transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
+            className="group hover:cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 rounded-full bg-primary text-primary-foreground font-mono text-xs font-bold uppercase tracking-tight hover:bg-black dark:hover:bg-primary/80 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-ring whitespace-nowrap"
           >
             <RefreshCw
               className="w-4 h-4 transition-transform group-hover:rotate-180 duration-300"

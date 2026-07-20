@@ -3,70 +3,27 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useAttendanceActions } from "@/hooks/useAttendanceActions";
 import PropTypes from "prop-types";
 import { useState } from "react";
 
-const EventActionsSidebar = ({
-  event,
-  user,
-  onDelete,
-  isDeleting,
-  userAttendances = [],
-  isLoadingAttendance,
-  currentSession,
-}) => {
+const EventActionsSidebar = ({ event, user, onDelete, isDeleting }) => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";
-  // Only USER-role principals are attendants: admins never see personal
-  // sign-in / sign-out controls.
-  const isAttendant = user?.role === "USER";
+  // Sign in / Sign out state comes from the attendance fields embedded in
+  // the event detail response - shared with EventListItem via the hook.
+  const {
+    isAttendant,
+    showSignIn: showSignInButton,
+    showSignOut: showSignOutButton,
+    wasAutoCheckedOut,
+  } = useAttendanceActions(event);
   // Signing in burns a rotating venue code and a single-use challenge before the
   // server can reject an un-enrolled face (and files an anomaly for it), so send
   // them to enroll instead. Only an explicit false means "not enrolled".
   const needsFaceScan = isAttendant && user?.hasFaceScan === false;
-  const isRecurringEvent = event?.isRecurring;
-
-  // Find attendance for the current session
-  const currentSessionAttendance = currentSession
-    ? userAttendances.find((att) => att.sessionId === currentSession.id)
-    : null;
-
-  // For non-recurring events, find the most recent attendance
-  const latestAttendance =
-    !isRecurringEvent && userAttendances.length > 0
-      ? userAttendances.reduce((latest, current) => {
-          const latestTime = new Date(latest.checkInTime).getTime();
-          const currentTime = new Date(current.checkInTime).getTime();
-          return currentTime > latestTime ? current : latest;
-        }, userAttendances[0])
-      : null;
-
-  // Determine sign-in/sign-out status based on event type
-  let hasSignedIn, hasSignedOut, showSignInButton, showSignOutButton;
-
-  if (isRecurringEvent && currentSession) {
-    // For recurring events: check current session attendance
-    hasSignedIn = currentSessionAttendance?.checkInTime;
-    hasSignedOut = currentSessionAttendance?.checkOutTime;
-
-    showSignInButton = !hasSignedIn;
-    showSignOutButton = hasSignedIn && !hasSignedOut;
-  } else if (!isRecurringEvent) {
-    // For non-recurring events: check latest attendance
-    hasSignedIn = latestAttendance?.checkInTime;
-    hasSignedOut = latestAttendance?.checkOutTime;
-
-    // Only show sign-in if user has never signed in
-    showSignInButton = !hasSignedIn;
-    // Only show sign-out if user has signed in but hasn't signed out yet
-    showSignOutButton = hasSignedIn && !hasSignedOut;
-  } else {
-    // If recurring but no current session, show both buttons
-    showSignInButton = true;
-    showSignOutButton = true;
-  }
 
   const handleDelete = () => {
     onDelete();
@@ -113,11 +70,7 @@ const EventActionsSidebar = ({
         <CardContent className="space-y-3">
           {/* Sign In Button - enrolled attendants only */}
           {isAttendant && showSignInButton && !needsFaceScan && (
-            <Button
-              className="w-full justify-start"
-              onClick={handleSignIn}
-              disabled={isLoadingAttendance}
-            >
+            <Button className="w-full justify-start" onClick={handleSignIn}>
               Sign In to Event
             </Button>
           )}
@@ -147,10 +100,17 @@ const EventActionsSidebar = ({
               variant="outline"
               className="w-full justify-start"
               onClick={handleSignOut}
-              disabled={isLoadingAttendance}
             >
               Sign Out of Event
             </Button>
+          )}
+
+          {/* Auto-checkout attribution: the session ended before the user
+              signed out and the system closed the record for them. */}
+          {isAttendant && wasAutoCheckedOut && (
+            <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs leading-snug text-muted-foreground">
+              You were signed out by the system when the session ended.
+            </p>
           )}
 
           {/* View My Attendance: a user's own record for THIS event. Admins
@@ -226,6 +186,18 @@ EventActionsSidebar.propTypes = {
   event: PropTypes.shape({
     id: PropTypes.number.isRequired,
     isRecurring: PropTypes.bool,
+    currentSession: PropTypes.shape({
+      id: PropTypes.number,
+      startDate: PropTypes.string,
+      endDate: PropTypes.string,
+    }),
+    viewerAttendance: PropTypes.shape({
+      sessionId: PropTypes.number,
+      status: PropTypes.string,
+      checkInTime: PropTypes.string,
+      checkOutTime: PropTypes.string,
+      autoCheckedOut: PropTypes.bool,
+    }),
   }).isRequired,
   user: PropTypes.shape({
     id: PropTypes.number.isRequired,
@@ -234,24 +206,6 @@ EventActionsSidebar.propTypes = {
   }).isRequired,
   onDelete: PropTypes.func.isRequired,
   isDeleting: PropTypes.bool,
-  userAttendances: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number,
-      checkInTime: PropTypes.string,
-      checkOutTime: PropTypes.string,
-      status: PropTypes.string,
-      sessionId: PropTypes.number,
-    })
-  ),
-  isLoadingAttendance: PropTypes.bool,
-  currentSession: PropTypes.shape({
-    id: PropTypes.number,
-    eventId: PropTypes.number,
-    startDate: PropTypes.string,
-    endDate: PropTypes.string,
-    startTime: PropTypes.string,
-    endTime: PropTypes.string,
-  }),
 };
 
 export default EventActionsSidebar;

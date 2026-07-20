@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateEvent } from "@/hooks/useEvent";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { eventValidationSchema } from "@/validation/eventValidation";
+import { buildEventPayload } from "@/components/event/event-payload";
 
 const CreateEventPage = () => {
   const navigate = useNavigate();
@@ -42,18 +43,7 @@ const CreateEventPage = () => {
   });
 
   const handleSubmit = (data) => {
-    const transformedData = {
-      ...data,
-      startDate: new Date(data.startDate).toISOString(),
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
-      ...(data.isRecurring &&
-        data.recurrenceInterval && {
-          recurrenceInterval: data.recurrenceInterval,
-        }),
-      ...(data.durationDays && { durationDays: data.durationDays }),
-    };
-
-    createEvent(transformedData, {
+    createEvent(buildEventPayload(data), {
       onSuccess: (response) => {
         toast.success(response.message || "Event created successfully!");
         navigate("/dashboard/events");

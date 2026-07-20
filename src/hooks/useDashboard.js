@@ -7,64 +7,41 @@ import {
   getRecentEvents,
   getUserAttendanceData,
 } from "@/api/dashboard";
+import { queryKeys } from "@/api/query-keys";
 
 export const useGetAdminDashboardTotals = () => {
   return useQuery({
-    queryKey: ["adminDashboardTotals"],
+    queryKey: queryKeys.dashboard.adminTotals,
     queryFn: getAdminDashboardTotals,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
   });
 };
 
 export const useGetAllUsersAttendanceData = (params = {}) => {
-  const queryKey = ["allUsersAttendanceData", params];
-
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.dashboard.allUsersAttendanceData(params),
     queryFn: () => getAllUsersAttendanceData(params),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 };
 
 export const useGetUserDashboardTotals = () => {
   return useQuery({
-    queryKey: ["userDashboardTotals"],
+    queryKey: queryKeys.dashboard.userTotals,
     queryFn: getUserDashboardTotals,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
   });
 };
 
 export const useGetRecentEvents = () => {
   return useQuery({
-    queryKey: ["recentEvents"],
+    queryKey: queryKeys.dashboard.recentEvents,
     queryFn: getRecentEvents,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
   });
 };
 
 export const useGetUserAttendanceData = (params = {}) => {
-  const queryKey = ["usersAttendanceData", params];
-
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.dashboard.userAttendanceData(params),
     queryFn: () => getUserAttendanceData(params),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 };

@@ -5,17 +5,21 @@
 // we ask the server who we are via GET /auth/me; the cookie decides. A 401
 // (no/invalid session) leaves us logged out.
 import { createContext, useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import PropTypes from "prop-types";
 import { getMe, logoutApi } from "@/api/auth";
+// Non-sensitive presence flag: tells the axios interceptor whether a session
+// believed it was signed in, so its endSession() only hard-redirects sessions
+// that actually were (rendering never reads it - ProtectedRoutes gates on
+// isLoading/user alone). The server cookie remains the source of truth - this
+// is only a hint, always confirmed by getMe(). Shared with the axios
+// interceptor via src/lib/auth-flag.js.
+import { AUTHED_FLAG } from "@/lib/auth-flag";
 
 const AuthContext = createContext();
 
-// Non-sensitive presence flag: lets us skip the logged-out flash on reload
-// without ever storing user fields. The server cookie remains the source of
-// truth - this is only a hint, always confirmed by getMe().
-const AUTHED_FLAG = "bethere.authed";
-
 export const AuthProvider = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -73,6 +77,21 @@ export const AuthProvider = ({ children }) => {
     // never keep the user logged in on this device.
     logoutApi().catch(() => {});
 
+    // Everything below is synchronous ON PURPOSE. Deferring the clear() into
+    // logoutApi()'s continuation meant that with the API unreachable the axios
+    // timeout (3 minutes, see src/api/index.js) could fire long after the user
+    // had signed back in - wiping the cache of the CURRENT principal.
+    //
+    // The React Query cache holds the outgoing principal's data; on a shared
+    // device the next login must not inherit it.
+    queryClient.clear();
+
+    // Order is load-bearing: removing AUTHED_FLAG BEFORE any query can 401
+    // means the interceptor's endSession() sees no flag and skips its hard
+    // window.location.assign("/login"). Clearing the cache first also leaves
+    // no mounted query to refire against the dying session. Flipping these
+    // around would let a refetch of the outgoing principal's data trigger a
+    // full-page navigation mid-logout.
     setUser(null);
     localStorage.removeItem(AUTHED_FLAG);
   };

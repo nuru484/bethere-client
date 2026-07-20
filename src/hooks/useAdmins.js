@@ -6,14 +6,17 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { getAdmins, addAdmin, deleteAdmin } from "@/api/admins";
+import { queryKeys } from "@/api/query-keys";
 
 // Get all admins with pagination
 export const useGetAllAdmins = (params = {}) => {
   return useQuery({
-    queryKey: ["admins", params],
+    queryKey: queryKeys.admins.list(params),
     queryFn: () => getAdmins(params),
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
+    // Focus refetch on (against the global default): admin staff are added and
+    // removed by other super-admins, and a stale roster here is a permissions
+    // question, not a cosmetic one.
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -25,7 +28,7 @@ export const useAddAdmin = () => {
   return useMutation({
     mutationFn: (adminData) => addAdmin(adminData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all });
     },
   });
 };
@@ -37,7 +40,7 @@ export const useDeleteAdmin = () => {
   return useMutation({
     mutationFn: (adminId) => deleteAdmin(adminId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admins.all });
     },
   });
 };

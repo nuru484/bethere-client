@@ -7,7 +7,7 @@ import {
 import LivenessCapture from "@/components/attendance/LivenessCapture";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { UserCircle, TriangleAlert } from "lucide-react";
+import { UserCircle, TriangleAlert, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Navigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,11 +19,18 @@ import { Button } from "@/components/ui/button";
 //  requesting -> waiting for the challenge
 //  capture    -> capture a face-frame burst and upload it; the server derives
 //                the face template from the frames
+//  enrolled   -> terminal: a template already exists and only an admin can
+//                reset it, so there is nothing to retry here
 const STAGE = {
   CONSENT: "consent",
   REQUESTING: "requesting",
   CAPTURE: "capture",
+  ENROLLED: "enrolled",
 };
+
+// The server refuses both enrollment steps with 409 once a template exists.
+// It carries no machine-readable code, so the status is the signal.
+const isAlreadyEnrolled = (error) => error?.status === 409;
 
 export default function AddUserFaceScan() {
   const { login, user } = useAuth();
@@ -32,7 +39,11 @@ export default function AddUserFaceScan() {
   // Biometric consent is required by the server: the enrollment upload must
   // carry consent, and nothing starts until it is ticked.
   const [consent, setConsent] = useState(false);
-  const [stage, setStage] = useState(STAGE.CONSENT);
+  // A bookmark or the back button can land an already-enrolled user here, so
+  // the terminal state is decided up front rather than only on a 409.
+  const [stage, setStage] = useState(() =>
+    user?.hasFaceScan === true ? STAGE.ENROLLED : STAGE.CONSENT
+  );
   const [challengeToken, setChallengeToken] = useState(null);
   const [actions, setActions] = useState([]);
   const [statusMessage, setStatusMessage] = useState(null);
@@ -61,6 +72,14 @@ export default function AddUserFaceScan() {
         setStage(STAGE.CAPTURE);
       },
       onError: (error) => {
+        // Retrying an already-enrolled user can never succeed: send them to
+        // the terminal state instead of looping them back to Continue.
+        if (isAlreadyEnrolled(error)) {
+          setStatusMessage(null);
+          setStage(STAGE.ENROLLED);
+          return;
+        }
+
         const { message } = extractApiErrorMessage(error);
         const errMsg = message || "Could not start face registration.";
         toast.error(errMsg);
@@ -73,7 +92,12 @@ export default function AddUserFaceScan() {
   const handleCapture = useCallback(
     (blobs) => {
       if (!blobs || blobs.length < 6) {
-        toast.error("Could not capture enough frames. Please try again.");
+        // Challenges are single-use and keep ageing, so drop straight back to
+        // the start instead of leaving the user holding a stale one.
+        const errMsg = "Could not capture enough frames. Please start again.";
+        toast.error(errMsg);
+        setStatusMessage({ message: errMsg, type: "error" });
+        resetToConsent();
         return;
       }
       if (!challengeToken) {
@@ -103,6 +127,14 @@ export default function AddUserFaceScan() {
           navigate(`/dashboard`);
         },
         onError: (error) => {
+          // The upload step 409s for the same reason the challenge does.
+          if (isAlreadyEnrolled(error)) {
+            toast.dismiss(toastId);
+            setStatusMessage(null);
+            setStage(STAGE.ENROLLED);
+            return;
+          }
+
           const { message } = extractApiErrorMessage(error);
           const errMsg = message || "Failed to register face.";
           toast.error(errMsg, { id: toastId });
@@ -123,7 +155,8 @@ export default function AddUserFaceScan() {
   }
 
   const statusClasses = {
-    success: "bg-[#dcf5e9] border-[#1a7f53]/20 text-[#1a7f53]",
+    success:
+      "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400",
     error: "bg-destructive/10 border-destructive/20 text-destructive",
   };
 
@@ -171,13 +204,18 @@ export default function AddUserFaceScan() {
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Side Card (Hidden on Mobile) */}
-          <div className="hidden lg:block">{notice}</div>
+          {/* Left Column - Side Card (Hidden on Mobile). The "one scan only"
+              warning is redundant once the scan exists, so it drops out. */}
+          <div className="hidden lg:block">
+            {stage !== STAGE.ENROLLED && notice}
+          </div>
 
           {/* Center Column - Consent then capture */}
           <div className="lg:col-span-2 space-y-6">
             {/* Mobile Card - Shown only on small screens */}
-            <div className="lg:hidden">{notice}</div>
+            <div className="lg:hidden">
+              {stage !== STAGE.ENROLLED && notice}
+            </div>
 
             {statusMessage && (
               <div
@@ -191,7 +229,35 @@ export default function AddUserFaceScan() {
               </div>
             )}
 
-            {stage === STAGE.CAPTURE ? (
+            {stage === STAGE.ENROLLED ? (
+              <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck
+                    className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-700 dark:text-emerald-400"
+                    strokeWidth={1.5}
+                  />
+                  <div className="min-w-0">
+                    <h2 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
+                      Face Already Registered
+                    </h2>
+                    <p className="mt-2 text-sm leading-snug text-muted-foreground">
+                      Your face scan is already on file, so there is nothing to
+                      register here. You can use it to check in and out right
+                      away. To replace it, ask an administrator to reset your
+                      face scan first.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => navigate("/dashboard")}
+                  className="mt-5 w-full rounded-full py-6 font-mono text-sm font-bold uppercase tracking-tight sm:w-auto sm:px-8"
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
+            ) : stage === STAGE.CAPTURE ? (
               <div className="flex justify-center">
                 <LivenessCapture
                   actions={actions}

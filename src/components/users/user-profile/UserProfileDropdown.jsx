@@ -48,16 +48,25 @@ const UserProfileDropdown = () => {
   return (
     <>
       <DropdownMenu>
+        {/* Real button trigger: Radix's asChild does not add tabIndex, so a
+            bare Avatar (a span) was unfocusable - sign out, theme toggle and
+            profile nav were mouse/touch-only for keyboard users. */}
         <DropdownMenuTrigger asChild>
-          <Avatar className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity border-2 border-foreground">
-            <AvatarImage
-              src={user.profilePicture ?? undefined}
-              alt={fullName}
-            />
-            <AvatarFallback className="bg-foreground text-background font-semibold">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
+          <button
+            type="button"
+            aria-label="Open account menu"
+            className="rounded-full cursor-pointer transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Avatar className="h-10 w-10 border-2 border-foreground">
+              <AvatarImage
+                src={user.profilePicture ?? undefined}
+                alt={fullName}
+              />
+              <AvatarFallback className="bg-foreground text-background font-semibold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="p-0 my-2 bg-popover border-border"

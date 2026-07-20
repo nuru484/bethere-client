@@ -32,14 +32,11 @@ export const addUser = async (userData) => await api.post("/users", userData);
 export const updateUserProfile = async (userId, userData) =>
   await api.put(`/users/${userId}`, userData);
 
-export const updateUserProfilePicture = async (userId, formData) => {
-  return await api.patch(`/users/${userId}/profile-picture`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    transformRequest: (data) => data,
-  });
-};
+// Multipart field "profilePicture". Pass the FormData straight through: axios
+// leaves it untouched and clears Content-Type so the browser writes the header
+// with its boundary - do NOT hand-set Content-Type here.
+export const updateUserProfilePicture = async (userId, formData) =>
+  await api.patch(`/users/${userId}/profile-picture`, formData);
 
 export const changePassword = async (data) =>
   await api.patch(`/users/change-password`, data);

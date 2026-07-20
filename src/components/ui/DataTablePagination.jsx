@@ -1,17 +1,10 @@
 // src/components/ui/DataTablePagination.jsx
 //
 // Minimal table pagination: mono micro-label on the left ("Page X of Y",
-// total or selection count), a compact rows-per-page select and plain
-// Prev/Next chips on the right. Contract unchanged.
+// total or selection count), then the shared rows-per-page select and
+// Prev/Next chips (PaginationControls). Contract unchanged.
 import PropTypes from "prop-types";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 
 export function DataTablePagination({
   table,
@@ -51,55 +44,16 @@ export function DataTablePagination({
         </span>
       </p>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="mr-2 flex items-center gap-2">
-          <label
-            htmlFor="page-size"
-            className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground"
-          >
-            Rows
-          </label>
-          <Select
-            value={pageSize.toString()}
-            onValueChange={(value) => onPageSizeChange?.(Number(value))}
-          >
-            <SelectTrigger
-              id="page-size"
-              className="h-8 w-[72px] cursor-pointer bg-white"
-            >
-              <SelectValue placeholder={pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top" className="min-w-[72px]">
-              {[5, 10, 20, 30, 50, 100].map((size) => (
-                <SelectItem
-                  key={size}
-                  value={size.toString()}
-                  className="cursor-pointer"
-                >
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange?.(Math.max(1, page - 1))}
-          disabled={page <= 1}
-        >
-          Prev
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange?.(page + 1)}
-          disabled={page >= totalPages}
-        >
-          Next
-        </Button>
-      </div>
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageSizeOptions={[5, 10, 20, 30, 50, 100]}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        selectId="page-size"
+        selectSide="top"
+      />
     </div>
   );
 }

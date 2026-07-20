@@ -5,6 +5,7 @@ import { BrowserQRCodeReader } from "@zxing/browser";
 import { Button } from "@/components/ui/button";
 import { QrCode, RefreshCw, TriangleAlert } from "lucide-react";
 import { parseVenuePayload } from "./venue-payload";
+import { cameraErrorMessage } from "@/lib/camera-errors";
 
 /**
  * Continuously scans the rear camera for the venue's rotating QR code. On a
@@ -72,17 +73,7 @@ export default function QrScanner({ eventId, onScan, disabled = false }) {
         controlsRef.current = controls;
       })
       .catch((err) => {
-        let message = "Unable to access the camera. Please try again.";
-        if (err?.name === "NotAllowedError" || err?.name === "SecurityError") {
-          message =
-            "Camera access was denied. Please allow camera permission in your browser settings and try again.";
-        } else if (err?.name === "NotFoundError") {
-          message = "No camera was found on this device.";
-        } else if (err?.name === "NotReadableError") {
-          message =
-            "The camera is already in use by another app. Close it and try again.";
-        }
-        setCameraError(message);
+        setCameraError(cameraErrorMessage(err));
       });
 
     return () => {

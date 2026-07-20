@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import RequireRole from "@/routes/RequireRole";
 import AuthContext from "@/context/AuthContext";
 
-const renderWithUser = (user) =>
+const renderWithUser = (user, role = "ADMIN") =>
   render(
     <AuthContext.Provider
       value={{ user, isLoading: false, login: () => {}, logout: () => {} }}
@@ -15,7 +15,7 @@ const renderWithUser = (user) =>
           <Route
             path="/dashboard/users"
             element={
-              <RequireRole role="ADMIN">
+              <RequireRole role={role}>
                 <div>Admin only content</div>
               </RequireRole>
             }
@@ -42,6 +42,19 @@ describe("RequireRole", () => {
 
   it("redirects when there is no user", () => {
     renderWithUser(null);
+
+    expect(screen.queryByText("Admin only content")).not.toBeInTheDocument();
+    expect(screen.getByText("Dashboard home")).toBeInTheDocument();
+  });
+
+  it("renders children when the user's role is in an allowed array", () => {
+    renderWithUser({ id: 3, role: "USER" }, ["ADMIN", "USER"]);
+
+    expect(screen.getByText("Admin only content")).toBeInTheDocument();
+  });
+
+  it("redirects when the user's role is not in the allowed array", () => {
+    renderWithUser({ id: 4, role: "USER" }, ["ADMIN", "SUPERVISOR"]);
 
     expect(screen.queryByText("Admin only content")).not.toBeInTheDocument();
     expect(screen.getByText("Dashboard home")).toBeInTheDocument();

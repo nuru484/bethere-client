@@ -5,10 +5,10 @@
 // containing block, so each new card lands ON TOP of the previous ones and
 // they accumulate like a deck - they don't take turns.
 // Arrival is a small top-hinged rotation driven by each card's own scroll
-// progress (framer-motion), disabled for reduced motion.
+// progress (motion/react), disabled for reduced motion.
 import { useRef } from "react";
 import PropTypes from "prop-types";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useTheme } from "@/context/ThemeContext";
 import { dotsLight, dotsDark } from "./texture";
 import { PixelGlyph } from "./PixelGlyph";

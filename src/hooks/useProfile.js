@@ -7,6 +7,7 @@
 // hooks pick the endpoints and cache keys, so an admin editing their own
 // profile hits /admins/:id instead of 404ing on /users/:id.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import {
   getUserById,
   updateUserProfile,
@@ -19,6 +20,7 @@ import {
   updateAdminProfilePicture,
   changeAdminPassword,
 } from "@/api/admins";
+import { queryKeys } from "@/api/query-keys";
 
 const endpointsByKind = {
   user: {
@@ -26,16 +28,16 @@ const endpointsByKind = {
     update: updateUserProfile,
     updatePicture: updateUserProfilePicture,
     changePassword,
-    detailKey: (profileId) => ["user", profileId],
-    listKey: ["users"],
+    detailKey: queryKeys.users.detail,
+    listKey: queryKeys.users.all,
   },
   admin: {
     get: getAdminById,
     update: updateAdminProfile,
     updatePicture: updateAdminProfilePicture,
     changePassword: changeAdminPassword,
-    detailKey: (profileId) => ["admin", profileId],
-    listKey: ["admins"],
+    detailKey: queryKeys.admins.detail,
+    listKey: queryKeys.admins.all,
   },
 };
 
@@ -53,8 +55,10 @@ export const useGetProfile = (profileId, { kind = "user", ...options } = {}) => 
   return useQuery({
     queryKey: endpoints.detailKey(profileId),
     queryFn: () => endpoints.get(profileId),
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
+    // Focus refetch on (against the global default): a profile can be edited
+    // from another session, and the profile page is also where face-scan
+    // enrollment state is read back after an enrolment done elsewhere.
+    refetchOnWindowFocus: true,
     enabled: !!profileId,
     ...options,
   });
@@ -70,24 +74,54 @@ const useInvalidateProfile = (kind) => {
   };
 };
 
+// When the edited profile is the signed-in principal's own, merge the
+// server's fresh fields into AuthContext too - the navbar renders name and
+// avatar from the context user, and cache invalidation alone left it stale
+// until a full reload re-ran the boot getMe(). Ids alone are not enough:
+// admins and attendants live in separate tables, so an admin's numeric id
+// can collide with an attendant's - the kind must match as well.
+const useSyncOwnProfile = (kind) => {
+  const { user: authUser, updateUser } = useAuth();
+
+  return (profileId, response) => {
+    const isOwn =
+      authUser &&
+      String(authUser.id) === String(profileId) &&
+      (authUser.role === "ADMIN") === (kind === "admin");
+
+    // Response envelope: { message, data: <safe user> }
+    if (isOwn && response?.data) {
+      updateUser(response.data);
+    }
+  };
+};
+
 export const useUpdateProfile = (kind) => {
   const endpoints = forKind(kind);
   const invalidateProfile = useInvalidateProfile(kind);
+  const syncOwnProfile = useSyncOwnProfile(kind);
 
   return useMutation({
     mutationFn: ({ profileId, data }) => endpoints.update(profileId, data),
-    onSuccess: (_response, { profileId }) => invalidateProfile(profileId),
+    onSuccess: (response, { profileId }) => {
+      invalidateProfile(profileId);
+      syncOwnProfile(profileId, response);
+    },
   });
 };
 
 export const useUpdateProfilePicture = (kind) => {
   const endpoints = forKind(kind);
   const invalidateProfile = useInvalidateProfile(kind);
+  const syncOwnProfile = useSyncOwnProfile(kind);
 
   return useMutation({
     mutationFn: ({ profileId, formData }) =>
       endpoints.updatePicture(profileId, formData),
-    onSuccess: (_response, { profileId }) => invalidateProfile(profileId),
+    onSuccess: (response, { profileId }) => {
+      invalidateProfile(profileId);
+      syncOwnProfile(profileId, response);
+    },
   });
 };
 

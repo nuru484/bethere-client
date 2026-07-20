@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useDebounce } from "@/hooks/useDebounce";
+import { normalizeFilterValue } from "@/lib/filter-value";
 import {
   Popover,
   PopoverContent,
@@ -41,24 +42,54 @@ export function AttendanceTableFilters({
   showSessionId = false,
   searchPlaceholder = "Search...",
 }) {
-  const selectedCount = table.getSelectedRowModel().rows.length;
-  const isAllSelected = selectedCount === totalCount && totalCount > 0;
-
   const [searchInput, setSearchInput] = useState(filters.search || "");
-  const [startDate, setStartDate] = useState(
-    filters.startDate ? new Date(filters.startDate) : undefined
-  );
-  const [endDate, setEndDate] = useState(
-    filters.endDate ? new Date(filters.endDate) : undefined
-  );
+  // Free-text filters are debounced like search: firing onFiltersChange per
+  // keystroke rewrote the URL and refired the server query on every letter.
+  const [eventTypeInput, setEventTypeInput] = useState(filters.eventType || "");
+  const [sessionIdInput, setSessionIdInput] = useState(filters.sessionId || "");
+  // Derived, not state: the filters come from the URL, so back/forward (and
+  // any other external change) has to move the pickers too. Seeding local
+  // state once left the calendar and the button label showing a stale day
+  // while the "From"/"To" badges below already showed the new one.
+  const startDate = filters.startDate ? new Date(filters.startDate) : undefined;
+  const endDate = filters.endDate ? new Date(filters.endDate) : undefined;
 
   const debouncedSearch = useDebounce(searchInput, 500);
+  const debouncedEventType = useDebounce(eventTypeInput, 500);
+  const debouncedSessionId = useDebounce(sessionIdInput, 500);
 
+  // Normalize both sides: an empty box is "" while an absent URL filter is
+  // undefined, and comparing those raw made this fire on every mount, which
+  // reset the list to page 1 (see src/lib/filter-value.js).
   useEffect(() => {
-    if (showSearch && debouncedSearch !== filters.search) {
+    if (
+      showSearch &&
+      normalizeFilterValue(debouncedSearch) !==
+        normalizeFilterValue(filters.search)
+    ) {
       onFiltersChange({ search: debouncedSearch || undefined });
     }
   }, [showSearch, debouncedSearch, filters.search, onFiltersChange]);
+
+  useEffect(() => {
+    if (
+      showEventType &&
+      normalizeFilterValue(debouncedEventType) !==
+        normalizeFilterValue(filters.eventType)
+    ) {
+      onFiltersChange({ eventType: debouncedEventType || undefined });
+    }
+  }, [showEventType, debouncedEventType, filters.eventType, onFiltersChange]);
+
+  useEffect(() => {
+    if (
+      showSessionId &&
+      normalizeFilterValue(debouncedSessionId) !==
+        normalizeFilterValue(filters.sessionId)
+    ) {
+      onFiltersChange({ sessionId: debouncedSessionId || undefined });
+    }
+  }, [showSessionId, debouncedSessionId, filters.sessionId, onFiltersChange]);
 
   const getStatusFilterValue = () => {
     if (filters.status === "PRESENT") return "present";
@@ -78,14 +109,12 @@ export function AttendanceTableFilters({
   };
 
   const handleStartDateChange = (date) => {
-    setStartDate(date);
     onFiltersChange({
       startDate: date ? format(date, "yyyy-MM-dd") : undefined,
     });
   };
 
   const handleEndDateChange = (date) => {
-    setEndDate(date);
     onFiltersChange({
       endDate: date ? format(date, "yyyy-MM-dd") : undefined,
     });
@@ -101,8 +130,8 @@ export function AttendanceTableFilters({
 
   const clearFilters = () => {
     setSearchInput("");
-    setStartDate(undefined);
-    setEndDate(undefined);
+    setEventTypeInput("");
+    setSessionIdInput("");
     onFiltersChange({
       search: undefined,
       status: undefined,
@@ -115,22 +144,9 @@ export function AttendanceTableFilters({
 
   return (
     <div className="space-y-4">
-      {/* Action Bar */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        {/* Selection Info */}
-        <div className="flex items-center gap-3 order-2 lg:order-1">
-          {selectedCount > 0 ? (
-            <div className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-lg border">
-              <Badge variant="secondary" className="font-medium">
-                {selectedCount} selected {isAllSelected && "(All)"}
-              </Badge>
-            </div>
-          ) : (
-            <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
-              {totalCount} total
-            </div>
-          )}
-        </div>
+      {/* Count */}
+      <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+        {totalCount} total
       </div>
 
       {/* Filters Row */}
@@ -169,12 +185,8 @@ export function AttendanceTableFilters({
           {showEventType && (
             <Input
               placeholder="Event type..."
-              value={filters.eventType || ""}
-              onChange={(e) =>
-                onFiltersChange({
-                  eventType: e.target.value || undefined,
-                })
-              }
+              value={eventTypeInput}
+              onChange={(e) => setEventTypeInput(e.target.value)}
               className="w-full sm:w-[140px]"
             />
           )}
@@ -183,12 +195,8 @@ export function AttendanceTableFilters({
           {showSessionId && (
             <Input
               placeholder="Session ID..."
-              value={filters.sessionId || ""}
-              onChange={(e) =>
-                onFiltersChange({
-                  sessionId: e.target.value || undefined,
-                })
-              }
+              value={sessionIdInput}
+              onChange={(e) => setSessionIdInput(e.target.value)}
               className="w-full sm:w-[140px]"
             />
           )}
@@ -311,7 +319,10 @@ export function AttendanceTableFilters({
             <Badge variant="secondary" className="gap-2">
               Type: {filters.eventType}
               <button
-                onClick={() => onFiltersChange({ eventType: undefined })}
+                onClick={() => {
+                  setEventTypeInput("");
+                  onFiltersChange({ eventType: undefined });
+                }}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -322,7 +333,10 @@ export function AttendanceTableFilters({
             <Badge variant="secondary" className="gap-2">
               Session: {filters.sessionId}
               <button
-                onClick={() => onFiltersChange({ sessionId: undefined })}
+                onClick={() => {
+                  setSessionIdInput("");
+                  onFiltersChange({ sessionId: undefined });
+                }}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -333,10 +347,7 @@ export function AttendanceTableFilters({
             <Badge variant="secondary" className="gap-2">
               From: {format(new Date(filters.startDate), "MMM dd, yyyy")}
               <button
-                onClick={() => {
-                  setStartDate(undefined);
-                  onFiltersChange({ startDate: undefined });
-                }}
+                onClick={() => onFiltersChange({ startDate: undefined })}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -347,10 +358,7 @@ export function AttendanceTableFilters({
             <Badge variant="secondary" className="gap-2">
               To: {format(new Date(filters.endDate), "MMM dd, yyyy")}
               <button
-                onClick={() => {
-                  setEndDate(undefined);
-                  onFiltersChange({ endDate: undefined });
-                }}
+                onClick={() => onFiltersChange({ endDate: undefined })}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -365,7 +373,6 @@ export function AttendanceTableFilters({
 
 AttendanceTableFilters.propTypes = {
   table: PropTypes.shape({
-    getSelectedRowModel: PropTypes.func.isRequired,
     getAllColumns: PropTypes.func.isRequired,
   }).isRequired,
   filters: PropTypes.shape({

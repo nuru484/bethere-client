@@ -1,18 +1,11 @@
 // src/components/ui/Pagination.jsx
 //
 // Minimal list pagination: mono micro-label on the left ("Page X of Y",
-// entry range), an optional compact rows-per-page select, and plain
-// Prev/Next chips on the right. Contract unchanged: meta {total, page,
-// limit, totalPages}, onPageChange, optional onLimitChange.
+// entry range), then the shared rows-per-page select and Prev/Next chips
+// (PaginationControls). Contract unchanged: meta {total, page, limit,
+// totalPages}, onPageChange, optional onLimitChange.
 import PropTypes from "prop-types";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 
 const Pagination = ({
   meta,
@@ -54,57 +47,17 @@ const Pagination = ({
         </span>
       </p>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {showPageSizeSelector && onLimitChange && (
-          <div className="mr-2 flex items-center gap-2">
-            <label
-              htmlFor="pageSize"
-              className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground"
-            >
-              Rows
-            </label>
-            <Select
-              value={limit.toString()}
-              onValueChange={(value) => handlePageSizeChange(Number(value))}
-            >
-              <SelectTrigger
-                id="pageSize"
-                className="h-8 w-[72px] cursor-pointer bg-white"
-              >
-                <SelectValue placeholder={limit} />
-              </SelectTrigger>
-              <SelectContent className="min-w-[72px]">
-                {pageSizeOptions.map((option) => (
-                  <SelectItem
-                    key={option}
-                    value={option.toString()}
-                    className="cursor-pointer"
-                  >
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
-        >
-          Prev
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-        >
-          Next
-        </Button>
-      </div>
+      <PaginationControls
+        page={currentPage}
+        totalPages={totalPages}
+        pageSize={limit}
+        pageSizeOptions={pageSizeOptions}
+        onPageChange={onPageChange}
+        onPageSizeChange={
+          showPageSizeSelector && onLimitChange ? handlePageSizeChange : undefined
+        }
+        selectId="pageSize"
+      />
     </div>
   );
 };

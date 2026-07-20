@@ -6,15 +6,12 @@ import {
   createEnrollmentChallenge,
   getUserFaceScan,
 } from "@/api/faceScan";
+import { queryKeys } from "@/api/query-keys";
 
 export const useGetUserFaceScan = (userId) => {
   return useQuery({
-    queryKey: ["facescan", userId],
+    queryKey: queryKeys.faceScan.detail(userId),
     queryFn: () => getUserFaceScan(userId),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
-    retry: 2,
-    refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 };
@@ -37,11 +34,13 @@ export const useAddFaceScan = () => {
       // Self-enrollment: the enrolled user id comes back on the response,
       // not in the mutation variables (an opaque FormData).
       const userId = data?.data?.user?.id;
-      queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.faceScan.detail(userId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) });
       // The users list carries hasFaceScan and is cached for 5 minutes, so it
       // would keep showing the old enrollment state without this.
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 };
@@ -52,9 +51,11 @@ export const useDeleteFaceScan = () => {
   return useMutation({
     mutationFn: ({ userId }) => deleteFaceScan(userId),
     onSuccess: (_data, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
-      queryClient.invalidateQueries({ queryKey: ["user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.faceScan.detail(userId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 };

@@ -1,5 +1,6 @@
 // src/components/dashboard/RecentEventsList.jsx
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const RecentEventsList = ({ events }) => {
@@ -28,9 +29,12 @@ const RecentEventsList = ({ events }) => {
       <CardContent className="p-0">
         <div className="divide-y">
           {events.map((event, index) => (
-            <div
+            // Real link (rows previously had hover + pointer styling but no
+            // destination - a false affordance).
+            <Link
               key={event.id || index}
-              className="px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer"
+              to={`/dashboard/events/${event.id}`}
+              className="block px-4 py-3 hover:bg-secondary/50 transition-colors focus-visible:outline-none focus-visible:bg-secondary/50"
             >
               <h3 className="font-semibold text-sm mb-1">{event.title}</h3>
 
@@ -52,7 +56,7 @@ const RecentEventsList = ({ events }) => {
                   </span>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </CardContent>

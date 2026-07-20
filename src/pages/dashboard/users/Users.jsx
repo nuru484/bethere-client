@@ -3,23 +3,23 @@
 // Attendant management (principal split): /users on the server now serves
 // attendants only, so there is no role column, filter or stat here. Admin
 // staff live on the separate Admins page.
-import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { UsersDataTable } from "@/components/users/table/UsersDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { useGetAllUsers } from "@/hooks/useUsers";
+import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
-const Userspage = () => {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+// Filter fields this page owns (stable identity for the URL-state hook).
+const FILTER_KEYS = ["search"];
 
-  // Filter states
-  const [filters, setFilters] = useState({
-    search: undefined,
-  });
+const Userspage = () => {
+  // Page, page size and filters live in the URL so refresh/back/share keep
+  // the same view.
+  const { page, pageSize, filters, setPage, setPageSize, setFilters } =
+    usePaginatedListState({ filterKeys: FILTER_KEYS });
 
   // Build query parameters
   const queryParams = {
@@ -33,6 +33,7 @@ const Userspage = () => {
   const {
     data: usersData,
     isLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -41,20 +42,10 @@ const Userspage = () => {
   const users = usersData?.data;
   const totalUsers = usersData?.meta?.total || 0;
 
-  const handlePageChange = (newPage) => setPage(newPage);
-
-  const handlePageSizeChange = (newPageSize) => {
-    setPageSize(newPageSize);
-    setPage(1);
-  };
-
-  const handleFiltersChange = useCallback((newFilters) => {
-    setFilters((prev) => ({
-      ...prev,
-      ...newFilters,
-    }));
-    setPage(1);
-  }, []);
+  // setPageSize and setFilters already reset the page to 1.
+  const handlePageChange = setPage;
+  const handlePageSizeChange = setPageSize;
+  const handleFiltersChange = setFilters;
 
   const handleRefresh = () => refetch();
 
@@ -99,6 +90,7 @@ const Userspage = () => {
           <UsersDataTable
             data={users || []}
             loading={isLoading}
+            fetching={isFetching && !isLoading}
             totalCount={totalUsers}
             page={page}
             pageSize={pageSize}

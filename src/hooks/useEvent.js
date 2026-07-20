@@ -12,29 +12,33 @@ import {
   updateEvent,
   deleteEvent,
 } from "@/api/event";
+import { queryKeys } from "@/api/query-keys";
 
 export const useGetEvent = (eventId) => {
   return useQuery({
-    queryKey: ["event", eventId],
+    queryKey: queryKeys.events.detail(eventId),
     queryFn: () => fetchEvent(eventId),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
+    // Deliberately below the global retry: 2 - event pages have their own
+    // retry UI, so surface a failure quickly instead of retrying twice.
     retry: 1,
+    // Events are edited by other admins (time, venue, cancellation), so a
+    // returning tab refetches rather than trusting the 5-minute staleTime.
+    refetchOnWindowFocus: true,
     refetchOnReconnect: false,
   });
 };
 
-export const useGetEvents = (params = {}) => {
-  const queryKey = ["events", params];
-
+export const useGetEvents = (params = {}, options = {}) => {
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.events.list(params),
     queryFn: () => fetchEvents(params),
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
+    // Deliberately below the global retry: 2 (see useGetEvent).
     retry: 1,
+    // Focus refetch on for the same reason as useGetEvent.
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
     refetchOnReconnect: false,
+    ...options,
   });
 };
 
@@ -44,7 +48,7 @@ export const useCreateEvent = () => {
   return useMutation({
     mutationFn: createEvent,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 };
@@ -55,8 +59,10 @@ export const useUpdateEvent = () => {
   return useMutation({
     mutationFn: ({ eventId, data }) => updateEvent(eventId, data),
     onSuccess: (data, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.detail(eventId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 };
@@ -67,8 +73,10 @@ export const useDeleteEvent = () => {
   return useMutation({
     mutationFn: ({ eventId }) => deleteEvent(eventId),
     onSuccess: (_data, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.detail(eventId),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 };

@@ -1,6 +1,9 @@
 //src/routes/index.jsx
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+// lazy() with stale-deploy recovery: a failed chunk import reloads once to
+// pick up the new build instead of stranding the user on an error page.
+import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import ProtectedRoutes from "./ProtectedRoutes";
 import RequireRole from "./RequireRole";
 import LandingPage from "@/pages/LandingPage";

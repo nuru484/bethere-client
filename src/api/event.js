@@ -36,10 +36,9 @@ const buildEventFormData = (eventData = {}) => {
   return formData;
 };
 
-// Let the browser set the multipart boundary instead of the instance-level
-// application/json default.
-const multipartConfig = { headers: { "Content-Type": undefined } };
-
+// The FormData is passed straight through, like every other upload here: axios
+// clears Content-Type for it so the browser writes the multipart boundary
+// itself. Never hand-set the header - a boundary-less one breaks the parse.
 export const fetchEvent = async (eventId) =>
   await api.get(`/events/${eventId}`);
 
@@ -50,14 +49,10 @@ export const fetchEvents = async (params) => {
 };
 
 export const createEvent = async (eventData) =>
-  await api.post(`/events`, buildEventFormData(eventData), multipartConfig);
+  await api.post(`/events`, buildEventFormData(eventData));
 
 export const updateEvent = async (eventId, eventData) =>
-  await api.put(
-    `/events/${eventId}`,
-    buildEventFormData(eventData),
-    multipartConfig
-  );
+  await api.put(`/events/${eventId}`, buildEventFormData(eventData));
 
 export const deleteEvent = async (eventId) =>
   await api.delete(`/events/${eventId}`);

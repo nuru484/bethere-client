@@ -64,6 +64,12 @@ const CodeForm = ({
   const handleKeyDown = (index, event) => {
     if (event.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
+    } else if (event.key === "ArrowLeft" && index > 0) {
+      event.preventDefault();
+      inputRefs.current[index - 1]?.focus();
+    } else if (event.key === "ArrowRight" && index < CODE_LENGTH - 1) {
+      event.preventDefault();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 

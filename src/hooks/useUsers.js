@@ -6,16 +6,17 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { getUsers, addUser, deleteUser } from "@/api/users";
+import { queryKeys } from "@/api/query-keys";
 
-// Get all users with pagination and filters
+// Get all users with pagination and filters. Focus refetching is on (against
+// the global default): the directory changes from other admin sessions -
+// enrollments, deletions, face-scan state - so a returning tab should not sit
+// on a list that is up to the 5-minute staleTime out of date.
 export const useGetAllUsers = (params = {}) => {
-  const queryKey = ["users", params];
-
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.users.list(params),
     queryFn: () => getUsers(params),
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -27,7 +28,7 @@ export const useAddUser = () => {
   return useMutation({
     mutationFn: (userData) => addUser(userData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 };
@@ -42,50 +43,21 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: (userId) => deleteUser(userId),
     onSuccess: (data, userId) => {
-      queryClient.removeQueries({ queryKey: ["user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.removeQueries({ queryKey: queryKeys.users.detail(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
   });
 };
 
 export const useSearchUsers = (searchParams = {}) => {
-  const queryKey = ["users", "search", searchParams];
-
   return useQuery({
-    queryKey,
+    queryKey: queryKeys.users.search(searchParams),
     queryFn: () => getUsers(searchParams),
+    // Deliberate: search results churn faster than the paged directory, so
+    // they go stale sooner than the global 5 minutes.
     staleTime: 1000 * 60 * 3,
-    retry: 2,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
     enabled: !!searchParams.search,
   });
-};
-
-export const useLazyGetAllUsers = () => {
-  const queryClient = useQueryClient();
-
-  return {
-    fetch: (params = {}) =>
-      queryClient.fetchQuery({
-        queryKey: ["users", params],
-        queryFn: () => getUsers(params),
-      }),
-    prefetch: (params = {}) =>
-      queryClient.prefetchQuery({
-        queryKey: ["users", params],
-        queryFn: () => getUsers(params),
-      }),
-  };
-};
-
-export const useLazySearchUsers = () => {
-  const queryClient = useQueryClient();
-
-  return {
-    fetch: (searchParams = {}) =>
-      queryClient.fetchQuery({
-        queryKey: ["users", "search", searchParams],
-        queryFn: () => getUsers(searchParams),
-      }),
-  };
 };

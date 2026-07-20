@@ -3,137 +3,18 @@
 // Minimal attendant creation: one card sheet with name, email and phone.
 // No password - attendants sign in via the passwordless OTP flow.
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-
-const MICRO_LABEL =
-  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
+import PersonForm from "@/components/shared/PersonForm";
 
 export default function AddUserForm({ form, onSubmit, isLoading }) {
-  const navigate = useNavigate();
-
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          noValidate
-          className="space-y-4"
-        >
-          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* First Name */}
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={MICRO_LABEL}>First name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Last Name */}
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={MICRO_LABEL}>Last name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={MICRO_LABEL}>Email address</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="john.doe@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Phone */}
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className={MICRO_LABEL}>
-                      Phone{" "}
-                      <span className="normal-case text-muted-foreground/70">
-                        (optional)
-                      </span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="+233 54 648 8115"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <p className="font-body text-sm text-muted-foreground">
-            No password needed - the attendant signs in with a one-time code
-            sent to their email or phone.
-          </p>
-
-          {/* Form Actions */}
-          <div className="flex flex-wrap gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/dashboard/users")}
-              disabled={isLoading}
-              className="flex-1 h-11"
-            >
-              Cancel
-            </Button>
-
-            <Button type="submit" disabled={isLoading} className="flex-1 h-11">
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Attendant Account
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+    <PersonForm
+      form={form}
+      onSubmit={onSubmit}
+      isLoading={isLoading}
+      cancelPath="/dashboard/users"
+      submitLabel="Create Attendant Account"
+      note="No password needed - the attendant signs in with a one-time code sent to their email or phone."
+    />
   );
 }
 

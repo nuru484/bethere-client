@@ -40,8 +40,11 @@ export const formatTimeWindow = (startTime, endTime) => {
   return null;
 };
 
+// Tint-plus-themed-text (matches the attendance status chips) so the chips
+// stay legible on both themes. "Live" keeps the solid brand green pill - it
+// reads correctly on light and dark.
 const STATUS_CLASSES = {
-  recurring: "bg-[#dcf5e9] text-[#1d8a5a]",
+  recurring: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   live: "bg-[#3ecf8e] text-[#0b3b26]",
   upcoming: "bg-secondary text-secondary-foreground",
   ended: "bg-secondary text-muted-foreground",

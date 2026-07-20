@@ -2,7 +2,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteEvent, useGetEvent } from "@/hooks/useEvent";
-import { useGetUserEventAttendance } from "@/hooks/useAttendance";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,8 +9,6 @@ import ErrorMessage from "@/components/ui/ErrorMessage";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import EventDetails from "@/components/event/EventDetails";
 import EventActionsSidebar from "@/components/event/EventActionsSidebar";
-import { getCurrentSession } from "@/utils/getCurrentSession";
-import { useMemo } from "react";
 import toast from "react-hot-toast";
 
 const EventDetailsPage = () => {
@@ -27,21 +24,9 @@ const EventDetailsPage = () => {
     refetch,
   } = useGetEvent(eventId);
 
-  const { data: userAttendanceData, isLoading: isLoadingAttendance } =
-    useGetUserEventAttendance(user?.id, eventId, {
-      limit: 100,
-    });
-
+  // The detail response embeds currentSession + viewerAttendance for
+  // attendants, so the sidebar needs no separate attendance fetch.
   const event = eventData?.data;
-  const userAttendances = userAttendanceData?.data || [];
-
-  // Determine the current session for recurring events
-  const currentSession = useMemo(() => {
-    if (event?.isRecurring) {
-      return getCurrentSession(event);
-    }
-    return null;
-  }, [event]);
 
   const handleDelete = () => {
     deleteEvent(
@@ -157,9 +142,6 @@ const EventDetailsPage = () => {
                 user={user}
                 onDelete={handleDelete}
                 isDeleting={isDeleting}
-                userAttendances={userAttendances}
-                isLoadingAttendance={isLoadingAttendance}
-                currentSession={currentSession}
               />
             </div>
           </div>

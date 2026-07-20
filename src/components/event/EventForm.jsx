@@ -1,5 +1,6 @@
 // src/components/event/EventForm.jsx
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { Info, Loader2 } from "lucide-react";
 import {
@@ -23,15 +24,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import SectionHeader from "@/components/ui/FormSectionHeader";
 import { compressImage } from "@/lib/compress-image";
 
-export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024; // ~5MB
+// Pre-compression ceiling for the raw file picked from disk. The compressed
+// result is validated against MAX_COVER_IMAGE_BYTES (5MB, eventValidation.js),
+// which the helper text mirrors.
+const MAX_RAW_COVER_IMAGE_BYTES = 25 * 1024 * 1024;
 
 const EventForm = ({
   form,
   onSubmit,
   isLoading,
   mode = "create",
+  cancelPath = "/dashboard/events",
   initialCoverImage = null,
 }) => {
+  const navigate = useNavigate();
   const [coverObjectUrl, setCoverObjectUrl] = useState(null);
   const coverInputRef = useRef(null);
   const isRecurring = form.watch("isRecurring");
@@ -71,7 +77,7 @@ const EventForm = ({
 
     // Only guard absurdly large originals; the image is compressed below, so a
     // normal multi-MB photo uploads as a couple hundred KB.
-    if (file.size > 25 * 1024 * 1024) {
+    if (file.size > MAX_RAW_COVER_IMAGE_BYTES) {
       form.setError("coverImage", {
         type: "manual",
         message: "Cover image is too large. Please choose one under 25MB.",
@@ -207,8 +213,9 @@ const EventForm = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    Shown on the event card and detail page. PNG, JPG or WebP,
-                    up to 5MB.
+                    Shown on the event card and detail page. PNG, JPG or WebP.
+                    Large photos are compressed automatically; the compressed
+                    image must be under 5MB.
                   </FormDescription>
                   <FormMessage />
 
@@ -525,7 +532,7 @@ const EventForm = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => window.history.back()}
+              onClick={() => navigate(cancelPath)}
               disabled={isLoading}
               className="flex-1 h-11"
             >
@@ -559,6 +566,7 @@ EventForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   mode: PropTypes.oneOf(["create", "update"]),
+  cancelPath: PropTypes.string,
   initialCoverImage: PropTypes.string,
 };
 
