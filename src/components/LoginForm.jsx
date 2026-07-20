@@ -12,16 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowRight,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Shield,
-  UserCog,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const LoginForm = ({ form, onSubmit, isLoading }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,62 +21,49 @@ const LoginForm = ({ form, onSubmit, isLoading }) => {
     setShowPassword((prev) => !prev);
   };
 
-  const handleDemoLogin = (role) => {
-    const demoCredentials = {
-      admin: {
-        email: import.meta.env.VITE_ADMIN_DEMO_EMAIL,
-        password: import.meta.env.VITE_DEMO_PASSWORD,
-      },
-      attendant: {
-        email: import.meta.env.VITE_ATTENDANT_DEMO_EMAIL,
-        password: import.meta.env.VITE_DEMO_PASSWORD,
-      },
-    };
-
-    const credentials = demoCredentials[role];
-    form.setValue("email", credentials.email);
-    form.setValue("password", credentials.password);
-
-    onSubmit(credentials);
-  };
-
   return (
     <div className="w-full max-w-md">
-      {/* Mobile Logo */}
-      <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-        <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg flex items-center justify-center shadow-lg">
-          <img
-            src={"/assets/logo.png"}
-            alt="BeThere Logo"
-            className="h-10 w-10 object-contain transition-transform duration-200 group-hover:scale-105"
-          />
+      {/* Mobile Logo → back to landing */}
+      <Link
+        to="/"
+        className="group lg:hidden flex items-center justify-center gap-3 mb-8"
+      >
+        <div className="w-10 h-10 bg-foreground rounded-xl flex items-center justify-center">
+          <span className="font-mono text-xs font-bold text-background">B/</span>
         </div>
-        <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+        <span className="font-display text-2xl font-normal text-foreground tracking-[-0.02em]">
           BeThere
         </span>
-      </div>
+      </Link>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-6"
+        >
           {/* Email Input */}
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="block text-sm font-semibold text-gray-700">
+                <FormLabel className="block font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
                   Email Address
                 </FormLabel>
                 <FormControl>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-600 transition-colors" />
+                      <Mail
+                        className="h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors"
+                        strokeWidth={1.5}
+                      />
                     </div>
                     <Input
                       type="email"
                       placeholder="Enter your email"
                       autoComplete="email"
-                      className="w-full pl-12 pr-4 py-3.5 h-auto rounded-xl border-2 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-100 outline-none transition-all duration-200 text-gray-700 placeholder-gray-400 bg-white"
+                      className="w-full pl-11 pr-4 h-11 bg-card"
                       disabled={isLoading}
                       {...field}
                     />
@@ -102,19 +80,22 @@ const LoginForm = ({ form, onSubmit, isLoading }) => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="block text-sm font-semibold text-gray-700">
+                <FormLabel className="block font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
                   Password
                 </FormLabel>
                 <FormControl>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-emerald-600 transition-colors" />
+                      <Lock
+                        className="h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors"
+                        strokeWidth={1.5}
+                      />
                     </div>
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       autoComplete="current-password"
-                      className="w-full pl-12 pr-12 py-3.5 h-auto rounded-xl border-2 border-gray-200 focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-100 outline-none transition-all duration-200 text-gray-700 placeholder-gray-400 bg-white"
+                      className="w-full pl-11 pr-11 h-11 bg-card"
                       disabled={isLoading}
                       {...field}
                     />
@@ -128,9 +109,15 @@ const LoginForm = ({ form, onSubmit, isLoading }) => {
                       }
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer" />
+                        <EyeOff
+                          className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          strokeWidth={1.5}
+                        />
                       ) : (
-                        <Eye className="h-5 w-5 text-gray-400 hover:text-emerald-600 transition-colors cursor-pointer" />
+                        <Eye
+                          className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          strokeWidth={1.5}
+                        />
                       )}
                     </button>
                   </div>
@@ -140,111 +127,31 @@ const LoginForm = ({ form, onSubmit, isLoading }) => {
             )}
           />
 
-          {/* Remember Me & Forgot Password */}
-          <div className="flex items-center justify-between">
-            <label className="flex items-center text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                className="mr-2 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                disabled={isLoading}
-              />
-              Remember me
-            </label>
-
+          {/* Forgot Password */}
+          <div className="flex justify-end">
             <Link
               to="/forgot-password"
-              className="text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline transition duration-200"
+              className="text-sm text-muted-foreground hover:text-foreground font-medium hover:underline transition duration-200"
               tabIndex={isLoading ? -1 : 0}
             >
               Forgot password?
             </Link>
           </div>
 
-          {/* Security Badge */}
-          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 flex items-start gap-3">
-            <Shield className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-medium text-emerald-900">
-                Secure Connection
-              </p>
-              <p className="text-xs text-emerald-700 mt-0.5">
-                Your data is encrypted and protected
-              </p>
-            </div>
-          </div>
-
           {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3.5 px-6 h-auto rounded-xl transition-all duration-200 focus:ring-4 focus:ring-emerald-200 focus:outline-none flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
+          <Button type="submit" disabled={isLoading} className="w-full h-11">
             {isLoading ? (
               <span>Signing In...</span>
             ) : (
               <>
                 <span>Sign In</span>
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
               </>
             )}
           </Button>
 
-          {/* Demo Login Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500 font-medium">
-                Or try demo
-              </span>
-            </div>
-          </div>
-
-          {/* Demo Login Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleDemoLogin("admin")}
-              disabled={isLoading}
-              className="w-full border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 font-medium py-3 px-4 h-auto rounded-xl transition-all duration-200 focus:ring-4 focus:ring-emerald-100 focus:outline-none flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <UserCog className="h-4 w-4" />
-              <span className="text-sm">Admin Demo</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleDemoLogin("attendant")}
-              disabled={isLoading}
-              className="w-full border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 font-medium py-3 px-4 h-auto rounded-xl transition-all duration-200 focus:ring-4 focus:ring-emerald-100 focus:outline-none flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <Users className="h-4 w-4" />
-              <span className="text-sm">Attendant Demo</span>
-            </Button>
-          </div>
         </form>
       </Form>
-
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
-          Need help? {/* FIXED: missing <a> tag */}
-          <a
-            href="#"
-            className="text-emerald-600 hover:text-emerald-700 font-medium hover:underline"
-          >
-            Contact Support
-          </a>
-        </p>
-        <p className="text-xs text-gray-400 mt-3">
-          Powered by{" "}
-          <span className="font-semibold text-gray-600">BeThere</span> • Secure
-          System
-        </p>
-      </div>
     </div>
   );
 };

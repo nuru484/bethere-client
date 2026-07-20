@@ -77,17 +77,19 @@ const CodeForm = ({
   return (
     <div className="w-full max-w-md">
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center mb-4">
-          <ShieldCheck className="h-7 w-7 text-emerald-600" />
+        <div className="w-14 h-14 rounded-2xl bg-[#2b2b2b] flex items-center justify-center mb-4">
+          <ShieldCheck className="h-7 w-7 text-[#fafafa]" strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-        <p className="text-sm text-gray-500 mt-2">
+        <h1 className="font-display text-2xl font-normal tracking-[-0.02em] text-foreground">
+          {title}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2">
           We sent a {CODE_LENGTH}-digit code to {channelLabel(channel)}. Enter
           it below to continue.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
         <div
           className="flex justify-center gap-2 sm:gap-3"
           role="group"
@@ -108,7 +110,7 @@ const CodeForm = ({
               onKeyDown={(event) => handleKeyDown(index, event)}
               disabled={isLoading}
               aria-label={`Digit ${index + 1}`}
-              className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-semibold rounded-xl border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all duration-200 text-gray-700 bg-white disabled:opacity-70"
+              className="w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl rounded-xl border border-border focus:border-ring focus:ring-1 focus:ring-ring outline-none transition-all duration-200 text-foreground bg-card disabled:opacity-70"
             />
           ))}
         </div>
@@ -116,14 +118,14 @@ const CodeForm = ({
         <Button
           type="submit"
           disabled={!isComplete || isLoading}
-          className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3.5 px-6 h-auto rounded-xl transition-all duration-200 focus:ring-4 focus:ring-emerald-200 focus:outline-none flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full h-11"
         >
           {isLoading ? (
             <span>Verifying...</span>
           ) : (
             <>
               <span>{submitLabel}</span>
-              <ArrowRight className="h-5 w-5" />
+              <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
             </>
           )}
         </Button>
@@ -133,9 +135,9 @@ const CodeForm = ({
             type="button"
             onClick={onBack}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-emerald-700 font-medium transition-colors disabled:opacity-70"
+            className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground font-medium transition-colors disabled:opacity-70"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             {backLabel}
           </button>
         )}

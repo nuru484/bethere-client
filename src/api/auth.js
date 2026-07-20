@@ -26,6 +26,16 @@ export const otpRequest = async ({ identifier }) =>
 export const otpVerify = async ({ identifier, code }) =>
   await api.post("/auth/otp/verify", { identifier, code });
 
+// Hydrates the signed-in principal from the httpOnly session cookie.
+// Responds { message, data: { user } }; a 401 means no/invalid session.
+export const getMe = async () => await api.get("/auth/me");
+
+// Portfolio demo sign-in: the server mints a demo session for the given role
+// and sets the auth cookies. role is "ADMIN" or "USER". Responds
+// { message, data: { user } }, or 403 when demo login is disabled server-side.
+export const demoLogin = async (role) =>
+  await api.post("/auth/demo-login", { role });
+
 // Revokes the session server-side and clears the cookies. Cookie-based:
 // no header or body needed.
 export const logoutApi = async () => await api.post("/auth/logout", {});

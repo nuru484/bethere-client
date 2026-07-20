@@ -1,54 +1,68 @@
 // src/context/AuthContext.jsx
 //
 // Cookie-only auth: the tokens live in httpOnly cookies the browser sends
-// automatically, so "authenticated" here simply means "we have a persisted
-// user". A 401 that fails refresh clears that user (see src/api/index.js).
+// automatically, so the user object is never persisted client-side. On boot
+// we ask the server who we are via GET /auth/me; the cookie decides. A 401
+// (no/invalid session) leaves us logged out.
 import { createContext, useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { logoutApi } from "@/api/auth";
+import { getMe, logoutApi } from "@/api/auth";
 
 const AuthContext = createContext();
+
+// Non-sensitive presence flag: lets us skip the logged-out flash on reload
+// without ever storing user fields. The server cookie remains the source of
+// truth - this is only a hint, always confirmed by getMe().
+const AUTHED_FLAG = "bethere.authed";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        setIsLoading(true);
-        const savedUser = localStorage.getItem("user");
+    let cancelled = false;
 
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+    // Boot hydration: the httpOnly cookie is the only source of truth, so ask
+    // the server who we are. On success adopt the returned user; on 401/any
+    // failure render unauthenticated. isLoading stays true until this resolves
+    // so the app never renders authed on a dead session.
+    const initializeAuth = async () => {
+      try {
+        const response = await getMe();
+        const me = response?.data?.user ?? null;
+        if (!cancelled) {
+          setUser(me);
+          if (me) {
+            localStorage.setItem(AUTHED_FLAG, "1");
+          } else {
+            localStorage.removeItem(AUTHED_FLAG);
+          }
         }
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        localStorage.removeItem("user");
+      } catch {
+        // No/invalid session (or network failure): stay logged out.
+        if (!cancelled) {
+          setUser(null);
+          localStorage.removeItem(AUTHED_FLAG);
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     initializeAuth();
-  }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
-      } else {
-        localStorage.removeItem("user");
-      }
-    }
-  }, [user, isLoading]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const login = (userData) => {
     setUser(userData);
+    localStorage.setItem(AUTHED_FLAG, "1");
   };
 
   // Merges fresh server-sent user fields (e.g. twoFactorEnabled after a
-  // toggle) into the persisted user.
+  // toggle) into the in-memory user.
   const updateUser = (userData) => {
     setUser((prev) => (prev ? { ...prev, ...userData } : userData));
   };
@@ -60,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     logoutApi().catch(() => {});
 
     setUser(null);
-    localStorage.removeItem("user");
+    localStorage.removeItem(AUTHED_FLAG);
   };
 
   return (
