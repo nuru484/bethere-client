@@ -16,7 +16,7 @@ import { TechBoard } from "@/components/landing/TechBoard";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
 const LandingPage = () => {
-  usePageTitle("BeThere - Verified live presence");
+  usePageTitle("Verified live presence");
 
   // Momentum scroll (mirrors the mhp website-frontend Lenis setup).
   useLenis();
