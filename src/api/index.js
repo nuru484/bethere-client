@@ -4,13 +4,15 @@ const serverURL = import.meta.env.VITE_SERVER_URL;
 
 // Auth is cookie-only: httpOnly cookies carry the tokens, so every request
 // just needs credentials enabled - no Authorization header, no token reads.
+// No default Content-Type on purpose. Axios already sets application/json for
+// plain-object bodies, but a hard-coded JSON default also applies to FormData -
+// and axios then serializes the FormData to JSON (files become {}), silently
+// breaking every multipart upload. Letting axios infer keeps JSON bodies JSON
+// and lets the browser set multipart/form-data with its boundary.
 const api = axios.create({
   baseURL: `${serverURL}/api/v1`,
   timeout: 3 * 60 * 1000,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Single-flight refresh: all concurrent 401s share one in-flight refresh
