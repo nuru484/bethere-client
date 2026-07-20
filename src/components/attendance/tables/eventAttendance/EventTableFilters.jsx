@@ -1,6 +1,6 @@
 // src/components/attendance/tables/eventAttendance/EventTableFilters.jsx
 import { useState, useEffect } from "react";
-import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -86,7 +86,6 @@ export function EventTableFilters({
   const hasFiltersApplied =
     filters.status !== undefined ||
     filters.search !== undefined ||
-    filters.sessionId !== undefined ||
     filters.startDate !== undefined ||
     filters.endDate !== undefined;
 
@@ -97,7 +96,6 @@ export function EventTableFilters({
     onFiltersChange({
       search: undefined,
       status: undefined,
-      sessionId: undefined,
       startDate: undefined,
       endDate: undefined,
     });
@@ -116,8 +114,8 @@ export function EventTableFilters({
               </Badge>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
-              {totalCount} total records
+            <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+              {totalCount} total
             </div>
           )}
         </div>
@@ -128,7 +126,7 @@ export function EventTableFilters({
         {/* Search Input */}
         <div className="flex-1 min-w-0">
           <Input
-            placeholder="Search by user name or email..."
+            placeholder="Search name, email or session #"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             className="w-full"
@@ -136,7 +134,7 @@ export function EventTableFilters({
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
           {/* Status Filter */}
           <Select
             value={getStatusFilterValue()}
@@ -153,23 +151,10 @@ export function EventTableFilters({
             </SelectContent>
           </Select>
 
-          {/* Session Filter */}
-          <Input
-            placeholder="Session ID..."
-            value={filters.sessionId || ""}
-            onChange={(e) =>
-              onFiltersChange({
-                sessionId: e.target.value || undefined,
-              })
-            }
-            className="w-full sm:w-[140px]"
-          />
-
           {/* Date Range Filters */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full sm:w-[160px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
                 {startDate ? format(startDate, "MMM dd, yyyy") : "Start Date"}
               </Button>
             </PopoverTrigger>
@@ -186,7 +171,6 @@ export function EventTableFilters({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full sm:w-[160px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
                 {endDate ? format(endDate, "MMM dd, yyyy") : "End Date"}
               </Button>
             </PopoverTrigger>
@@ -220,13 +204,15 @@ export function EventTableFilters({
                 size="default"
                 className="whitespace-nowrap"
               >
-                <ChevronDown className="w-4 h-4 mr-2" />
+                <ChevronDown className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 Columns
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
               <div className="p-2">
-                <div className="text-sm font-medium mb-2">Toggle columns</div>
+                <div className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground mb-2">
+                  Toggle columns
+                </div>
                 {table
                   .getAllColumns()
                   .filter((column) => column.getCanHide())
@@ -251,7 +237,9 @@ export function EventTableFilters({
       {/* Active Filters Display */}
       {hasFiltersApplied && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
+          <span className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Active filters:
+          </span>
           {filters.search && (
             <Badge variant="secondary" className="gap-2">
               Search: {filters.search}
@@ -271,17 +259,6 @@ export function EventTableFilters({
               Status: {filters.status}
               <button
                 onClick={() => onFiltersChange({ status: undefined })}
-                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          {filters.sessionId && (
-            <Badge variant="secondary" className="gap-2">
-              Session: {filters.sessionId}
-              <button
-                onClick={() => onFiltersChange({ sessionId: undefined })}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -330,7 +307,6 @@ EventTableFilters.propTypes = {
   filters: PropTypes.shape({
     search: PropTypes.string,
     status: PropTypes.oneOf(["PRESENT", "LATE", "ABSENT"]),
-    sessionId: PropTypes.string,
     startDate: PropTypes.string,
     endDate: PropTypes.string,
   }).isRequired,

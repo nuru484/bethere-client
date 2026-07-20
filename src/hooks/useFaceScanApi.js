@@ -19,7 +19,10 @@ export const useAddFaceScan = () => {
 
   return useMutation({
     mutationFn: (userData) => addFaceScan(userData),
-    onSuccess: (_, userId) => {
+    onSuccess: (data) => {
+      // Self-enrollment: the enrolled user id comes back on the response,
+      // not in the mutation variables ({ faceScan, consent }).
+      const userId = data?.data?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
@@ -31,8 +34,8 @@ export const useDeleteFaceScan = () => {
 
   return useMutation({
     mutationFn: ({ userId }) => deleteFaceScan(userId),
-    onSuccess: (userId) => {
-      queryClient.invalidateQueries({ queryKey: ["facescan"] });
+    onSuccess: (_data, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
     },
   });

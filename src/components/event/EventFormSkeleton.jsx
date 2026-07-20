@@ -1,26 +1,36 @@
 // src/components/event/EventFormSkeleton.jsx
+//
+// Mirrors EventForm: numbered mono eyebrow + title per section, then the
+// section's fields. No icons - the form language is text-only.
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, FileText, Calendar, Clock } from "lucide-react";
+import PropTypes from "prop-types";
+
+const SectionHeader = ({ index, title }) => (
+  <div className="mb-6">
+    <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+      {index}
+    </p>
+    <h2 className="mt-1 text-lg font-semibold text-foreground">{title}</h2>
+  </div>
+);
+
+SectionHeader.propTypes = {
+  index: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+};
 
 const EventFormSkeleton = () => {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       {/* Basic Information Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-green-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Basic Information
-          </h2>
-        </div>
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        <SectionHeader index="01" title="Basic Information" />
 
         <div className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
             <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-full" />
           </div>
 
           {/* Description */}
@@ -32,32 +42,38 @@ const EventFormSkeleton = () => {
           {/* Event Type */}
           <div className="space-y-2">
             <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-full" />
           </div>
         </div>
       </div>
 
-      {/* Date and Time Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-green-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">Date & Time</h2>
+      {/* Cover Image Section */}
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        <SectionHeader index="02" title="Cover Image" />
+
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-3 w-64" />
         </div>
+      </div>
+
+      {/* Date and Time Section */}
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        <SectionHeader index="03" title="Date & Time" />
 
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Start Date */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
 
             {/* End Date */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
           </div>
 
@@ -65,14 +81,14 @@ const EventFormSkeleton = () => {
             {/* Start Time */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
               <Skeleton className="h-3 w-48" />
             </div>
 
             {/* End Time */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
               <Skeleton className="h-3 w-48" />
             </div>
           </div>
@@ -80,15 +96,8 @@ const EventFormSkeleton = () => {
       </div>
 
       {/* Recurring Event Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-            <Clock className="w-4 h-4 text-green-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Recurrence Settings
-          </h2>
-        </div>
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        <SectionHeader index="04" title="Recurrence Settings" />
 
         <div className="space-y-6">
           {/* Checkbox */}
@@ -103,60 +112,36 @@ const EventFormSkeleton = () => {
       </div>
 
       {/* Location Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-green-600" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Event Location
-          </h2>
-        </div>
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+        <SectionHeader index="05" title="Event Location" />
 
         <div className="space-y-6">
           {/* Location Name */}
           <div className="space-y-2">
             <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-9 w-full" />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Latitude */}
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-
-            {/* Longitude */}
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          </div>
-
-          {/* Use Current Location Button */}
-          <Skeleton className="h-10 w-full" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* City */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
 
             {/* Country */}
             <div className="space-y-2">
               <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-9 w-full" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Form Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 pt-4">
-        <Skeleton className="flex-1 h-11" />
-        <Skeleton className="flex-1 h-11" />
+      <div className="flex flex-wrap gap-3 pt-4">
+        <Skeleton className="flex-1 h-11 rounded-lg" />
+        <Skeleton className="flex-1 h-11 rounded-full" />
       </div>
     </div>
   );

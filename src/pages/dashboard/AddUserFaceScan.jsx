@@ -1,16 +1,22 @@
 // src/pages/AddUserFaceScan.jsx
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useAddFaceScan } from "@/hooks/useFaceScanApi";
 import FaceScanner from "@/components/FaceScanner";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { UserCircle } from "lucide-react";
+import { UserCircle, TriangleAlert } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function AddUserFaceScan() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Biometric consent is required by the server: the enrollment payload must
+  // carry consent: true, and the scanner stays disabled until it is ticked.
+  const [consent, setConsent] = useState(false);
 
   const hasSubmittedRef = useRef(false);
   const {
@@ -23,12 +29,13 @@ export default function AddUserFaceScan() {
 
   const handleScanComplete = useCallback(
     (result) => {
-      if (result.success && !hasSubmittedRef.current) {
+      if (result.success && consent && !hasSubmittedRef.current) {
         hasSubmittedRef.current = true;
 
         addFaceScan(
           {
             faceScan: result.descriptor,
+            consent: true,
           },
           {
             onSuccess: (response) => {
@@ -49,7 +56,7 @@ export default function AddUserFaceScan() {
         );
       }
     },
-    [addFaceScan, login, navigate]
+    [addFaceScan, consent, login, navigate]
   );
 
   const { message } = extractApiErrorMessage(error);
@@ -76,16 +83,24 @@ export default function AddUserFaceScan() {
     return null;
   };
 
+  // Self-enrollment is attendant-only: admins do not enroll their own face.
+  if (user?.role === "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="container mx-auto max-w-6xl">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3 pb-6 border-b">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
-            <UserCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        <div className="flex items-center gap-3 pb-6 border-b border-border">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#2b2b2b] flex items-center justify-center">
+            <UserCircle
+              className="h-5 w-5 sm:h-6 sm:w-6 text-[#fafafa]"
+              strokeWidth={1.5}
+            />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-normal tracking-[-0.02em] text-foreground">
               Face Registration
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
@@ -99,24 +114,17 @@ export default function AddUserFaceScan() {
           {/* Left Column - Side Card (Hidden on Mobile) */}
           <div className="hidden lg:block">
             {/* Important Notice */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg h-fit">
+            <div className="bg-card border border-border p-4 rounded-xl h-fit">
               <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <TriangleAlert
+                  className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                  strokeWidth={1.5}
+                />
                 <div>
-                  <h3 className="text-sm font-semibold text-yellow-800">
+                  <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
                     Important Notice
                   </h3>
-                  <p className="text-sm text-yellow-700 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     You can only register one face scan. After adding your face
                     scan, you will need to contact an administrator to reset it
                     before you can add a new one.
@@ -131,24 +139,17 @@ export default function AddUserFaceScan() {
             {/* Mobile Card - Shown only on small screens */}
             <div className="lg:hidden">
               {/* Important Notice */}
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+              <div className="bg-card border border-border p-4 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <TriangleAlert
+                    className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
                   <div>
-                    <h3 className="text-sm font-semibold text-yellow-800">
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-foreground">
                       Important Notice
                     </h3>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       You can only register one face scan. After adding your
                       face scan, you will need to contact an administrator to
                       reset it before you can add a new one.
@@ -158,12 +159,33 @@ export default function AddUserFaceScan() {
               </div>
             </div>
 
+            {/* Biometric consent - required before enrollment */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="biometric-consent"
+                  checked={consent}
+                  onCheckedChange={(value) => setConsent(value === true)}
+                  disabled={isPending}
+                  className="mt-0.5"
+                />
+                <Label
+                  htmlFor="biometric-consent"
+                  className="cursor-pointer text-sm font-normal leading-snug text-muted-foreground"
+                >
+                  I consent to my facial biometric data being captured and stored
+                  to verify my attendance. It is encrypted and can be deleted on
+                  request.
+                </Label>
+              </div>
+            </div>
+
             {/* Face Scanner Component - Centered */}
             <div className="flex justify-center">
               <FaceScanner
                 buttonText="Register Face"
                 onScanComplete={handleScanComplete}
-                disabled={isPending}
+                disabled={isPending || !consent}
                 externalStatus={getExternalStatus()}
               />
             </div>

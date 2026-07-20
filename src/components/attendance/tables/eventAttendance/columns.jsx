@@ -1,24 +1,29 @@
 // src/components/attendance/tables/eventAttendance/columns.jsx
-import { ArrowUpDown, Calendar, User } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EventAttendanceActionsDropdown } from "./EventAttendanceActionsDropdown";
 
-const getStatusVariant = (status) => {
+const STATUS_CHIP_BASE =
+  "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight";
+
+const getStatusChipClass = (status) => {
   switch (status) {
     case "PRESENT":
-      return "default";
+      return `${STATUS_CHIP_BASE} bg-[#dcf5e9] text-[#1a7f53]`;
     case "LATE":
-      return "secondary";
+      return `${STATUS_CHIP_BASE} bg-amber-100 text-amber-800`;
     case "ABSENT":
-      return "destructive";
+      return `${STATUS_CHIP_BASE} bg-red-100 text-red-700`;
     default:
-      return "outline";
+      return `${STATUS_CHIP_BASE} bg-muted text-muted-foreground`;
   }
 };
+
+const HEADER_LABEL_CLASS =
+  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
 
 export const createEventAttendanceColumns = () => [
   {
@@ -52,11 +57,10 @@ export const createEventAttendanceColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent text-left justify-start"
+        className={`p-0 h-auto hover:bg-transparent text-left justify-start ${HEADER_LABEL_CLASS}`}
       >
-        <User className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
         User
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ArrowUpDown className="ml-2 h-4 w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -84,14 +88,10 @@ export const createEventAttendanceColumns = () => [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: () => <span className={HEADER_LABEL_CLASS}>Status</span>,
     cell: ({ row }) => {
       const status = row.getValue("status");
-      return (
-        <Badge variant={getStatusVariant(status)} className="text-xs">
-          {status}
-        </Badge>
-      );
+      return <span className={getStatusChipClass(status)}>{status}</span>;
     },
   },
   {
@@ -100,11 +100,10 @@ export const createEventAttendanceColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent"
+        className={`p-0 h-auto hover:bg-transparent ${HEADER_LABEL_CLASS}`}
       >
-        <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
         Session Date
-        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -125,10 +124,10 @@ export const createEventAttendanceColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent"
+        className={`p-0 h-auto hover:bg-transparent ${HEADER_LABEL_CLASS}`}
       >
         Check In
-        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -143,7 +142,7 @@ export const createEventAttendanceColumns = () => [
   },
   {
     accessorKey: "checkOutTime",
-    header: "Check Out",
+    header: () => <span className={HEADER_LABEL_CLASS}>Check Out</span>,
     cell: ({ row }) => {
       const checkOutTime = row.getValue("checkOutTime");
       if (!checkOutTime) {
@@ -165,7 +164,7 @@ export const createEventAttendanceColumns = () => [
   {
     id: "actions",
     enableHiding: false,
-    header: "Actions",
+    header: () => <span className={HEADER_LABEL_CLASS}>Actions</span>,
     cell: ({ row }) => (
       <EventAttendanceActionsDropdown attendance={row.original} />
     ),

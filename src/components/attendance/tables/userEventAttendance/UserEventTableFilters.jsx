@@ -1,6 +1,6 @@
 // src/components/attendance/tables/userEventAttendance/UserEventTableFilters.jsx
 import { useState } from "react";
-import { ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -103,8 +103,8 @@ export function UserEventTableFilters({
               </Badge>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
-              {totalCount} total records
+            <div className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+              {totalCount} total
             </div>
           )}
         </div>
@@ -113,7 +113,7 @@ export function UserEventTableFilters({
       {/* Filters Row */}
       <div className="flex flex-col xl:flex-row gap-4">
         {/* Filter Controls */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+        <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
           {/* Status Filter */}
           <Select
             value={getStatusFilterValue()}
@@ -146,7 +146,6 @@ export function UserEventTableFilters({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full sm:w-[160px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
                 {startDate ? format(startDate, "MMM dd, yyyy") : "Start Date"}
               </Button>
             </PopoverTrigger>
@@ -163,7 +162,6 @@ export function UserEventTableFilters({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="w-full sm:w-[160px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
                 {endDate ? format(endDate, "MMM dd, yyyy") : "End Date"}
               </Button>
             </PopoverTrigger>
@@ -197,13 +195,15 @@ export function UserEventTableFilters({
                 size="default"
                 className="whitespace-nowrap"
               >
-                <ChevronDown className="w-4 h-4 mr-2" />
+                <ChevronDown className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 Columns
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
               <div className="p-2">
-                <div className="text-sm font-medium mb-2">Toggle columns</div>
+                <div className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground mb-2">
+                  Toggle columns
+                </div>
                 {table
                   .getAllColumns()
                   .filter((column) => column.getCanHide())
@@ -228,7 +228,9 @@ export function UserEventTableFilters({
       {/* Active Filters Display */}
       {hasFiltersApplied && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
+          <span className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Active filters:
+          </span>
           {filters.status !== undefined && (
             <Badge variant="secondary" className="gap-2">
               Status: {filters.status}

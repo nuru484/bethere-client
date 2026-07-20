@@ -1,36 +1,28 @@
 // src/components/attendance/tables/userAttendance/columns.jsx
-import { ArrowUpDown, Calendar, MapPin } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { AttendanceActionsDropdown } from "../../tables/userAttendance/AttendanceActionsDropdown";
 
-const getStatusVariant = (status) => {
+const STATUS_CHIP_BASE =
+  "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight";
+
+const getStatusChipClass = (status) => {
   switch (status) {
     case "PRESENT":
-      return "default"; // or "success" if you have it
+      return `${STATUS_CHIP_BASE} bg-[#dcf5e9] text-[#1a7f53]`;
     case "LATE":
-      return "secondary";
+      return `${STATUS_CHIP_BASE} bg-amber-100 text-amber-800`;
     case "ABSENT":
-      return "destructive";
+      return `${STATUS_CHIP_BASE} bg-red-100 text-red-700`;
     default:
-      return "outline";
+      return `${STATUS_CHIP_BASE} bg-muted text-muted-foreground`;
   }
 };
 
-// const getStatusColor = (status) => {
-//   switch (status) {
-//     case "PRESENT":
-//       return "text-green-600";
-//     case "LATE":
-//       return "text-yellow-600";
-//     case "ABSENT":
-//       return "text-red-600";
-//     default:
-//       return "";
-//   }
-// };
+const HEADER_LABEL_CLASS =
+  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
 
 export const createAttendanceColumns = () => [
   {
@@ -64,10 +56,10 @@ export const createAttendanceColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent text-left justify-start"
+        className={`p-0 h-auto hover:bg-transparent text-left justify-start ${HEADER_LABEL_CLASS}`}
       >
         Event
-        <ArrowUpDown className="ml-2 h-4 w-4" />
+        <ArrowUpDown className="ml-2 h-4 w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -86,14 +78,10 @@ export const createAttendanceColumns = () => [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: () => <span className={HEADER_LABEL_CLASS}>Status</span>,
     cell: ({ row }) => {
       const status = row.getValue("status");
-      return (
-        <Badge variant={getStatusVariant(status)} className="text-xs">
-          {status}
-        </Badge>
-      );
+      return <span className={getStatusChipClass(status)}>{status}</span>;
     },
   },
   {
@@ -102,11 +90,10 @@ export const createAttendanceColumns = () => [
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="p-0 h-auto font-semibold hover:bg-transparent"
+        className={`p-0 h-auto hover:bg-transparent ${HEADER_LABEL_CLASS}`}
       >
-        <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
         Check In
-        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+        <ArrowUpDown className="ml-2 h-3 w-3 sm:h-4 sm:w-4" strokeWidth={1.5} />
       </Button>
     ),
     cell: ({ row }) => {
@@ -121,7 +108,7 @@ export const createAttendanceColumns = () => [
   },
   {
     accessorKey: "checkOutTime",
-    header: "Check Out",
+    header: () => <span className={HEADER_LABEL_CLASS}>Check Out</span>,
     cell: ({ row }) => {
       const checkOutTime = row.getValue("checkOutTime");
       if (!checkOutTime) {
@@ -142,14 +129,13 @@ export const createAttendanceColumns = () => [
   },
   {
     accessorKey: "session.event.location",
-    header: "Location",
+    header: () => <span className={HEADER_LABEL_CLASS}>Location</span>,
     cell: ({ row }) => {
       const location = row.original.session?.event?.location;
       return (
         <div className="max-w-[150px]">
-          <div className="flex items-center gap-1 text-xs sm:text-sm">
-            <MapPin className="h-3 w-3 text-muted-foreground" />
-            <span className="truncate">{location?.name || "N/A"}</span>
+          <div className="text-xs sm:text-sm">
+            <span className="block truncate">{location?.name || "N/A"}</span>
           </div>
           {location?.city && (
             <div className="text-xs text-muted-foreground truncate">
@@ -163,7 +149,7 @@ export const createAttendanceColumns = () => [
   },
   {
     accessorKey: "session.startDate",
-    header: "Session Date",
+    header: () => <span className={HEADER_LABEL_CLASS}>Session Date</span>,
     cell: ({ row }) => {
       const startDate = row.original.session?.startDate;
       if (!startDate) return <span className="text-xs sm:text-sm">N/A</span>;
@@ -179,7 +165,7 @@ export const createAttendanceColumns = () => [
   {
     id: "actions",
     enableHiding: false,
-    header: "Actions",
+    header: () => <span className={HEADER_LABEL_CLASS}>Actions</span>,
     cell: ({ row }) => <AttendanceActionsDropdown attendance={row.original} />,
   },
 ];

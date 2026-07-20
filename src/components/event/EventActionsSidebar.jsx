@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Pencil, Trash, Users, LogIn, LogOut, UserCheck } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,6 +19,9 @@ const EventActionsSidebar = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";
+  // Only USER-role principals are attendants: admins never see personal
+  // sign-in / sign-out controls.
+  const isAttendant = user?.role === "USER";
   const isRecurringEvent = event?.isRecurring;
 
   // Find attendance for the current session
@@ -87,49 +89,51 @@ const EventActionsSidebar = ({
     navigate(`/dashboard/events/${event.id}/edit`);
   };
 
+  const handleShowVenueCode = () => {
+    navigate(`/dashboard/events/${event.id}/venue-code`);
+  };
+
   return (
     <>
-      <Card className="shadow-sm border-0 sticky top-4">
+      <Card className="sticky top-4">
         <CardHeader className="pb-4">
-          <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+          <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
             Quick Actions
           </h3>
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {/* Sign In Button - Conditional */}
-          {showSignInButton && (
+          {/* Sign In Button - attendants only */}
+          {isAttendant && showSignInButton && (
             <Button
-              variant="outline"
-              className="w-full justify-start border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-sm"
+              className="w-full justify-start"
               onClick={handleSignIn}
               disabled={isLoadingAttendance}
             >
-              <LogIn className="w-4 h-4 mr-3" />
               Sign In to Event
             </Button>
           )}
 
-          {/* Sign Out Button - Conditional */}
-          {showSignOutButton && (
+          {/* Sign Out Button - attendants only */}
+          {isAttendant && showSignOutButton && (
             <Button
               variant="outline"
-              className="w-full justify-start border-teal-200 text-teal-700 hover:bg-teal-50 text-sm"
+              className="w-full justify-start"
               onClick={handleSignOut}
               disabled={isLoadingAttendance}
             >
-              <LogOut className="w-4 h-4 mr-3" />
               Sign Out of Event
             </Button>
           )}
 
-          {/* View My Attendance (Everyone) */}
+          {/* View My Attendance: a user's own record for THIS event. Admins
+              have no attendance rows; the backend answers with an empty
+              page and the view renders its empty state. */}
           <Button
             variant="outline"
-            className="w-full justify-start border-purple-200 text-purple-700 hover:bg-purple-50 text-sm"
+            className="w-full justify-start"
             onClick={handleViewMyAttendance}
           >
-            <UserCheck className="w-4 h-4 mr-3" />
             My Event Attendance
           </Button>
 
@@ -138,31 +142,36 @@ const EventActionsSidebar = ({
             <>
               <Button
                 variant="outline"
-                className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50 text-sm"
+                className="w-full justify-start"
                 onClick={handleViewAttendance}
               >
-                <Users className="w-4 h-4 mr-3" />
                 Event Attendance
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleShowVenueCode}
+              >
+                Show Venue Code
               </Button>
 
               <Separator className="my-4" />
 
               <Button
                 variant="outline"
-                className="w-full justify-start border-gray-200 text-gray-700 hover:bg-gray-50 text-sm"
+                className="w-full justify-start"
                 onClick={handleEditEvent}
               >
-                <Pencil className="w-4 h-4 mr-3" />
                 Edit Event
               </Button>
 
               <Button
                 variant="destructive"
-                className="w-full justify-start text-sm"
+                className="w-full justify-start"
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={isDeleting}
               >
-                <Trash className="w-4 h-4 mr-3" />
                 {isDeleting ? "Deleting..." : "Delete Event"}
               </Button>
             </>

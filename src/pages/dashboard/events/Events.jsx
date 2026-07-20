@@ -2,7 +2,6 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useGetEvents } from "@/hooks/useEvent";
 import { useAuth } from "@/hooks/useAuth";
 import EventList from "@/components/event/EventList";
@@ -17,7 +16,6 @@ export default function EventsPage() {
   const [filters, setFilters] = useState({
     search: undefined,
     type: undefined,
-    location: undefined,
   });
 
   const {
@@ -75,14 +73,8 @@ export default function EventsPage() {
         onRefetch={refetch}
         headerActions={
           isAdmin && (
-            <Button
-              onClick={handleCreateEvent}
-              size="sm"
-              className="flex-1 sm:flex-none gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden xs:inline">Create Event</span>
-              <span className="xs:hidden">Create</span>
+            <Button onClick={handleCreateEvent} size="sm">
+              Create event
             </Button>
           )
         }

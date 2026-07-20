@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteEvent, useGetEvent } from "@/hooks/useEvent";
 import { useGetUserEventAttendance } from "@/hooks/useAttendance";
-import { ArrowLeft, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +48,7 @@ const EventDetailsPage = () => {
       { eventId },
       {
         onSuccess: (response) => {
-          toast.success(response.data.message || "Event deleted successfully");
+          toast.success(response.message || "Event deleted successfully");
           navigate("/dashboard/events");
         },
         onError: (error) => {
@@ -68,22 +67,20 @@ const EventDetailsPage = () => {
     return (
       <div className="container mx-auto space-y-6">
         {/* Header Skeleton */}
-        <div className="max-w-7xl mx-auto flex items-center justify-between pb-4 sm:pb-6 border-b">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
+        <div className="max-w-7xl mx-auto flex items-end justify-between pb-4 sm:pb-6 border-b">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
-          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
         </div>
 
         {/* Content Skeleton */}
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content Skeleton */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-0 shadow-md">
+            <Card>
               <CardContent className="p-6 sm:p-8 space-y-6">
                 <Skeleton className="h-10 w-3/4" />
                 <Skeleton className="h-6 w-1/2" />
@@ -102,7 +99,7 @@ const EventDetailsPage = () => {
 
           {/* Sidebar Skeleton */}
           <div className="lg:col-span-1">
-            <Card className="border-0 shadow-md sticky top-6">
+            <Card className="sticky top-6">
               <CardContent className="p-6 space-y-4">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -122,36 +119,28 @@ const EventDetailsPage = () => {
 
   return (
     <div className="container mx-auto space-y-6">
-      {/* Professional Header */}
-      <div className="max-w-7xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b">
-        {/* Title Section */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
-            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground tracking-tight line-clamp-1">
-              {event?.title || "Event Details"}
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-              View event information and details
-            </p>
-          </div>
+      {/* Header: mono eyebrow + display title */}
+      <div className="max-w-7xl mx-auto flex items-end justify-between gap-3 pb-4 sm:pb-6 border-b">
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+            Event
+          </p>
+          <h1 className="mt-1 line-clamp-2 break-words font-display text-xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-2xl lg:text-3xl">
+            {event?.title || "Event Details"}
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">
+            View event information and details
+          </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 sm:flex-none gap-2"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden xs:inline">Back to Events</span>
-            <span className="xs:hidden">Back</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-shrink-0"
+          onClick={handleBack}
+        >
+          Back
+        </Button>
       </div>
 
       {/* Main Content Area */}

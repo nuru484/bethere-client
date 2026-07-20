@@ -1,23 +1,28 @@
 // src/components/attendance/tables/userEventAttendance/columns.jsx
-import { ArrowUpDown, Calendar, MapPin } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { UserEventAttendanceActionsDropdown } from "./UserEventAttendanceActionsDropdown";
 
-const getStatusVariant = (status) => {
+const STATUS_CHIP_BASE =
+  "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight";
+
+const getStatusChipClass = (status) => {
   switch (status) {
     case "PRESENT":
-      return "default";
+      return `${STATUS_CHIP_BASE} bg-[#dcf5e9] text-[#1a7f53]`;
     case "LATE":
-      return "secondary";
+      return `${STATUS_CHIP_BASE} bg-amber-100 text-amber-800`;
     case "ABSENT":
-      return "destructive";
+      return `${STATUS_CHIP_BASE} bg-red-100 text-red-700`;
     default:
-      return "outline";
+      return `${STATUS_CHIP_BASE} bg-muted text-muted-foreground`;
   }
 };
+
+const HEADER_LABEL_CLASS =
+  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
 
 export const createUserEventAttendanceColumns = (isRecurring = true) => {
   const columns = [
@@ -51,16 +56,13 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: () => <span className={HEADER_LABEL_CLASS}>Status</span>,
       cell: ({ row }) => {
         const status = row.getValue("status");
         return (
-          <Badge
-            variant={getStatusVariant(status)}
-            className="text-xs whitespace-nowrap"
-          >
+          <span className={`${getStatusChipClass(status)} whitespace-nowrap`}>
             {status}
-          </Badge>
+          </span>
         );
       },
       size: 100,
@@ -72,11 +74,10 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 h-auto font-semibold hover:bg-transparent whitespace-nowrap"
+          className={`p-0 h-auto hover:bg-transparent whitespace-nowrap ${HEADER_LABEL_CLASS}`}
         >
-          <Calendar className="mr-2 h-4 w-4" />
           Session Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 h-4 w-4" strokeWidth={1.5} />
         </Button>
       ),
       cell: ({ row }) => {
@@ -98,10 +99,9 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
     {
       accessorKey: "session.event.location",
       header: () => (
-        <div className="flex items-center gap-2 whitespace-nowrap">
-          <MapPin className="h-4 w-4" />
+        <span className={`whitespace-nowrap ${HEADER_LABEL_CLASS}`}>
           Location
-        </div>
+        </span>
       ),
       cell: ({ row }) => {
         const location = row.original.session?.event?.location;
@@ -131,10 +131,10 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 h-auto font-semibold hover:bg-transparent whitespace-nowrap"
+          className={`p-0 h-auto hover:bg-transparent whitespace-nowrap ${HEADER_LABEL_CLASS}`}
         >
           Check In
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 h-4 w-4" strokeWidth={1.5} />
         </Button>
       ),
       cell: ({ row }) => {
@@ -157,7 +157,11 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
     },
     {
       accessorKey: "checkOutTime",
-      header: () => <span className="whitespace-nowrap">Check Out</span>,
+      header: () => (
+        <span className={`whitespace-nowrap ${HEADER_LABEL_CLASS}`}>
+          Check Out
+        </span>
+      ),
       cell: ({ row }) => {
         const checkOutTime = row.getValue("checkOutTime");
         if (!checkOutTime) {
@@ -183,7 +187,11 @@ export const createUserEventAttendanceColumns = (isRecurring = true) => {
     {
       id: "actions",
       enableHiding: false,
-      header: () => <span className="whitespace-nowrap">Actions</span>,
+      header: () => (
+        <span className={`whitespace-nowrap ${HEADER_LABEL_CLASS}`}>
+          Actions
+        </span>
+      ),
       cell: ({ row }) => (
         <UserEventAttendanceActionsDropdown attendance={row.original} />
       ),

@@ -1,15 +1,7 @@
 // src/components/event/EventForm.jsx
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  MapPin,
-  FileText,
-  Navigation,
-  Info,
-  Calendar,
-  Clock,
-  Loader2,
-} from "lucide-react";
-import { useState } from "react";
+import { Info, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipTrigger,
@@ -28,50 +20,93 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import SectionHeader from "@/components/ui/FormSectionHeader";
 
-const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
-  const [locationError, setLocationError] = useState(null);
+export const MAX_COVER_IMAGE_BYTES = 5 * 1024 * 1024; // ~5MB
+
+const EventForm = ({
+  form,
+  onSubmit,
+  isLoading,
+  mode = "create",
+  initialCoverImage = null,
+}) => {
+  const [coverObjectUrl, setCoverObjectUrl] = useState(null);
+  const coverInputRef = useRef(null);
   const isRecurring = form.watch("isRecurring");
+  const coverValue = form.watch("coverImage");
 
-  const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          form.setValue("location.latitude", position.coords.latitude);
-          form.setValue("location.longitude", position.coords.longitude);
-          setLocationError(null);
-          navigator.geolocation.clearWatch(watchId);
-        },
-        () => {
-          setLocationError(
-            "Unable to retrieve your location. Please enter manually."
-          );
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 10000,
-        }
-      );
+  // Live preview for a freshly selected file; revoked on change/unmount.
+  useEffect(() => {
+    if (coverValue instanceof File) {
+      const url = URL.createObjectURL(coverValue);
+      setCoverObjectUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setCoverObjectUrl(null);
+  }, [coverValue]);
+
+  // coverImage field semantics: undefined = unchanged, "" = remove,
+  // File = replace. Preview resolves in that order.
+  const coverPreviewUrl =
+    coverValue instanceof File
+      ? coverObjectUrl
+      : coverValue === ""
+        ? null
+        : initialCoverImage;
+
+  const handleCoverChange = (e, field) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type?.startsWith("image/")) {
+      form.setError("coverImage", {
+        type: "manual",
+        message: "Cover image must be an image file (PNG, JPG or WebP).",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_COVER_IMAGE_BYTES) {
+      form.setError("coverImage", {
+        type: "manual",
+        message: "Cover image must be 5MB or smaller.",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    form.clearErrors("coverImage");
+    field.onChange(file);
+  };
+
+  const handleRemoveCover = (field) => {
+    if (coverInputRef.current) {
+      coverInputRef.current.value = "";
+    }
+    form.clearErrors("coverImage");
+
+    if (coverValue instanceof File) {
+      // Drop the selection; an existing image (if any) shows again.
+      field.onChange(undefined);
     } else {
-      setLocationError("Geolocation is not supported by your browser.");
+      // Mark the existing image for removal (sent as "").
+      field.onChange("");
     }
   };
 
   return (
     <div className="w-full max-w-3xl mx-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-6"
+        >
           {/* Basic Information Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-green-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Basic Information
-              </h2>
-            </div>
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+            <SectionHeader index="01" title="Basic Information" />
 
             <div className="space-y-6">
               {/* Title */}
@@ -80,18 +115,15 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
-                      Event Title
-                    </FormLabel>
+                    <FormLabel>Event Title</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter event title"
                         {...field}
                         disabled={isLoading}
-                        className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-600" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -102,9 +134,9 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
+                    <FormLabel>
                       Description{" "}
-                      <span className="text-gray-400 font-normal">
+                      <span className="text-muted-foreground font-normal">
                         (Optional)
                       </span>
                     </FormLabel>
@@ -113,10 +145,10 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                         placeholder="Enter event description"
                         {...field}
                         disabled={isLoading}
-                        className="min-h-[100px] border-gray-300 focus:border-green-500 focus:ring-green-500"
+                        className="min-h-[100px]"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-600" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -127,34 +159,76 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
-                      Event Type
-                    </FormLabel>
+                    <FormLabel>Event Type</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Sports, Music, Conference"
                         {...field}
                         disabled={isLoading}
-                        className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-600" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
           </div>
 
+          {/* Cover Image Section */}
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+            <SectionHeader index="02" title="Cover Image" />
+
+            <FormField
+              control={form.control}
+              name="coverImage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Cover image{" "}
+                    <span className="text-muted-foreground font-normal">
+                      (Optional)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/*"
+                      disabled={isLoading}
+                      onChange={(e) => handleCoverChange(e, field)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Shown on the event card and detail page. PNG, JPG or WebP,
+                    up to 5MB.
+                  </FormDescription>
+                  <FormMessage />
+
+                  {coverPreviewUrl && (
+                    <div className="space-y-2 pt-2">
+                      <img
+                        src={coverPreviewUrl}
+                        alt="Cover image preview"
+                        className="aspect-video w-full rounded-xl border border-border object-cover"
+                      />
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => handleRemoveCover(field)}
+                        className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </FormItem>
+              )}
+            />
+          </div>
+
           {/* Date and Time Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-green-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Date & Time
-              </h2>
-            </div>
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+            <SectionHeader index="03" title="Date & Time" />
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,18 +238,11 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        Start Date
-                      </FormLabel>
+                      <FormLabel>Start Date</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        />
+                        <Input type="date" {...field} disabled={isLoading} />
                       </FormControl>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -186,10 +253,10 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2">
                         End Date
                         {!isRecurring && (
-                          <span className="text-red-500 text-xs">
+                          <span className="text-destructive text-xs">
                             (Required)
                           </span>
                         )}
@@ -197,7 +264,8 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                           <TooltipTrigger asChild>
                             <Info
                               size={14}
-                              className="text-gray-400 cursor-help"
+                              strokeWidth={1.5}
+                              className="text-muted-foreground cursor-help"
                             />
                           </TooltipTrigger>
                           <TooltipContent>
@@ -213,10 +281,9 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                           {...field}
                           value={field.value || ""}
                           disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -229,21 +296,14 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        Start Time
-                      </FormLabel>
+                      <FormLabel>Start Time</FormLabel>
                       <FormControl>
-                        <Input
-                          type="time"
-                          {...field}
-                          disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        />
+                        <Input type="time" {...field} disabled={isLoading} />
                       </FormControl>
-                      <FormDescription className="text-gray-500">
+                      <FormDescription>
                         When attendance opens (e.g., 06:00)
                       </FormDescription>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -254,21 +314,14 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                   name="endTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        End Time
-                      </FormLabel>
+                      <FormLabel>End Time</FormLabel>
                       <FormControl>
-                        <Input
-                          type="time"
-                          {...field}
-                          disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        />
+                        <Input type="time" {...field} disabled={isLoading} />
                       </FormControl>
-                      <FormDescription className="text-gray-500">
+                      <FormDescription>
                         When attendance closes (e.g., 19:30)
                       </FormDescription>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -277,15 +330,8 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
           </div>
 
           {/* Recurring Event Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-green-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Recurrence Settings
-              </h2>
-            </div>
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+            <SectionHeader index="04" title="Recurrence Settings" />
 
             <div className="space-y-6">
               <FormField
@@ -301,13 +347,14 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-gray-700 font-medium flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2">
                         Is this event recurring?
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info
                               size={14}
-                              className="text-gray-400 cursor-help"
+                              strokeWidth={1.5}
+                              className="text-muted-foreground cursor-help"
                             />
                           </TooltipTrigger>
                           <TooltipContent>
@@ -316,7 +363,7 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                           </TooltipContent>
                         </Tooltip>
                       </FormLabel>
-                      <FormDescription className="text-gray-500">
+                      <FormDescription>
                         Enable this if the event repeats over time
                       </FormDescription>
                     </div>
@@ -331,9 +378,7 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                     name="recurrenceInterval"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Recurrence Interval (Days)
-                        </FormLabel>
+                        <FormLabel>Recurrence Interval (Days)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -349,13 +394,12 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                             }
                             value={field.value || ""}
                             disabled={isLoading}
-                            className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                           />
                         </FormControl>
-                        <FormDescription className="text-gray-500">
+                        <FormDescription>
                           How many days between occurrences
                         </FormDescription>
-                        <FormMessage className="text-red-600" />
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -365,9 +409,7 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                     name="durationDays"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Duration (Days)
-                        </FormLabel>
+                        <FormLabel>Duration (Days)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -383,13 +425,12 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                             }
                             value={field.value || ""}
                             disabled={isLoading}
-                            className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                           />
                         </FormControl>
-                        <FormDescription className="text-gray-500">
+                        <FormDescription>
                           How many days each occurrence lasts
                         </FormDescription>
-                        <FormMessage className="text-red-600" />
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -399,15 +440,8 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
           </div>
 
           {/* Location Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-green-600" />
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Event Location
-              </h2>
-            </div>
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6">
+            <SectionHeader index="05" title="Event Location" />
 
             <div className="space-y-6">
               <FormField
@@ -415,18 +449,15 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                 name="location.name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">
-                      Location Name
-                    </FormLabel>
+                    <FormLabel>Location Name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Conference Hall A"
                         {...field}
                         disabled={isLoading}
-                        className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-600" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -434,85 +465,12 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="location.latitude"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        Latitude
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="any"
-                          placeholder="e.g., 5.6037"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value ? parseFloat(e.target.value) : 0
-                            )
-                          }
-                          disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-600" />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location.longitude"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
-                        Longitude
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="any"
-                          placeholder="e.g., -0.1870"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value ? parseFloat(e.target.value) : 0
-                            )
-                          }
-                          disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-600" />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleUseCurrentLocation}
-                variant="outline"
-                disabled={isLoading}
-                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-              >
-                <Navigation className="mr-2 h-4 w-4" />
-                Use Current Location
-              </Button>
-
-              {locationError && (
-                <p className="text-sm text-red-600">{locationError}</p>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
                   name="location.city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
+                      <FormLabel>
                         City{" "}
-                        <span className="text-gray-400 font-normal">
+                        <span className="text-muted-foreground font-normal">
                           (Optional)
                         </span>
                       </FormLabel>
@@ -521,10 +479,9 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                           placeholder="e.g., Accra"
                           {...field}
                           disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -534,9 +491,9 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                   name="location.country"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-700 font-medium">
+                      <FormLabel>
                         Country{" "}
-                        <span className="text-gray-400 font-normal">
+                        <span className="text-muted-foreground font-normal">
                           (Optional)
                         </span>
                       </FormLabel>
@@ -545,10 +502,9 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
                           placeholder="e.g., Ghana"
                           {...field}
                           disabled={isLoading}
-                          className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                         />
                       </FormControl>
-                      <FormMessage className="text-red-600" />
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -557,23 +513,24 @@ const EventForm = ({ form, onSubmit, isLoading, mode = "create" }) => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="flex flex-wrap gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => window.history.back()}
               disabled={isLoading}
-              className="flex-1 h-11 border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+              className="flex-1 h-11"
             >
               Cancel
             </Button>
 
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-medium shadow-sm transition-colors"
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isLoading} className="flex-1 h-11">
+              {isLoading && (
+                <Loader2
+                  className="mr-2 h-4 w-4 animate-spin"
+                  strokeWidth={1.5}
+                />
+              )}
               {mode === "update" ? "Update Event" : "Create Event"}
             </Button>
           </div>
@@ -588,11 +545,13 @@ EventForm.propTypes = {
     control: PropTypes.any.isRequired,
     handleSubmit: PropTypes.func.isRequired,
     watch: PropTypes.func.isRequired,
-    setValue: PropTypes.func.isRequired,
+    setError: PropTypes.func.isRequired,
+    clearErrors: PropTypes.func.isRequired,
   }).isRequired,
   onSubmit: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   mode: PropTypes.oneOf(["create", "update"]),
+  initialCoverImage: PropTypes.string,
 };
 
 export default EventForm;

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/data-table/DataTable";
+import EmptyState from "@/components/ui/EmptyState";
 import { createEventAttendanceColumns } from "./columns";
 import { EventTableFilters } from "./EventTableFilters";
 import PropTypes from "prop-types";
@@ -61,6 +62,12 @@ export function EventAttendanceDataTable({
 }) {
   const columns = useMemo(() => createEventAttendanceColumns(), []);
 
+  const hasActiveFilters =
+    filters.search !== undefined ||
+    filters.status !== undefined ||
+    filters.startDate !== undefined ||
+    filters.endDate !== undefined;
+
   return (
     <DataTable
       columns={columns}
@@ -80,8 +87,15 @@ export function EventAttendanceDataTable({
         />
       )}
       renderSkeletonCells={renderSkeletonCells}
-      emptyTitle="No attendance records found"
-      emptyDescription="Try adjusting your search or filter criteria"
+      hasActiveFilters={hasActiveFilters}
+      emptyState={
+        <EmptyState
+          eyebrow="Attendance"
+          title="No attendance records"
+          description="Records will appear here once attendants check in to this event."
+        />
+      }
+      emptyMessage="No records match the current filters - clear the filters to see all records."
     />
   );
 }
@@ -95,7 +109,6 @@ EventAttendanceDataTable.propTypes = {
   filters: PropTypes.shape({
     search: PropTypes.string,
     status: PropTypes.oneOf(["PRESENT", "LATE", "ABSENT"]),
-    sessionId: PropTypes.string,
     startDate: PropTypes.string,
     endDate: PropTypes.string,
   }).isRequired,

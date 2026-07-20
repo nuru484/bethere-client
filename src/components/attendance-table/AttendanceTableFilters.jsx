@@ -1,4 +1,8 @@
-// src/components/attendance/tables/userAttendance/TableFilters.jsx
+// src/components/attendance-table/AttendanceTableFilters.jsx
+//
+// One filter bar for every attendance table. Flags decide which controls
+// appear: `showSearch` (user + event tables), `showEventType` (user table),
+// `showSessionId` (userEvent table). Status and the date range are always on.
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,7 +31,16 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import PropTypes from "prop-types";
 
-export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
+export function AttendanceTableFilters({
+  table,
+  filters,
+  onFiltersChange,
+  totalCount,
+  showSearch = false,
+  showEventType = false,
+  showSessionId = false,
+  searchPlaceholder = "Search...",
+}) {
   const selectedCount = table.getSelectedRowModel().rows.length;
   const isAllSelected = selectedCount === totalCount && totalCount > 0;
 
@@ -42,10 +55,10 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
   const debouncedSearch = useDebounce(searchInput, 500);
 
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
+    if (showSearch && debouncedSearch !== filters.search) {
       onFiltersChange({ search: debouncedSearch || undefined });
     }
-  }, [debouncedSearch, filters.search, onFiltersChange]);
+  }, [showSearch, debouncedSearch, filters.search, onFiltersChange]);
 
   const getStatusFilterValue = () => {
     if (filters.status === "PRESENT") return "present";
@@ -80,8 +93,9 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
 
   const hasFiltersApplied =
     filters.status !== undefined ||
-    filters.search !== undefined ||
-    filters.eventType !== undefined ||
+    (showSearch && filters.search !== undefined) ||
+    (showEventType && filters.eventType !== undefined) ||
+    (showSessionId && filters.sessionId !== undefined) ||
     filters.startDate !== undefined ||
     filters.endDate !== undefined;
 
@@ -93,6 +107,7 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
       search: undefined,
       status: undefined,
       eventType: undefined,
+      sessionId: undefined,
       startDate: undefined,
       endDate: undefined,
     });
@@ -102,7 +117,7 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
     <div className="space-y-4">
       {/* Action Bar */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        {/* Selection Info & Delete Action */}
+        {/* Selection Info */}
         <div className="flex items-center gap-3 order-2 lg:order-1">
           {selectedCount > 0 ? (
             <div className="flex items-center gap-3 bg-muted/50 px-3 py-2 rounded-lg border">
@@ -121,14 +136,16 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
       {/* Filters Row */}
       <div className="flex flex-col xl:flex-row gap-4">
         {/* Search Input */}
-        <div className="flex-1 min-w-0">
-          <Input
-            placeholder="Search by event, location, or type..."
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            className="w-full"
-          />
-        </div>
+        {showSearch && (
+          <div className="flex-1 min-w-0">
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              className="w-full"
+            />
+          </div>
+        )}
 
         {/* Filter Controls */}
         <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
@@ -149,16 +166,32 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
           </Select>
 
           {/* Event Type Filter */}
-          <Input
-            placeholder="Event type..."
-            value={filters.eventType || ""}
-            onChange={(e) =>
-              onFiltersChange({
-                eventType: e.target.value || undefined,
-              })
-            }
-            className="w-full sm:w-[140px]"
-          />
+          {showEventType && (
+            <Input
+              placeholder="Event type..."
+              value={filters.eventType || ""}
+              onChange={(e) =>
+                onFiltersChange({
+                  eventType: e.target.value || undefined,
+                })
+              }
+              className="w-full sm:w-[140px]"
+            />
+          )}
+
+          {/* Session Filter */}
+          {showSessionId && (
+            <Input
+              placeholder="Session ID..."
+              value={filters.sessionId || ""}
+              onChange={(e) =>
+                onFiltersChange({
+                  sessionId: e.target.value || undefined,
+                })
+              }
+              className="w-full sm:w-[140px]"
+            />
+          )}
 
           {/* Date Range Filters */}
           <Popover>
@@ -249,7 +282,7 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
           <span className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
             Active filters:
           </span>
-          {filters.search && (
+          {showSearch && filters.search && (
             <Badge variant="secondary" className="gap-2">
               Search: {filters.search}
               <button
@@ -274,11 +307,22 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
               </button>
             </Badge>
           )}
-          {filters.eventType && (
+          {showEventType && filters.eventType && (
             <Badge variant="secondary" className="gap-2">
               Type: {filters.eventType}
               <button
                 onClick={() => onFiltersChange({ eventType: undefined })}
+                className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+          {showSessionId && filters.sessionId && (
+            <Badge variant="secondary" className="gap-2">
+              Session: {filters.sessionId}
+              <button
+                onClick={() => onFiltersChange({ sessionId: undefined })}
                 className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5"
               >
                 ×
@@ -319,7 +363,7 @@ export function TableFilters({ table, filters, onFiltersChange, totalCount }) {
   );
 }
 
-TableFilters.propTypes = {
+AttendanceTableFilters.propTypes = {
   table: PropTypes.shape({
     getSelectedRowModel: PropTypes.func.isRequired,
     getAllColumns: PropTypes.func.isRequired,
@@ -328,9 +372,14 @@ TableFilters.propTypes = {
     search: PropTypes.string,
     status: PropTypes.oneOf(["PRESENT", "LATE", "ABSENT"]),
     eventType: PropTypes.string,
+    sessionId: PropTypes.string,
     startDate: PropTypes.string,
     endDate: PropTypes.string,
   }).isRequired,
   onFiltersChange: PropTypes.func.isRequired,
   totalCount: PropTypes.number.isRequired,
+  showSearch: PropTypes.bool,
+  showEventType: PropTypes.bool,
+  showSessionId: PropTypes.bool,
+  searchPlaceholder: PropTypes.string,
 };

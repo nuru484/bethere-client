@@ -1,9 +1,14 @@
-// src/components/events/EventList.jsx
+// src/components/event/EventList.jsx
+//
+// Events index: mono eyebrow header, compact single-row search/filter bar
+// (stacking on mobile), and a responsive grid of card links.
 import { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
+import PropTypes from "prop-types";
 import EventListItem from "./EventListItem";
 import EventListItemSkeleton from "./EventListItemSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Search, X, MapPin } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import Pagination from "@/components/ui/Pagination";
@@ -16,7 +21,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import PropTypes from "prop-types";
+
+const MICRO_LABEL =
+  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
+
+const EVENT_TYPES = [
+  "Conference",
+  "Workshop",
+  "Seminar",
+  "Meetup",
+  "Webinar",
+  "Festival",
+  "Exhibition",
+  "Concert",
+  "Sports",
+  "Other",
+];
 
 const EventList = ({
   data,
@@ -32,7 +52,6 @@ const EventList = ({
   headerActions,
 }) => {
   const [searchInput, setSearchInput] = useState(filters?.search || "");
-  const [locationInput, setLocationInput] = useState(filters?.location || "");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,64 +63,49 @@ const EventList = ({
     return () => clearTimeout(timer);
   }, [searchInput, filters?.search, onFiltersChange]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (locationInput !== filters?.location) {
-        onFiltersChange({ location: locationInput || undefined });
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [locationInput, filters?.location, onFiltersChange]);
-
   const handleClearFilters = () => {
     setSearchInput("");
-    setLocationInput("");
     onFiltersChange({
       search: undefined,
       type: undefined,
-      location: undefined,
     });
   };
 
-  const hasActiveFilters =
-    filters?.search || filters?.type || filters?.location;
+  const hasActiveFilters = Boolean(filters?.search || filters?.type);
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        {/* Header Skeleton */}
-        <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b">
-          <div className="flex items-center gap-3">
-            <Skeleton className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-7 sm:h-8 w-32 sm:w-40" />
-              <Skeleton className="h-4 w-24 sm:w-32" />
-            </div>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-end justify-between gap-4 border-b pb-4 sm:pb-6">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-8 w-32 sm:h-9" />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-8 w-28 rounded-full" />
+        </div>
+
+        {/* Filter row skeleton */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3 w-12" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="flex-none space-y-1.5 lg:w-40">
+            <Skeleton className="h-3 w-8" />
+            <Skeleton className="h-9 w-full lg:w-40" />
           </div>
         </div>
 
-        {/* Filters Skeleton */}
-        <div className="max-w-5xl mx-auto space-y-3">
-          <Skeleton className="h-10 w-full" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-
-        {/* Event List Item Skeletons */}
-        <div className="max-w-5xl mx-auto space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+        {/* Card grid skeleton */}
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
             <EventListItemSkeleton key={i} />
           ))}
         </div>
 
-        {/* Pagination Skeleton */}
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+        {/* Pagination skeleton */}
+        <div className="flex flex-col items-center justify-between gap-4 pt-4 sm:flex-row">
           <Skeleton className="h-4 w-40" />
           <div className="flex items-center gap-2">
             <Skeleton className="h-9 w-20" />
@@ -121,159 +125,139 @@ const EventList = ({
   }
 
   const eventCount = data?.length || 0;
+  const noEventsAtAll = meta.total === 0 && !hasActiveFilters;
 
   return (
-    <div className="space-y-6">
-      {/* Professional Header */}
-      <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 sm:pb-6 border-b">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
-            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground tracking-tight">
-              Events
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-              {meta.total.toLocaleString()} event
-              {meta.total !== 1 ? "s" : ""}{" "}
-              {meta.total === 0 ? "available" : "found"}
-            </p>
-          </div>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header: mono eyebrow + display title (the count lives in the
+          toolbar area below, never here) */}
+      <div className="flex items-end justify-between gap-4 border-b pb-4 sm:pb-6">
+        <div className="min-w-0">
+          <p className={MICRO_LABEL}>All events</p>
+          <h1 className="mt-1 font-display text-2xl font-normal tracking-[-0.02em] text-foreground sm:text-3xl">
+            Events
+          </h1>
         </div>
 
         {headerActions && (
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {headerActions}
           </div>
         )}
       </div>
 
-      {/* Search and Filters */}
-      <div className="max-w-5xl mx-auto space-y-3">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search events by title, description, type, or city..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10 pr-10"
-          />
-          {searchInput && (
-            <button
-              onClick={() => setSearchInput("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+      {/* Compact search/filter row + result count - hidden when there is
+          nothing to search or filter at all */}
+      {!noEventsAtAll && (
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            {/* Search */}
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <label htmlFor="event-search" className={MICRO_LABEL}>
+                Search
+              </label>
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  strokeWidth={1.5}
+                />
+                <Input
+                  id="event-search"
+                  type="text"
+                  placeholder="Search title, type or location"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => setSearchInput("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </button>
+                )}
+              </div>
+            </div>
 
-        {/* Filter Controls */}
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1 w-full">
-            {/* Type Filter */}
-            <Select
-              value={filters?.type || "all"}
-              onValueChange={(value) =>
-                onFiltersChange({ type: value === "all" ? undefined : value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Event Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Conference">Conference</SelectItem>
-                <SelectItem value="Workshop">Workshop</SelectItem>
-                <SelectItem value="Seminar">Seminar</SelectItem>
-                <SelectItem value="Meetup">Meetup</SelectItem>
-                <SelectItem value="Webinar">Webinar</SelectItem>
-                <SelectItem value="Festival">Festival</SelectItem>
-                <SelectItem value="Exhibition">Exhibition</SelectItem>
-                <SelectItem value="Concert">Concert</SelectItem>
-                <SelectItem value="Sports">Sports</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Location Filter */}
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Filter by location..."
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              {locationInput && (
-                <button
-                  onClick={() => setLocationInput("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            {/* Type filter + clear */}
+            <div className="flex flex-none items-end gap-3">
+              <div className="flex-1 space-y-1.5 lg:w-40 lg:flex-none">
+                <span className={MICRO_LABEL}>Type</span>
+                <Select
+                  value={filters?.type || "all"}
+                  onValueChange={(value) =>
+                    onFiltersChange({
+                      type: value === "all" ? undefined : value,
+                    })
+                  }
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Event type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All types</SelectItem>
+                    {EVENT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                  Clear
+                </Button>
               )}
             </div>
           </div>
 
-          {/* Clear Filters Button */}
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilters}
-              className="whitespace-nowrap w-full sm:w-auto"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Clear Filters
-            </Button>
-          )}
+          {/* Result count - the single place the total appears */}
+          <p className={MICRO_LABEL}>{meta.total.toLocaleString()} total</p>
         </div>
-      </div>
+      )}
 
-      {/* Event List */}
+      {/* Event grid */}
       {eventCount > 0 ? (
         <>
-          <div className="space-y-4 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {data.map((event) => (
               <EventListItem key={event.id} event={event} />
             ))}
           </div>
 
-          {/* Pagination */}
-          <div className="max-w-5xl mx-auto">
-            <Pagination
-              meta={meta}
-              onPageChange={onPageChange}
-              onLimitChange={onLimitChange}
-              showPageSizeSelector={true}
-              pageSizeOptions={[5, 10, 25, 50]}
-            />
-          </div>
+          <Pagination
+            meta={meta}
+            onPageChange={onPageChange}
+            onLimitChange={onLimitChange}
+            showPageSizeSelector={true}
+            pageSizeOptions={[5, 10, 25, 50]}
+          />
         </>
+      ) : noEventsAtAll ? (
+        <EmptyState
+          eyebrow="Events"
+          title="No events yet"
+          description="Events will appear here once they are created."
+        />
       ) : (
-        <div className="text-center py-12 sm:py-16">
-          <div className="max-w-md mx-auto px-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <Search className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
-              No Events Found
-            </h3>
-            <p className="text-sm sm:text-base text-muted-foreground mb-4">
-              {hasActiveFilters
-                ? "No events match your current filters. Try adjusting your search criteria."
-                : "No events available at the moment. Check back later."}
+        <div className="rounded-2xl border border-dashed py-12 text-center sm:py-16">
+          <div className="mx-auto max-w-md px-4">
+            <p className="text-sm text-muted-foreground">
+              No events match the current filters.
             </p>
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleClearFilters}>
-                Clear Filters
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearFilters}
+              className="mt-4"
+            >
+              Clear filters
+            </Button>
           </div>
         </div>
       )}

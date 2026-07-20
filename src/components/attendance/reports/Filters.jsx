@@ -1,5 +1,5 @@
 // src/components/attendance/reports/Filters.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -24,10 +24,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, RotateCcw, Search, Loader2 } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useGetAllUsers } from "@/hooks/useUsers";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
   const [checkInStartDate, setCheckInStartDate] = useState();
@@ -36,15 +37,89 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
   const [sessionEndDate, setSessionEndDate] = useState();
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
-  // Fetch users with search
+  // Local state for the free-text filters so typing is debounced and doesn't
+  // fire a report request on every keystroke.
+  const [searchInput, setSearchInput] = useState(filters.search || "");
+  const [eventNameInput, setEventNameInput] = useState(filters.eventName || "");
+  const [eventTypeInput, setEventTypeInput] = useState(filters.eventType || "");
+  const [locationNameInput, setLocationNameInput] = useState(
+    filters.locationName || ""
+  );
+  const [cityInput, setCityInput] = useState(filters.city || "");
+  const [countryInput, setCountryInput] = useState(filters.country || "");
+
+  const debouncedUserSearch = useDebounce(userSearchTerm, 400);
+  const debouncedSearch = useDebounce(searchInput, 500);
+  const debouncedEventName = useDebounce(eventNameInput, 500);
+  const debouncedEventType = useDebounce(eventTypeInput, 500);
+  const debouncedLocationName = useDebounce(locationNameInput, 500);
+  const debouncedCity = useDebounce(cityInput, 500);
+  const debouncedCountry = useDebounce(countryInput, 500);
+
+  // Fetch users with debounced search
   const { data: usersData, isLoading: isUsersLoading } = useGetAllUsers({
     page: 1,
     limit: 10,
-    search: userSearchTerm,
+    search: debouncedUserSearch,
   });
 
   const set = (key, value) => {
     onFiltersChange({ ...filters, [key]: value });
+  };
+
+  // Commit each debounced text value up to the parent once it settles. An empty
+  // string clears the filter (sends no param) rather than serializing "".
+  useEffect(() => {
+    if ((debouncedSearch || undefined) !== filters.search) {
+      onFiltersChange({ search: debouncedSearch || undefined });
+    }
+  }, [debouncedSearch, filters.search, onFiltersChange]);
+
+  useEffect(() => {
+    if ((debouncedEventName || undefined) !== filters.eventName) {
+      onFiltersChange({ eventName: debouncedEventName || undefined });
+    }
+  }, [debouncedEventName, filters.eventName, onFiltersChange]);
+
+  useEffect(() => {
+    if ((debouncedEventType || undefined) !== filters.eventType) {
+      onFiltersChange({ eventType: debouncedEventType || undefined });
+    }
+  }, [debouncedEventType, filters.eventType, onFiltersChange]);
+
+  useEffect(() => {
+    if ((debouncedLocationName || undefined) !== filters.locationName) {
+      onFiltersChange({ locationName: debouncedLocationName || undefined });
+    }
+  }, [debouncedLocationName, filters.locationName, onFiltersChange]);
+
+  useEffect(() => {
+    if ((debouncedCity || undefined) !== filters.city) {
+      onFiltersChange({ city: debouncedCity || undefined });
+    }
+  }, [debouncedCity, filters.city, onFiltersChange]);
+
+  useEffect(() => {
+    if ((debouncedCountry || undefined) !== filters.country) {
+      onFiltersChange({ country: debouncedCountry || undefined });
+    }
+  }, [debouncedCountry, filters.country, onFiltersChange]);
+
+  // Reset clears the parent filters and all local state, including the date
+  // pickers (which otherwise keep stale selections after a reset).
+  const handleReset = () => {
+    setSearchInput("");
+    setEventNameInput("");
+    setEventTypeInput("");
+    setLocationNameInput("");
+    setCityInput("");
+    setCountryInput("");
+    setUserSearchTerm("");
+    setCheckInStartDate(undefined);
+    setCheckInEndDate(undefined);
+    setSessionStartDate(undefined);
+    setSessionEndDate(undefined);
+    onReset();
   };
 
   const applyCheckInDateRange = () => {
@@ -75,13 +150,14 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
     <Card className="w-full">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pb-4">
         <div>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg font-display font-normal tracking-[-0.02em]">
+            Filters
+          </CardTitle>
           <CardDescription className="text-sm">
             Refine attendance reports
           </CardDescription>
         </div>
-        <Button onClick={onReset} variant="outline" size="sm">
-          <RotateCcw className="h-4 w-4 mr-2" />
+        <Button onClick={handleReset} variant="outline" size="sm">
           Reset
         </Button>
       </CardHeader>
@@ -91,11 +167,14 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
         <div className="space-y-2">
           <Label>General Search</Label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                strokeWidth={1.5}
+              />
             <Input
               placeholder="Search users, events, locations..."
-              value={filters.search || ""}
-              onChange={(e) => set("search", e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9"
             />
           </div>
@@ -106,7 +185,10 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
           <Label>User</Label>
           <div className="space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                strokeWidth={1.5}
+              />
               <Input
                 placeholder="Search users by name or email..."
                 value={userSearchTerm}
@@ -116,7 +198,9 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
             </div>
             <Select
               value={filters.userId ? String(filters.userId) : ""}
-              onValueChange={(v) => set("userId", v ? Number(v) : undefined)}
+              onValueChange={(v) =>
+                set("userId", v && v !== "all" ? Number(v) : undefined)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a user" />
@@ -177,14 +261,16 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
 
         {/* Event Filters */}
         <div className="space-y-3">
-          <Label className="text-base font-semibold">Event Filters</Label>
+          <Label className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Event Filters
+          </Label>
 
           <div className="space-y-2">
             <Label className="text-sm">Event Name</Label>
             <Input
               placeholder="Search by event title..."
-              value={filters.eventName || ""}
-              onChange={(e) => set("eventName", e.target.value)}
+              value={eventNameInput}
+              onChange={(e) => setEventNameInput(e.target.value)}
             />
           </div>
 
@@ -192,8 +278,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
             <Label className="text-sm">Event Type</Label>
             <Input
               placeholder="e.g., Conference, Workshop..."
-              value={filters.eventType || ""}
-              onChange={(e) => set("eventType", e.target.value)}
+              value={eventTypeInput}
+              onChange={(e) => setEventTypeInput(e.target.value)}
             />
           </div>
 
@@ -223,14 +309,16 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
 
         {/* Location Filters */}
         <div className="space-y-3">
-          <Label className="text-base font-semibold">Location Filters</Label>
+          <Label className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Location Filters
+          </Label>
 
           <div className="space-y-2">
             <Label className="text-sm">Location Name</Label>
             <Input
               placeholder="Search by location name..."
-              value={filters.locationName || ""}
-              onChange={(e) => set("locationName", e.target.value)}
+              value={locationNameInput}
+              onChange={(e) => setLocationNameInput(e.target.value)}
             />
           </div>
 
@@ -239,8 +327,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               <Label className="text-sm">City</Label>
               <Input
                 placeholder="e.g., Accra"
-                value={filters.city || ""}
-                onChange={(e) => set("city", e.target.value)}
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
               />
             </div>
 
@@ -248,8 +336,8 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
               <Label className="text-sm">Country</Label>
               <Input
                 placeholder="e.g., Ghana"
-                value={filters.country || ""}
-                onChange={(e) => set("country", e.target.value)}
+                value={countryInput}
+                onChange={(e) => setCountryInput(e.target.value)}
               />
             </div>
           </div>
@@ -257,8 +345,10 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
 
         {/* Check-In Date Range */}
         <div className="space-y-3">
-          <Label className="text-base font-semibold">Check-In Date Range</Label>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <Label className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Check-In Date Range
+          </Label>
+          <div className="flex flex-wrap gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -268,7 +358,6 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                     !checkInStartDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {checkInStartDate
                     ? format(checkInStartDate, "MMM d, yyyy")
                     : "Start Date"}
@@ -293,7 +382,6 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                     !checkInEndDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {checkInEndDate
                     ? format(checkInEndDate, "MMM d, yyyy")
                     : "End Date"}
@@ -321,8 +409,10 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
 
         {/* Session Date Range */}
         <div className="space-y-3">
-          <Label className="text-base font-semibold">Session Date Range</Label>
-          <div className="flex flex-col sm:flex-row gap-2">
+          <Label className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
+            Session Date Range
+          </Label>
+          <div className="flex flex-wrap gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -332,7 +422,6 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                     !sessionStartDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {sessionStartDate
                     ? format(sessionStartDate, "MMM d, yyyy")
                     : "Start Date"}
@@ -357,7 +446,6 @@ export const AttendanceFilters = ({ filters, onFiltersChange, onReset }) => {
                     !sessionEndDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
                   {sessionEndDate
                     ? format(sessionEndDate, "MMM d, yyyy")
                     : "End Date"}

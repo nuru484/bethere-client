@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/data-table/DataTable";
+import EmptyState from "@/components/ui/EmptyState";
 import { createUserEventAttendanceColumns } from "./columns";
 import { UserEventTableFilters } from "./UserEventTableFilters";
 import PropTypes from "prop-types";
@@ -72,6 +73,12 @@ export function UserEventAttendanceDataTable({
     [isRecurring]
   );
 
+  const hasActiveFilters =
+    filters.status !== undefined ||
+    filters.sessionId !== undefined ||
+    filters.startDate !== undefined ||
+    filters.endDate !== undefined;
+
   return (
     <DataTable
       columns={columns}
@@ -95,12 +102,19 @@ export function UserEventAttendanceDataTable({
           : undefined
       }
       renderSkeletonCells={renderSkeletonCells}
-      emptyTitle="No attendance records found"
-      emptyDescription={
-        isRecurring
-          ? "Try adjusting your search or filter criteria"
-          : "This user has not attended this event"
+      hasActiveFilters={hasActiveFilters}
+      emptyState={
+        <EmptyState
+          eyebrow="Attendance"
+          title="No attendance records"
+          description={
+            isRecurring
+              ? "This attendant has no session records for this event yet."
+              : "This attendant has not attended this event."
+          }
+        />
       }
+      emptyMessage="No records match the current filters - clear the filters to see all records."
       showPagination={isRecurring && totalCount > pageSize}
     />
   );

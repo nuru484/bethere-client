@@ -1,17 +1,15 @@
 // src/components/event/EventDetails.jsx
-import {
-  Calendar,
-  MapPin,
-  Tag,
-  Repeat,
-  Clock,
-  Globe,
-  AlertCircle,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+//
+// Detail card in the paper-and-ink voice: optional cover image, mono
+// micro-label row (type + status), display title, then text-only meta
+// sections - no decorative icons.
 import PropTypes from "prop-types";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { getEventStatus } from "./event-display";
+
+const MICRO_LABEL =
+  "font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground";
 
 const EventDetails = ({ event }) => {
   const formatDate = (date) =>
@@ -26,189 +24,145 @@ const EventDetails = ({ event }) => {
 
   const formatTime = (time) => time || "Not specified";
 
-  const formatRecurrenceInfo = () => {
-    if (!event?.isRecurring) return null;
-
-    const interval = event.recurrenceInterval || 1;
-    const intervalText = interval === 1 ? "day" : `${interval} days`;
-
-    return `Every ${intervalText}`;
-  };
-
   if (!event) {
     return (
-      <Card className="shadow-lg border-0 bg-white">
-        <CardContent>
-          <div className="text-center py-8 sm:py-12">
-            <div className="max-w-md mx-auto px-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-amber-50 flex items-center justify-center">
-                <AlertCircle className="h-7 w-7 sm:h-8 sm:w-8 text-amber-600" />
-              </div>
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
-                Event Not Found
-              </h3>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                The event you&apos;re looking for doesn&apos;t exist or has been
-                removed.
-              </p>
-            </div>
+      <Card>
+        <CardContent className="p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-md py-8 text-center sm:py-12">
+            <p className={MICRO_LABEL}>Not found</p>
+            <h3 className="mt-2 text-base font-semibold text-foreground sm:text-lg">
+              Event Not Found
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+              The event you&apos;re looking for doesn&apos;t exist or has been
+              removed.
+            </p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  const status = getEventStatus(event);
+
   return (
-    <Card className="shadow-lg border-0 bg-white hover:shadow-xl transition-shadow duration-300">
+    <Card>
       <CardContent className="p-4 sm:p-6 lg:p-8">
-        {/* Event Title and Type */}
+        {/* Cover image */}
+        {event.coverImage && (
+          <img
+            src={event.coverImage}
+            alt=""
+            className="mb-6 aspect-video w-full rounded-xl border border-border object-cover"
+          />
+        )}
+
+        {/* Micro-label row: the page header owns the title, this card only
+            carries type/status metadata and the description. */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight tracking-tight">
-              {event.title}
-            </h1>
-            <Badge
-              variant="secondary"
-              className="bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1.5 font-medium w-fit shadow-sm hover:shadow transition-shadow"
+          <div
+            className={`flex flex-wrap items-center gap-2 ${MICRO_LABEL}`}
+          >
+            <span>{event.type}</span>
+            <span
+              className={`rounded-full px-2 py-0.5 ${status.className}`}
             >
-              <Tag className="w-3.5 h-3.5 mr-1.5" />
-              {event.type}
-            </Badge>
+              {status.label}
+            </span>
           </div>
 
           {event.description && (
-            <div className="prose prose-gray max-w-none">
-              <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
-                {event.description}
-              </p>
-            </div>
+            <p className="mt-4 break-words text-base leading-relaxed text-muted-foreground sm:text-lg">
+              {event.description}
+            </p>
           )}
         </div>
 
-        <Separator className="my-6 sm:my-8 bg-gray-200" />
+        <Separator className="my-6 sm:my-8" />
 
-        {/* Event Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
-          {/* Date & Time Section */}
+        {/* Event details grid - text only, departures-board style */}
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-10">
+          {/* Date & Time */}
           <div className="space-y-6">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="p-2.5 bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-xl flex-shrink-0 shadow-sm">
-                <Calendar className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base tracking-tight">
-                  Date & Time
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-start sm:items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-500 w-12 flex-shrink-0">
-                      Start:
-                    </span>
-                    <span className="text-gray-900 break-words font-medium">
-                      {formatDate(event.startDate)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm pl-14">
-                    <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                    <span className="text-gray-600">
-                      {formatTime(event.startTime)}
-                    </span>
-                  </div>
+            <div>
+              <h3 className={`${MICRO_LABEL} mb-3`}>Date &amp; Time</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-2 text-sm">
+                  <span className="w-12 flex-shrink-0 font-medium text-muted-foreground">
+                    Start:
+                  </span>
+                  <span className="break-words font-medium text-foreground">
+                    {formatDate(event.startDate)}
+                  </span>
+                </div>
+                <p className="pl-14 font-mono text-xs text-muted-foreground">
+                  {formatTime(event.startTime)}
+                </p>
 
-                  {event.endDate && (
-                    <>
-                      <div className="flex items-start sm:items-center gap-2 text-sm pt-3 mt-3 border-t border-gray-100">
-                        <span className="font-medium text-gray-500 w-12 flex-shrink-0">
-                          End:
-                        </span>
-                        <span className="text-gray-900 break-words font-medium">
-                          {formatDate(event.endDate)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm pl-14">
-                        <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-600">
-                          {formatTime(event.endTime)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-
-                  {event.durationDays && event.durationDays > 0 && (
-                    <div className="flex items-center gap-2 text-sm mt-3 pt-3 border-t border-gray-100">
-                      <span className="font-medium text-gray-500 flex-shrink-0">
-                        Duration:
+                {event.endDate && (
+                  <>
+                    <div className="mt-3 flex items-start gap-2 border-t border-border pt-3 text-sm">
+                      <span className="w-12 flex-shrink-0 font-medium text-muted-foreground">
+                        End:
                       </span>
-                      <span className="text-gray-900 font-medium">
-                        {event.durationDays}{" "}
-                        {event.durationDays === 1 ? "day" : "days"}
+                      <span className="break-words font-medium text-foreground">
+                        {formatDate(event.endDate)}
                       </span>
                     </div>
-                  )}
-                </div>
+                    <p className="pl-14 font-mono text-xs text-muted-foreground">
+                      {formatTime(event.endTime)}
+                    </p>
+                  </>
+                )}
+
+                {event.durationDays && event.durationDays > 0 && (
+                  <div className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-sm">
+                    <span className="flex-shrink-0 font-medium text-muted-foreground">
+                      Duration:
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {event.durationDays}{" "}
+                      {event.durationDays === 1 ? "day" : "days"}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Recurrence */}
             {event.isRecurring && (
-              <div className="flex items-start gap-3 sm:gap-4 p-4 bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-xl">
-                <div className="p-2.5 bg-white border border-teal-200 rounded-lg flex-shrink-0 shadow-sm">
-                  <Repeat className="w-5 h-5 text-teal-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base tracking-tight">
-                    Recurrence
-                  </h3>
-                  <p className="text-gray-700 text-sm font-medium">
-                    {formatRecurrenceInfo()}
+              <div className="rounded-xl border border-border bg-secondary p-4">
+                <h3 className={`${MICRO_LABEL} mb-2`}>Recurrence</h3>
+                <p className="text-sm font-medium text-foreground">
+                  Every{" "}
+                  {(event.recurrenceInterval || 1) === 1
+                    ? "day"
+                    : `${event.recurrenceInterval} days`}
+                </p>
+                {event.recurrenceInterval && (
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Repeats every {event.recurrenceInterval}{" "}
+                    {event.recurrenceInterval === 1 ? "day" : "days"}
                   </p>
-                  {event.recurrenceInterval && (
-                    <p className="text-gray-500 text-xs mt-1.5">
-                      Repeats every {event.recurrenceInterval}{" "}
-                      {event.recurrenceInterval === 1 ? "day" : "days"}
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Location Section */}
-          <div className="space-y-6">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl flex-shrink-0 shadow-sm">
-                <MapPin className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 mb-3 text-sm sm:text-base tracking-tight">
-                  Location
-                </h3>
-                <div className="space-y-3">
-                  <p className="font-semibold text-gray-900 break-words text-base">
-                    {event.location?.name || "No location specified"}
-                  </p>
-                  {(event.location?.city || event.location?.country) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Globe className="w-3.5 h-3.5 flex-shrink-0 text-blue-500" />
-                      <span className="break-words">
-                        {event.location.city}
-                        {event.location.city && event.location.country
-                          ? ", "
-                          : ""}
-                        {event.location.country}
-                      </span>
-                    </div>
-                  )}
-                  {event.location?.latitude && event.location?.longitude && (
-                    <div className="pt-2 mt-2 border-t border-gray-100">
-                      <p className="text-xs text-gray-500 font-mono break-all bg-gray-50 px-2 py-1.5 rounded border border-gray-200">
-                        {event.location.latitude.toFixed(6)},{" "}
-                        {event.location.longitude.toFixed(6)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+          {/* Location */}
+          <div>
+            <h3 className={`${MICRO_LABEL} mb-3`}>Location</h3>
+            <div className="space-y-3">
+              <p className="break-words text-base font-semibold text-foreground">
+                {event.location?.name || "No location specified"}
+              </p>
+              {(event.location?.city || event.location?.country) && (
+                <p className="break-words text-sm text-muted-foreground">
+                  {event.location.city}
+                  {event.location.city && event.location.country ? ", " : ""}
+                  {event.location.country}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -223,6 +177,7 @@ EventDetails.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string,
     type: PropTypes.string.isRequired,
+    coverImage: PropTypes.string,
     startDate: PropTypes.string.isRequired,
     endDate: PropTypes.string,
     startTime: PropTypes.string.isRequired,
@@ -235,8 +190,6 @@ EventDetails.propTypes = {
       name: PropTypes.string,
       city: PropTypes.string,
       country: PropTypes.string,
-      latitude: PropTypes.number,
-      longitude: PropTypes.number,
     }),
   }),
 };

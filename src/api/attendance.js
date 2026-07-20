@@ -2,11 +2,23 @@
 import { api } from ".";
 import { buildSearchParams } from "./users";
 
-export const createAttendance = async (eventId, data) =>
-  api.post(`/attendance/${eventId}`, data);
+// Step 1 of check-in/check-out: prove presence with the scanned venue code and
+// request a liveness challenge. `mode` is "in" or "out". The server returns the
+// actions the user must perform and a single-use challengeToken.
+export const createAttendanceChallenge = async (eventId, { venueCode, mode }) =>
+  api.post(`/attendance/${eventId}/challenge`, { venueCode, mode });
 
-export const updateAttendance = async (eventId, data) =>
-  api.put(`/attendance/${eventId}`, data);
+// Step 2 of check-in: upload the captured frames. `formData` is a FormData
+// instance (challengeToken + `frames` files); passing it straight through lets
+// axios set the multipart boundary itself - do NOT hand-set Content-Type here.
+export const createAttendance = async (eventId, formData) =>
+  api.post(`/attendance/${eventId}`, formData);
+
+// Step 2 of check-out: same multipart shape as check-in (challengeToken +
+// `frames`), sent as a PUT. Pass the FormData straight through so axios keeps
+// the multipart boundary - do NOT hand-set Content-Type here.
+export const updateAttendance = async (eventId, formData) =>
+  api.put(`/attendance/${eventId}`, formData);
 
 export const getUserAttendance = async (userId, params = {}) => {
   const queryString = buildSearchParams(params);

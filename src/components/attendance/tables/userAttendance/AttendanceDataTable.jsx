@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/data-table/DataTable";
+import EmptyState from "@/components/ui/EmptyState";
 import { createAttendanceColumns } from "./columns";
 import { TableFilters } from "./TableFilters";
 import PropTypes from "prop-types";
@@ -61,6 +62,13 @@ export function AttendanceDataTable({
 }) {
   const columns = useMemo(() => createAttendanceColumns(), []);
 
+  const hasActiveFilters =
+    filters.search !== undefined ||
+    filters.status !== undefined ||
+    filters.eventType !== undefined ||
+    filters.startDate !== undefined ||
+    filters.endDate !== undefined;
+
   return (
     <DataTable
       columns={columns}
@@ -80,8 +88,15 @@ export function AttendanceDataTable({
         />
       )}
       renderSkeletonCells={renderSkeletonCells}
-      emptyTitle="No attendance records found"
-      emptyDescription="Try adjusting your search or filter criteria"
+      hasActiveFilters={hasActiveFilters}
+      emptyState={
+        <EmptyState
+          eyebrow="Attendance"
+          title="No attendance records"
+          description="This attendant has no check-in history yet."
+        />
+      }
+      emptyMessage="No records match the current filters - clear the filters to see all records."
     />
   );
 }

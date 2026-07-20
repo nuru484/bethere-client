@@ -1,38 +1,49 @@
-// src/components/events/EventListItem.jsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  MapPin,
-  Tag,
-  Eye,
-  Edit,
-  Trash2,
-  LogIn,
-  LogOut,
-  Calendar,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { useDeleteEvent } from "@/hooks/useEvent";
-import { useGetUserEventAttendance } from "@/hooks/useAttendance";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { getCurrentSession } from "@/utils/getCurrentSession";
-import toast from "react-hot-toast";
-import PropTypes from "prop-types";
-import { useAuth } from "@/hooks/useAuth";
+// src/components/event/EventListItem.jsx
+//
+// One card in the events grid. The whole card is a link to the event detail
+// page; the only buttons are Sign in / Sign out, mirroring the attendance
+// logic used on the detail page. Edit/delete live on the detail page.
 import { useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
+import { Button } from "@/components/ui/button";
+import { useGetUserEventAttendance } from "@/hooks/useAttendance";
+import { useAuth } from "@/hooks/useAuth";
+import { getCurrentSession } from "@/utils/getCurrentSession";
+import { dotsLight } from "@/components/landing/texture";
+import { PixelGlyph } from "@/components/landing/PixelGlyph";
+import {
+  formatDateRange,
+  formatTimeWindow,
+  getEventStatus,
+} from "./event-display";
+
+const GLYPH_NAMES = ["diamond", "checker", "bars", "stair", "funnel"];
+
+const glyphFor = (id) => {
+  const n = Number(id);
+  return GLYPH_NAMES[Number.isFinite(n) ? Math.abs(n) % GLYPH_NAMES.length : 0];
+};
 
 const EventListItem = ({ event }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { mutate: deleteEvent, isLoading: isDeleting } = useDeleteEvent();
+  // Only USER-role principals are attendants: admins never see personal
+  // sign-in / sign-out controls.
+  const isAttendant = user?.role === "USER";
 
-  const { id, title, type, location, date, description, isRecurring } = event;
+  const {
+    id,
+    title,
+    type,
+    coverImage,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    isRecurring,
+  } = event;
 
   // Fetch user's attendance for this event
   const { data: userAttendanceData, isLoading: isLoadingAttendance } =
@@ -90,210 +101,94 @@ const EventListItem = ({ event }) => {
     showSignOutButton = true;
   }
 
-  const handleView = (e) => {
+  // Card-level buttons must not trigger the surrounding link.
+  const handleAction = (e, path) => {
+    e.preventDefault();
     e.stopPropagation();
-    navigate(`/dashboard/events/${id}`);
+    navigate(path);
   };
 
-  const handleEdit = (e) => {
-    e.stopPropagation();
-    navigate(`/dashboard/events/${id}/edit`);
-  };
-
-  const handleDelete = async () => {
-    try {
-      deleteEvent(
-        { eventId: id },
-        {
-          onSuccess: () => {
-            toast.success("Event deleted successfully");
-            setShowDeleteDialog(false);
-          },
-          onError: (error) => {
-            const { message } = extractApiErrorMessage(error);
-            console.error("Failed to delete event:", error);
-            toast.error(message || "Failed to delete event");
-          },
-        }
-      );
-    } catch (error) {
-      const { message } = extractApiErrorMessage(error);
-      console.error("Failed to delete event:", error);
-      toast.error(message || "Failed to delete event");
-    }
-  };
-
-  const handleSignIn = (e) => {
-    e.stopPropagation();
-    navigate(`/dashboard/events/${id}/attendance-in`);
-  };
-
-  const handleSignOut = (e) => {
-    e.stopPropagation();
-    navigate(`/dashboard/events/${id}/attendance-out`);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "Date TBA";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const status = getEventStatus(event);
+  const dateRange = formatDateRange(startDate, endDate);
+  const timeWindow = formatTimeWindow(startTime, endTime);
 
   return (
-    <>
-      <Card className="w-full max-w-5xl mx-auto hover:shadow-lg transition-all duration-300 hover:scale-[1.01] group overflow-hidden">
-        <CardContent className="p-0">
-          <div className="flex flex-col h-full">
-            {/* Event Information */}
-            <div className="flex-1 p-4 sm:p-6 lg:p-8 flex flex-col">
-              {/* Header */}
-              <div className="flex flex-col gap-3 mb-4">
-                <div className="flex flex-col gap-2">
-                  {/* Title */}
-                  <h3 className="font-semibold text-foreground text-base sm:text-lg lg:text-xl break-words">
-                    {title}
-                  </h3>
-
-                  {/* Badge */}
-                  <Badge
-                    variant="secondary"
-                    className="text-xs flex items-center gap-1 bg-emerald-100 text-emerald-800 w-fit"
-                  >
-                    <Tag className="h-3 w-3 shrink-0" />
-                    <span className="break-words">{type}</span>
-                  </Badge>
-
-                  {/* Description */}
-                  {description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-3 break-words">
-                      {description}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Event Details */}
-              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-6 text-sm text-muted-foreground mb-6">
-                {date && (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Calendar className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span className="font-medium break-words">
-                      {formatDate(date)}
-                    </span>
-                  </div>
-                )}
-                {location && (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <MapPin className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span className="break-words">
-                      {location.name}
-                      {location.city && `, ${location.city}`}
-                      {location.country && `, ${location.country}`}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 mt-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleView}
-                  className="group-hover:border-primary/50 transition-colors cursor-pointer"
-                >
-                  <Eye className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                  <span className="hidden sm:inline truncate">View</span>
-                  <span className="sm:hidden truncate">Details</span>
-                </Button>
-
-                {isAdmin ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleEdit}
-                      className="cursor-pointer"
-                      disabled={isDeleting}
-                    >
-                      <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="truncate">Edit</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDeleteDialog(true);
-                      }}
-                      className="text-destructive hover:text-destructive hover:border-destructive/50 cursor-pointer col-span-2 sm:col-span-1"
-                      disabled={isDeleting}
-                    >
-                      <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                      <span className="hidden sm:inline truncate">Delete</span>
-                      <span className="sm:hidden truncate">Del</span>
-                    </Button>
-                  </>
-                ) : null}
-
-                {/* Sign In Button - Conditional */}
-                {showSignInButton && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleSignIn}
-                    disabled={isLoadingAttendance}
-                    className={`cursor-pointer bg-emerald-600 hover:bg-emerald-700 ${
-                      isAdmin ? "sm:col-span-1" : ""
-                    }`}
-                  >
-                    <LogIn className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                    <span className="hidden sm:inline truncate">Sign In</span>
-                    <span className="sm:hidden truncate">In</span>
-                  </Button>
-                )}
-
-                {/* Sign Out Button - Conditional */}
-                {showSignOutButton && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSignOut}
-                    disabled={isLoadingAttendance}
-                    className={`cursor-pointer ${
-                      isAdmin ? "sm:col-span-1" : ""
-                    }`}
-                  >
-                    <LogOut className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                    <span className="hidden sm:inline truncate">Sign Out</span>
-                    <span className="sm:hidden truncate">Out</span>
-                  </Button>
-                )}
-              </div>
-            </div>
+    <Link
+      to={`/dashboard/events/${id}`}
+      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    >
+      {/* Cover */}
+      <div className="aspect-video w-full overflow-hidden border-b border-border bg-muted">
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={dotsLight}
+          >
+            <PixelGlyph name={glyphFor(id)} className="w-20" />
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      {/* Delete Confirmation Dialog - Only for Admins */}
-      {isAdmin && (
-        <ConfirmationDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          title="Delete Event"
-          description={`Are you sure you want to delete "${title}"? This action cannot be undone.`}
-          onConfirm={handleDelete}
-          confirmText="Delete"
-          isDestructive
-        />
-      )}
-    </>
+      {/* Body */}
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        {/* Micro-label row: type + status */}
+        <div className="flex items-center justify-between gap-2 font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+          <span className="truncate">{type}</span>
+          <span
+            className={`shrink-0 rounded-full px-2 py-0.5 ${status.className}`}
+          >
+            {status.label}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="mt-2 line-clamp-2 font-body text-base font-semibold tracking-tight text-foreground">
+          {title}
+        </h3>
+
+        {/* Text-only meta */}
+        <div className="mt-2 space-y-1 font-mono text-xs text-muted-foreground">
+          <p className="truncate">{dateRange}</p>
+          {timeWindow && <p className="truncate">{timeWindow}</p>}
+        </div>
+
+        {/* Attendance actions (attendants only) */}
+        {isAttendant && (showSignInButton || showSignOutButton) && (
+          <div className="mt-auto flex flex-wrap gap-2 pt-4">
+            {showSignInButton && (
+              <Button
+                size="sm"
+                disabled={isLoadingAttendance}
+                onClick={(e) =>
+                  handleAction(e, `/dashboard/events/${id}/attendance-in`)
+                }
+              >
+                Sign in
+              </Button>
+            )}
+            {showSignOutButton && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isLoadingAttendance}
+                onClick={(e) =>
+                  handleAction(e, `/dashboard/events/${id}/attendance-out`)
+                }
+              >
+                Sign out
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </Link>
   );
 };
 
@@ -302,14 +197,12 @@ EventListItem.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     title: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
-    date: PropTypes.string,
-    description: PropTypes.string,
+    coverImage: PropTypes.string,
+    startDate: PropTypes.string,
+    endDate: PropTypes.string,
+    startTime: PropTypes.string,
+    endTime: PropTypes.string,
     isRecurring: PropTypes.bool,
-    location: PropTypes.shape({
-      name: PropTypes.string,
-      city: PropTypes.string,
-      country: PropTypes.string,
-    }),
   }).isRequired,
 };
 

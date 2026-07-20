@@ -2,7 +2,6 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Filter, X } from "lucide-react";
 import { AttendanceFilters } from "@/components/attendance/reports/Filters";
 import { AttendanceReportDisplay } from "@/components/attendance/reports/AttendanceReportDisplay";
 
@@ -69,7 +68,9 @@ const AttendanceReportsPage = () => {
       value !== ""
   );
 
-  const FiltersComp = () => (
+  // Plain node (not an inline component) so the filters keep their state
+  // and focus across parent re-renders.
+  const filtersNode = (
     <AttendanceFilters
       filters={filters}
       onFiltersChange={handleFiltersChange}
@@ -80,23 +81,25 @@ const AttendanceReportsPage = () => {
   return (
     <div className="min-h-screen">
       <div className="container mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Attendance Reports
+        {/* Header: mono eyebrow + display title */}
+        <div className="mb-6 flex items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+              Reports
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+              Attendance
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Comprehensive attendance tracking and analytics
+            <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
+              Cross-event records, summaries and top attendees
             </p>
           </div>
 
           {/* Mobile filter button */}
-          <div className="xl:hidden">
+          <div className="flex-shrink-0 xl:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" className="relative">
-                  <Filter className="h-4 w-4 mr-2" />
+                <Button variant="outline" size="sm" className="relative">
                   Filters
                   {hasActiveFilters && (
                     <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full" />
@@ -105,21 +108,9 @@ const AttendanceReportsPage = () => {
               </SheetTrigger>
               <SheetContent
                 side="left"
-                className="w-full sm:w-96 p-0 overflow-y-auto"
+                className="w-full sm:w-96 overflow-y-auto p-4 pt-10"
               >
-                <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
-                  <h2 className="font-semibold">Filters</h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="p-4">
-                  <FiltersComp />
-                </div>
+                {filtersNode}
               </SheetContent>
             </Sheet>
           </div>
@@ -129,9 +120,7 @@ const AttendanceReportsPage = () => {
         <div className="flex flex-col xl:flex-row gap-6">
           {/* Desktop sidebar */}
           <aside className="hidden xl:block xl:w-80 flex-shrink-0">
-            <div className="sticky top-6">
-              <FiltersComp />
-            </div>
+            <div className="sticky top-6">{filtersNode}</div>
           </aside>
 
           {/* Main content */}
