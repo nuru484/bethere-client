@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 const getMenuItems = (user) => {
   const isAdmin = user?.role === "ADMIN";
-  const shouldShowFaceScan = user?.hasFaceScan === false;
   return [
     {
       title: "Dashboard",
@@ -30,15 +29,6 @@ const getMenuItems = (user) => {
             title: "My Attendance",
             url: `attendance/${user.id}`,
             path: `/dashboard/attendance/${user.id}`,
-          },
-        ]
-      : []),
-    ...(shouldShowFaceScan
-      ? [
-          {
-            title: "Add Face Scan",
-            url: "add-facescan",
-            path: "/dashboard/add-facescan",
           },
         ]
       : []),

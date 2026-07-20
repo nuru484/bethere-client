@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Power, Home, Moon, Sun } from "lucide-react";
+import { User, Power, Home, Moon, Sun, ScanFace } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -102,6 +102,19 @@ const UserProfileDropdown = () => {
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
+
+          {/* Face enrollment - attendants only, and only until they enroll.
+              After the first scan hasFaceScan flips to true and this hides;
+              an admin reset flips it back to false and it returns. */}
+          {user.role !== "ADMIN" && user.hasFaceScan === false && (
+            <DropdownMenuItem
+              onClick={() => handleNavigation("/dashboard/add-facescan")}
+              className="cursor-pointer px-4 py-2 hover:bg-accent focus:bg-accent text-foreground flex items-center"
+            >
+              <ScanFace className="mr-2 h-4 w-4" />
+              <span>Add Face Scan</span>
+            </DropdownMenuItem>
+          )}
 
           {/* Home Link */}
           <DropdownMenuItem
