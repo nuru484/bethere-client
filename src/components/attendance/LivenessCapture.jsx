@@ -17,8 +17,12 @@ const labelFor = (action) => ACTION_LABELS[action] || action;
 /**
  * Check-in capture surface: streams the webcam and, on Start, captures a burst
  * of JPEG frames while cycling the challenge prompts so the user performs each
- * action during the ~5s window. Hands the raw Blobs back via onCapture - it
- * does NOT map frames to specific actions (the server checks the whole burst).
+ * action during the ~5s window. Hands the raw Blobs back via onCapture.
+ *
+ * Frames are handed over IN CAPTURE ORDER and the prompts are cycled in the
+ * challenge's order, which the server relies on: it proves each action strictly
+ * after the previous one, so performing them out of sequence fails. Do not
+ * reorder or de-duplicate the burst before uploading it.
  */
 export default function LivenessCapture({
   actions = [],

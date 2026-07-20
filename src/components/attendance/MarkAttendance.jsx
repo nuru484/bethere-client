@@ -1,5 +1,5 @@
 // src/components/attendance/MarkAttendance.jsx
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import {
   useCreateAttendance,
@@ -36,6 +36,15 @@ export default function MarkAttendance({ type = "in" }) {
   // Bumped to force-remount the scanner (which stops itself after a scan) when
   // we drop back to the scan stage.
   const [scanKey, setScanKey] = useState(0);
+  // Success redirect is delayed so the confirmation is readable; drop it if the
+  // user navigates away first, otherwise they get yanked back.
+  const redirectTimerRef = useRef(null);
+  useEffect(
+    () => () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    },
+    []
+  );
 
   const { mutate: requestChallenge, isPending: isRequestingChallenge } =
     useRequestAttendanceChallenge();
@@ -125,7 +134,10 @@ export default function MarkAttendance({ type = "in" }) {
               (isCheckIn ? "Checked in successfully!" : "Checked out successfully!");
             toast.success(msg, { id: toastId });
             setStatusMessage({ message: msg, type: "success" });
-            setTimeout(() => navigate(`/dashboard/events/${eventId}`), 1500);
+            redirectTimerRef.current = setTimeout(
+              () => navigate(`/dashboard/events/${eventId}`),
+              1500
+            );
           },
           onError: (error) => {
             const { message } = extractApiErrorMessage(error);

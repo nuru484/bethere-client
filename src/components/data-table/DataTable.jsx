@@ -41,6 +41,7 @@ export function DataTable({
   showPagination = true,
   rowSelection: controlledRowSelection,
   onRowSelectionChange,
+  getRowId,
 }) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -67,6 +68,8 @@ export function DataTable({
     onRowSelectionChange: isSelectionControlled
       ? onRowSelectionChange
       : setInternalRowSelection,
+    // Undefined falls back to tanstack's row-index keys.
+    getRowId,
     state: {
       sorting,
       columnFilters,
@@ -191,4 +194,5 @@ DataTable.propTypes = {
   showPagination: PropTypes.bool,
   rowSelection: PropTypes.object,
   onRowSelectionChange: PropTypes.func,
+  getRowId: PropTypes.func,
 };

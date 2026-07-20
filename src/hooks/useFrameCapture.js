@@ -28,12 +28,19 @@ export const useFrameCapture = ({
   const blobsRef = useRef([]);
   const timerRef = useRef(null);
   const onCompleteRef = useRef(onComplete);
+  // Bumped whenever the camera or a burst is torn down, so work that was
+  // already in flight (the getUserMedia prompt, an awaited toBlob) can tell it
+  // belongs to a dead session and bail out instead of resurrecting itself.
+  const cameraSessionRef = useRef(0);
+  const captureSessionRef = useRef(0);
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
 
   const stopCamera = useCallback(() => {
+    cameraSessionRef.current += 1;
+    captureSessionRef.current += 1;
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -47,12 +54,19 @@ export const useFrameCapture = ({
   }, []);
 
   const startCamera = useCallback(async () => {
+    const session = ++cameraSessionRef.current;
     setCameraError("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
         audio: false,
       });
+      // Unmounted / restarted while the permission prompt was up: release the
+      // stream nobody is left to stop.
+      if (session !== cameraSessionRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -71,6 +85,7 @@ export const useFrameCapture = ({
         message =
           "The camera is already in use by another app. Close it and try again.";
       }
+      if (session !== cameraSessionRef.current) return;
       setCameraError(message);
     }
   }, []);
@@ -100,12 +115,17 @@ export const useFrameCapture = ({
   const startCapture = useCallback(() => {
     if (!cameraReady || isCapturing) return;
 
+    const session = ++captureSessionRef.current;
+
     blobsRef.current = [];
     setCapturedCount(0);
     setIsCapturing(true);
 
     const grabNext = async (index) => {
       const blob = await captureFrame();
+      // Torn down mid-frame: don't re-arm the timer cleanup just cleared and
+      // don't hand a half-finished burst to onComplete.
+      if (session !== captureSessionRef.current) return;
       if (blob) {
         blobsRef.current.push(blob);
         setCapturedCount(blobsRef.current.length);

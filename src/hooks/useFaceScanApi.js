@@ -25,6 +25,9 @@ export const useAddFaceScan = () => {
       const userId = data?.data?.user?.id;
       queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      // The users list carries hasFaceScan and is cached for 5 minutes, so it
+      // would keep showing the old enrollment state without this.
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };
@@ -37,6 +40,7 @@ export const useDeleteFaceScan = () => {
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ["facescan", userId] });
       queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
   });
 };

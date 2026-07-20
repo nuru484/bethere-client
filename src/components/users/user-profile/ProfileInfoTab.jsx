@@ -4,7 +4,7 @@
 // ring-bordered avatar, and an inline edit mode. Data access is role-aware
 // via the profile `kind` ("user" | "admin"), so an admin editing their own
 // profile hits /admins instead of /users.
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
@@ -47,6 +47,19 @@ const ProfileInfoTab = ({ user, kind }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+
+  // Leaving the tab with a pending preview would otherwise leak the blob:
+  // replace/discard revoke it, unmount has to as well.
+  const imagePreviewRef = useRef(null);
+  useEffect(() => {
+    imagePreviewRef.current = imagePreview;
+  }, [imagePreview]);
+  useEffect(
+    () => () => {
+      if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+    },
+    []
+  );
 
   const { user: currentUser, login: logUserIn } = useAuth();
   const isViewingOwnProfile = currentUser?.id === user?.id;

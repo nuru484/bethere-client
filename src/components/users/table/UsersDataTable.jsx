@@ -1,5 +1,5 @@
 // src/components/users/table/UsersDataTable.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { TableCell } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,8 +51,9 @@ export function UsersDataTable({
   onFiltersChange,
   onRefresh,
 }) {
-  // Row selection is controlled here (rows are keyed by index, the tanstack
-  // default) so the bulk-delete handler can resolve the selected users.
+  // Row selection is controlled here so the bulk-delete handler can resolve the
+  // selected users. Rows are keyed by user id, NOT tanstack's default row index,
+  // otherwise paging would re-point a stale selection at a different user.
   const [rowSelection, setRowSelection] = useState({});
   const [deleteSelectedDialogOpen, setDeleteSelectedDialogOpen] =
     useState(false);
@@ -63,10 +64,18 @@ export function UsersDataTable({
 
   const hasActiveFilters = filters.search !== undefined;
 
+  const getRowId = useCallback((user) => String(user.id), []);
+
+  // Never act on a row the admin cannot currently see selected: drop the
+  // selection whenever the visible page or the filters change.
+  useEffect(() => {
+    setRowSelection({});
+  }, [page, pageSize, filters]);
+
   const selectedUsers = useMemo(
     () =>
       Object.keys(rowSelection)
-        .map((index) => data[Number(index)])
+        .map((id) => data.find((user) => String(user.id) === id))
         .filter(Boolean),
     [rowSelection, data]
   );
@@ -124,6 +133,7 @@ export function UsersDataTable({
         onPageSizeChange={onPageSizeChange}
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
+        getRowId={getRowId}
         renderFilters={(table) => (
           <TableFilters
             table={table}

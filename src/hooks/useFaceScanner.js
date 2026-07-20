@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FaceAuthSystem } from "@/lib/FaceAuthSystem";
 
-export const useFaceScanner = (distanceThreshold = 0.2) => {
+export const useFaceScanner = () => {
   const [authSystem, setAuthSystem] = useState(null);
   const [status, setStatus] = useState("Initializing...");
   const [error, setError] = useState(null);
@@ -13,10 +13,29 @@ export const useFaceScanner = (distanceThreshold = 0.2) => {
 
   const videoRef = useRef(null);
   const scanSamples = useRef([]);
+  const streamRef = useRef(null);
 
-  const startWebcam = useCallback(async () => {
+  const stopWebcam = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setWebcamActive(false);
+  }, []);
+
+  const startWebcam = useCallback(async (isCancelled) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Unmounted (or StrictMode-remounted) while the permission prompt was up:
+      // nobody would ever stop this stream, so release it here.
+      if (isCancelled()) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
@@ -25,35 +44,46 @@ export const useFaceScanner = (distanceThreshold = 0.2) => {
         };
       }
     } catch (err) {
+      if (isCancelled()) return;
       setError(err.message || "Failed to access webcam.");
       setStatus("Camera error.");
     }
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const isCancelled = () => cancelled;
+
     const init = async () => {
       setIsInitializing(true);
       setStatus("Loading face detection models...");
       try {
-        const system = new FaceAuthSystem({ distanceThreshold });
+        const system = new FaceAuthSystem();
         const initialized = await system.initialize();
+        if (cancelled) return;
         if (initialized) {
           setAuthSystem(system);
           setStatus("System initialized. Starting webcam...");
-          await startWebcam();
+          await startWebcam(isCancelled);
         } else {
           throw new Error("Failed to initialize face detection models.");
         }
       } catch (err) {
+        if (cancelled) return;
         setError(err.message);
         setStatus("Initialization failed.");
       } finally {
-        setIsInitializing(false);
+        if (!cancelled) setIsInitializing(false);
       }
     };
 
     init();
-  }, [startWebcam, distanceThreshold]);
+
+    return () => {
+      cancelled = true;
+      stopWebcam();
+    };
+  }, [startWebcam, stopWebcam]);
 
   const captureImage = () => {
     const video = videoRef.current;

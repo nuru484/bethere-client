@@ -66,11 +66,15 @@ export default function VenueCodePage() {
   }, [codes, now]);
 
   // Pull a new batch before the current one runs out. Guard with a ref so we
-  // fire once per batch rather than on every tick.
+  // fire once per batch rather than on every tick. The guard is keyed on the
+  // batch's first code, not on `data`: a refetch that returns the same batch
+  // still yields a new `data` object, which would re-arm the guard and spin
+  // this into an unbounded request loop.
+  const firstCode = codes[0]?.code;
   const refetchedRef = useRef(false);
   useEffect(() => {
     refetchedRef.current = false;
-  }, [data]);
+  }, [firstCode]);
   useEffect(() => {
     if (!isFetching && remaining <= REFETCH_THRESHOLD && !refetchedRef.current) {
       refetchedRef.current = true;

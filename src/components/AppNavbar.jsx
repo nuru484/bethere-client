@@ -27,8 +27,8 @@ const getMenuItems = (user) => {
       ? [
           {
             title: "My Attendance",
-            url: `attendance/${user.id}`,
-            path: `/dashboard/attendance/${user.id}`,
+            url: `attendance/${user?.id}`,
+            path: `/dashboard/attendance/${user?.id}`,
           },
         ]
       : []),

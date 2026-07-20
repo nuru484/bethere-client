@@ -22,6 +22,10 @@ const EventActionsSidebar = ({
   // Only USER-role principals are attendants: admins never see personal
   // sign-in / sign-out controls.
   const isAttendant = user?.role === "USER";
+  // Signing in burns a rotating venue code and a single-use challenge before the
+  // server can reject an un-enrolled face (and files an anomaly for it), so send
+  // them to enroll instead. Only an explicit false means "not enrolled".
+  const needsFaceScan = isAttendant && user?.hasFaceScan === false;
   const isRecurringEvent = event?.isRecurring;
 
   // Find attendance for the current session
@@ -73,6 +77,10 @@ const EventActionsSidebar = ({
     navigate(`/dashboard/events/${event.id}/attendance-in`);
   };
 
+  const handleAddFaceScan = () => {
+    navigate("/dashboard/add-facescan");
+  };
+
   const handleSignOut = () => {
     navigate(`/dashboard/events/${event.id}/attendance-out`);
   };
@@ -103,8 +111,8 @@ const EventActionsSidebar = ({
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {/* Sign In Button - attendants only */}
-          {isAttendant && showSignInButton && (
+          {/* Sign In Button - enrolled attendants only */}
+          {isAttendant && showSignInButton && !needsFaceScan && (
             <Button
               className="w-full justify-start"
               onClick={handleSignIn}
@@ -112,6 +120,25 @@ const EventActionsSidebar = ({
             >
               Sign In to Event
             </Button>
+          )}
+
+          {/* Un-enrolled attendants get the enrolment step instead */}
+          {showSignInButton && needsFaceScan && (
+            <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
+              <p
+                id="facescan-required-note"
+                className="text-sm leading-snug text-muted-foreground"
+              >
+                Add your face scan before you can sign in to events.
+              </p>
+              <Button
+                className="w-full justify-start"
+                onClick={handleAddFaceScan}
+                aria-describedby="facescan-required-note"
+              >
+                Add Face Scan
+              </Button>
+            </div>
           )}
 
           {/* Sign Out Button - attendants only */}
@@ -203,6 +230,7 @@ EventActionsSidebar.propTypes = {
   user: PropTypes.shape({
     id: PropTypes.number.isRequired,
     role: PropTypes.string.isRequired,
+    hasFaceScan: PropTypes.bool,
   }).isRequired,
   onDelete: PropTypes.func.isRequired,
   isDeleting: PropTypes.bool,
