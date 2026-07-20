@@ -213,16 +213,21 @@ const LoginPage = () => {
 
         {/* Right Side - Login Steps */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative">
-          {/* Top bar: back to landing + theme toggle (reachable on every screen) */}
-          <div className="absolute inset-x-4 top-4 flex items-center justify-between lg:inset-x-6 lg:top-6">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-              Back to home
-            </Link>
-            <ThemeToggle />
+          {/* Top bar: back to landing + theme toggle. Constrained to the same
+              max-w-md column as the login content and centered, so on wide
+              screens they stay by the form instead of drifting to the panel
+              edges. */}
+          <div className="absolute inset-x-0 top-4 px-6 lg:top-6 lg:px-12">
+            <div className="mx-auto flex w-full max-w-md items-center justify-between">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+                Back to home
+              </Link>
+              <ThemeToggle />
+            </div>
           </div>
           {step === STEPS.PASSWORD && (
             <div className="w-full max-w-md space-y-6">

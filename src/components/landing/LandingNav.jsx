@@ -27,9 +27,12 @@ function LandingThemeToggle() {
 export function LandingNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50">
+      {/* Centered to the same max width as the page content, so on wide
+          screens the logo and buttons stay together with the content instead
+          of stretching to the viewport edges. */}
       <nav
         aria-label="Main"
-        className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
+        className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
       >
         <Link
           to="/"

@@ -19,7 +19,7 @@ export const siteConfig = {
   name: "BeThere",
   title: "BeThere - Attendance you can't fake",
   description:
-    "Face verification plus 50 m geofencing: a check-in only counts from the right person, standing in the right spot.",
+    "Verified live presence: scan the venue's live code, then a real-time face check confirms it's you - all verified on the server.",
   author: "Nurudeen Abdul-Majeed",
   themeColor: "#f1f1f1",
   backgroundColor: "#f1f1f1",
