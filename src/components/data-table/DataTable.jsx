@@ -35,8 +35,9 @@ export function DataTable({
   onPageSizeChange,
   renderFilters,
   renderSkeletonCells,
-  emptyTitle = "No records found",
-  emptyDescription = "Try adjusting your search or filter criteria",
+  emptyMessage = "No matches for the current filters - clear the filters to see all records.",
+  emptyState,
+  hasActiveFilters = false,
   showPagination = true,
   rowSelection: controlledRowSelection,
   onRowSelectionChange,
@@ -77,19 +78,32 @@ export function DataTable({
     pageCount: Math.ceil(totalCount / pageSize),
   });
 
+  // Truly empty (no records at all, nothing filtered out): show only the
+  // designed empty state - no filter bar, no table shell, no pagination.
+  const noRecordsAtAll = !loading && totalCount === 0 && !hasActiveFilters;
+  if (noRecordsAtAll && emptyState) {
+    return emptyState;
+  }
+
   return (
     <div className="w-full max-w-full space-y-6">
       {renderFilters && renderFilters(table)}
 
       {/* Table */}
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="min-w-full">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow
+                  key={headerGroup.id}
+                  className="border-border hover:bg-transparent"
+                >
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="whitespace-nowrap">
+                    <TableHead
+                      key={header.id}
+                      className="whitespace-nowrap font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -105,7 +119,7 @@ export function DataTable({
             <TableBody>
               {loading ? (
                 Array.from({ length: pageSize }).map((_, index) => (
-                  <TableRow key={`skeleton-${index}`}>
+                  <TableRow key={`skeleton-${index}`} className="border-border">
                     {renderSkeletonCells(index)}
                   </TableRow>
                 ))
@@ -114,7 +128,7 @@ export function DataTable({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/50"
+                    className="border-border hover:bg-secondary/50"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -132,12 +146,11 @@ export function DataTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <div className="text-muted-foreground">{emptyTitle}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {emptyDescription}
-                      </div>
-                    </div>
+                    {/* Filtered to zero: keep the filter bar above so it can
+                        be cleared; show a light no-matches note here. */}
+                    <p className="text-sm text-muted-foreground">
+                      {emptyMessage}
+                    </p>
                   </TableCell>
                 </TableRow>
               )}
@@ -172,8 +185,9 @@ DataTable.propTypes = {
   onPageSizeChange: PropTypes.func,
   renderFilters: PropTypes.func,
   renderSkeletonCells: PropTypes.func.isRequired,
-  emptyTitle: PropTypes.node,
-  emptyDescription: PropTypes.node,
+  emptyMessage: PropTypes.node,
+  emptyState: PropTypes.node,
+  hasActiveFilters: PropTypes.bool,
   showPagination: PropTypes.bool,
   rowSelection: PropTypes.object,
   onRowSelectionChange: PropTypes.func,

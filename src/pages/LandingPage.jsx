@@ -17,7 +17,7 @@ import { TechBoard } from "@/components/landing/TechBoard";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
 const LandingPage = () => {
-  usePageTitle("BeThere - Attendance you can't fake");
+  usePageTitle("BeThere - Verified live presence");
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -37,7 +37,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f1f1f1] font-body text-[#2b2b2b] antialiased">
+    <div className="min-h-screen bg-[var(--lp-bg)] font-body text-[var(--lp-ink)] antialiased">
       <LandingNav />
       <main>
         <LandingHero />

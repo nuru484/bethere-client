@@ -1,5 +1,9 @@
 // src/components/ui/DataTablePagination.jsx
-"use client";
+//
+// Minimal table pagination: mono micro-label on the left ("Page X of Y",
+// total or selection count), a compact rows-per-page select and plain
+// Prev/Next chips on the right. Contract unchanged.
+import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,15 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Database,
-  Users,
-} from "lucide-react";
-import PropTypes from "prop-types";
 
 export function DataTablePagination({
   table,
@@ -29,49 +24,40 @@ export function DataTablePagination({
   const selectedCount = table.getSelectedRowModel().rows.length;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
-  return (
-    <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 bg-card border-t border-border">
-      {/* Selected count and total */}
-      <div className="flex items-center gap-2 text-sm">
-        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-          {selectedCount > 0 ? (
-            <Users className="w-4 h-4 text-primary" />
-          ) : (
-            <Database className="w-4 h-4 text-primary" />
-          )}
-        </div>
-        <div className="text-muted-foreground">
-          {selectedCount > 0 ? (
-            <>
-              <span className="text-foreground font-semibold">
-                {selectedCount}
-              </span>
-              {" of "}
-              <span className="text-foreground font-semibold">
-                {totalCount}
-              </span>
-              {" selected"}
-            </>
-          ) : (
-            <>
-              <span className="text-foreground font-semibold">
-                {totalCount}
-              </span>
-              {" total items"}
-            </>
-          )}
-        </div>
-      </div>
+  // Nothing to paginate: on a single page render only the selection count
+  // (when rows are selected), otherwise nothing at all.
+  if (totalPages <= 1) {
+    if (selectedCount === 0) return null;
 
-      {/* Pagination controls */}
-      <div className="flex flex-col sm:flex-row items-center gap-6 w-full lg:w-auto">
-        {/* Page size selector */}
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+    return (
+      <div className="border-t border-border pt-4">
+        <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+          {selectedCount} of {totalCount} selected
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+        Page {page} of {totalPages}
+        <span className="text-muted-foreground/70">
+          {" "}
+          ·{" "}
+          {selectedCount > 0
+            ? `${selectedCount} of ${totalCount} selected`
+            : `${totalCount.toLocaleString()} total`}
+        </span>
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="mr-2 flex items-center gap-2">
           <label
             htmlFor="page-size"
-            className="text-sm font-medium text-muted-foreground whitespace-nowrap"
+            className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground"
           >
-            Rows per page:
+            Rows
           </label>
           <Select
             value={pageSize.toString()}
@@ -79,19 +65,16 @@ export function DataTablePagination({
           >
             <SelectTrigger
               id="page-size"
-              className="h-9 w-[80px] bg-background border-border focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200 cursor-pointer"
+              className="h-8 w-[72px] cursor-pointer bg-white"
             >
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
-            <SelectContent
-              side="top"
-              className="min-w-[80px] bg-card border-border"
-            >
+            <SelectContent side="top" className="min-w-[72px]">
               {[5, 10, 20, 30, 50, 100].map((size) => (
                 <SelectItem
                   key={size}
                   value={size.toString()}
-                  className="hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                  className="cursor-pointer"
                 >
                   {size}
                 </SelectItem>
@@ -100,61 +83,22 @@ export function DataTablePagination({
           </Select>
         </div>
 
-        {/* Page info and navigation */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <div className="px-3 py-2 bg-muted/30 rounded-lg border border-border">
-              <span className="text-muted-foreground">Page </span>
-              <span className="text-foreground font-bold">{page}</span>
-              <span className="text-muted-foreground"> of </span>
-              <span className="text-foreground font-bold">{totalPages}</span>
-            </div>
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-lg"
-              onClick={() => onPageChange?.(1)}
-              disabled={page <= 1}
-              aria-label="Go to first page"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-lg"
-              onClick={() => onPageChange?.(Math.max(1, page - 1))}
-              disabled={page <= 1}
-              aria-label="Go to previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-lg"
-              onClick={() => onPageChange?.(page + 1)}
-              disabled={page >= totalPages}
-              aria-label="Go to next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-10 w-10 rounded-lg"
-              onClick={() => onPageChange?.(totalPages)}
-              disabled={page >= totalPages}
-              aria-label="Go to last page"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange?.(Math.max(1, page - 1))}
+          disabled={page <= 1}
+        >
+          Prev
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange?.(page + 1)}
+          disabled={page >= totalPages}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

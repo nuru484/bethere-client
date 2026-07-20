@@ -62,34 +62,34 @@ export default function FaceScanner({
       return {
         text: buttonText,
         disabled: true,
-        className: "bg-gray-400 cursor-not-allowed",
+        className: "bg-white/15 text-white/50 cursor-not-allowed",
       };
     }
     if (scanStep === "started") {
       return {
         text: "Processing...",
         disabled: true,
-        className: "bg-yellow-500 cursor-wait",
+        className: "bg-white/15 text-white cursor-wait",
       };
     }
     if (scanStep === "failed" && shouldShowInternalError) {
       return {
         text: "Retry Scan",
         disabled: false,
-        className: "bg-orange-500 hover:bg-orange-600",
+        className: "bg-[#fafafa] text-[#2b2b2b] hover:bg-white",
       };
     }
     if (scanStep === "complete") {
       return {
         text: "Scan Again",
         disabled: false,
-        className: "bg-green-500 hover:bg-green-600",
+        className: "bg-[#dcf5e9] text-[#1a7f53] hover:bg-[#c9efdc]",
       };
     }
     return {
       text: buttonText,
       disabled: false,
-      className: "bg-blue-600 hover:bg-blue-700",
+      className: "bg-[#fafafa] text-[#2b2b2b] hover:bg-white",
     };
   };
 
@@ -100,57 +100,57 @@ export default function FaceScanner({
   };
 
   const renderStatusIndicator = () => {
-    let bgColor = "bg-gray-50";
-    let textColor = "text-gray-700";
+    let bgColor = "bg-card border-border";
+    let textColor = "text-foreground";
     let displayStatus = status;
     let showRefreshButton = false;
 
     if ((scanStep === "failed" || error) && shouldShowInternalError) {
-      bgColor = "bg-red-50";
-      textColor = "text-red-700";
+      bgColor = "bg-destructive/10 border-destructive/20";
+      textColor = "text-destructive";
       displayStatus = error || status;
       showRefreshButton = true;
     } else if (externalStatus) {
       displayStatus = externalStatus.message || externalStatus;
       const type = externalStatus.type;
       if (type === "loading" || type === "info") {
-        bgColor = "bg-blue-50";
-        textColor = "text-blue-700";
+        bgColor = "bg-card border-border";
+        textColor = "text-muted-foreground";
       } else if (type === "success") {
-        bgColor = "bg-green-50";
-        textColor = "text-green-700";
+        bgColor = "bg-[#dcf5e9] border-[#1a7f53]/20";
+        textColor = "text-[#1a7f53]";
       } else if (type === "error") {
-        bgColor = "bg-red-50";
-        textColor = "text-red-700";
+        bgColor = "bg-destructive/10 border-destructive/20";
+        textColor = "text-destructive";
       } else if (type === "warning") {
-        bgColor = "bg-yellow-50";
-        textColor = "text-yellow-700";
+        bgColor = "bg-amber-50 border-amber-200";
+        textColor = "text-amber-700";
       }
     } else if (!webcamActive && !isInitializing) {
-      bgColor = "bg-red-50";
-      textColor = "text-red-700";
+      bgColor = "bg-destructive/10 border-destructive/20";
+      textColor = "text-destructive";
       displayStatus = "Webcam not active. Please allow camera access.";
     } else if (isInitializing) {
-      bgColor = "bg-blue-50";
-      textColor = "text-blue-700";
+      bgColor = "bg-card border-border";
+      textColor = "text-muted-foreground";
       displayStatus = "Loading models...";
     } else if (scanStep === "started") {
-      bgColor = "bg-yellow-50";
-      textColor = "text-yellow-700";
+      bgColor = "bg-card border-border";
+      textColor = "text-muted-foreground";
     } else if (scanStep === "complete") {
-      bgColor = "bg-green-50";
-      textColor = "text-green-700";
+      bgColor = "bg-[#dcf5e9] border-[#1a7f53]/20";
+      textColor = "text-[#1a7f53]";
     }
 
     return (
       <div
-        className={`text-center font-medium p-4 mt-4 border ${bgColor} ${textColor} rounded-lg transition-all duration-300`}
+        className={`text-center font-medium p-4 mt-4 border ${bgColor} ${textColor} rounded-xl transition-all duration-300`}
       >
         <p>{displayStatus}</p>
         {showRefreshButton && (
           <button
             onClick={handleRefresh}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+            className="mt-3 px-4 py-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors font-mono text-xs font-bold uppercase tracking-tight"
           >
             Refresh to Scan Again
           </button>
@@ -164,14 +164,14 @@ export default function FaceScanner({
     return (
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="relative w-64 h-80">
-          <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-blue-500 rounded-tl-lg"></div>
-          <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-blue-500 rounded-tr-lg"></div>
-          <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-blue-500 rounded-bl-lg"></div>
-          <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-blue-500 rounded-br-lg"></div>
+          <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-[#fafafa]/80 rounded-tl-lg"></div>
+          <div className="absolute top-0 right-0 w-12 h-12 border-r-2 border-t-2 border-[#fafafa]/80 rounded-tr-lg"></div>
+          <div className="absolute bottom-0 left-0 w-12 h-12 border-l-2 border-b-2 border-[#fafafa]/80 rounded-bl-lg"></div>
+          <div className="absolute bottom-0 right-0 w-12 h-12 border-r-2 border-b-2 border-[#fafafa]/80 rounded-br-lg"></div>
 
           {scanStep === "started" && (
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan"></div>
+              <div className="absolute w-full h-0.5 bg-[#fafafa]/70 animate-scan"></div>
             </div>
           )}
 
@@ -180,15 +180,15 @@ export default function FaceScanner({
               <div
                 className={`w-2 h-2 rounded-full ${
                   scanStep === "started"
-                    ? "bg-yellow-400 animate-pulse"
+                    ? "bg-[#fafafa] animate-pulse"
                     : scanStep === "complete"
-                    ? "bg-green-400"
+                    ? "bg-[#8ce0b6]"
                     : scanStep === "failed"
                     ? "bg-red-400"
-                    : "bg-blue-400"
+                    : "bg-[#fafafa]/60"
                 }`}
               ></div>
-              <span className="text-white text-xs font-medium">
+              <span className="text-white font-mono text-[10px] font-bold uppercase tracking-tight">
                 {scanStep === "started"
                   ? "Scanning..."
                   : scanStep === "complete"
@@ -208,8 +208,15 @@ export default function FaceScanner({
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 rounded-2xl shadow-2xl">
-        <div className="relative bg-black rounded-xl overflow-hidden mb-6 shadow-inner">
+      <div
+        className="bg-[#2b2b2b] p-6 rounded-2xl"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(250,250,250,0.10) 1px, transparent 1px)",
+          backgroundSize: "7px 7px",
+        }}
+      >
+        <div className="relative bg-black rounded-xl overflow-hidden mb-6">
           <video
             ref={videoRef}
             autoPlay
@@ -218,15 +225,15 @@ export default function FaceScanner({
             className="w-full h-80 object-cover"
           />
           {renderFaceOverlay()}
-          <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-cyan-400/50"></div>
-          <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-cyan-400/50"></div>
-          <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-cyan-400/50"></div>
-          <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-cyan-400/50"></div>
+          <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-[#fafafa]/30"></div>
+          <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-[#fafafa]/30"></div>
+          <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-[#fafafa]/30"></div>
+          <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-[#fafafa]/30"></div>
         </div>
 
         <button
           onClick={handleClick}
-          className={`w-full py-4 px-6 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg ${button.className}`}
+          className={`w-full py-3.5 px-6 rounded-full font-mono text-sm font-bold uppercase tracking-tight transition-colors duration-300 ${button.className}`}
           disabled={button.disabled}
         >
           <span className="flex items-center justify-center gap-2">
@@ -263,11 +270,11 @@ export default function FaceScanner({
         scanStep === "idle" &&
         !externalStatus &&
         !shouldShowInternalError && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">
-              Instructions:
+          <div className="mt-4 p-4 bg-card border border-border rounded-xl">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground mb-2">
+              Instructions
             </h3>
-            <ul className="text-xs text-blue-800 space-y-1">
+            <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Position your face within the frame</li>
               <li>• Ensure good lighting conditions</li>
               <li>• Look directly at the camera</li>

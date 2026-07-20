@@ -119,7 +119,7 @@ const SidebarProvider = React.forwardRef(
               ...style,
             }}
             className={cn(
-              'group/sidebar-wrapper flex justify-center bg-gradient-to-b from-emerald-50 to-white  min-h-svh w-full  has-[[data-variant=inset]]:bg-sidebar',
+              'group/sidebar-wrapper flex justify-center bg-background min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar',
               className
             )}
             ref={ref}

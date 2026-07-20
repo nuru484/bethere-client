@@ -41,14 +41,24 @@ const AdminDashboard = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <div className="container mx-auto space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">
-            Admin Dashboard
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Overview of your system statistics and metrics
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+              Overview
+            </p>
+            <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+              Admin Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-1.5 sm:text-base">
+              System statistics and metrics
+            </p>
+          </div>
+
+          <DateRangeSelector
+            onDateChange={setDateRange}
+            isLoading={isAttendanceLoading}
+          />
         </div>
 
         {isLoading ? (
@@ -61,11 +71,6 @@ const AdminDashboard = () => {
         ) : (
           <DashboardTotalsCard totals={totals} isAdmin={true} />
         )}
-
-        <DateRangeSelector
-          onDateChange={setDateRange}
-          isLoading={isAttendanceLoading}
-        />
 
         {isAttendanceLoading ? (
           <AttendanceDataSkeleton />

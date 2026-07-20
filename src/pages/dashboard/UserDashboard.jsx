@@ -54,14 +54,25 @@ const UserDashboard = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <div className="container mx-auto space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">
-            My Dashboard
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Your personal overview of events and attendance
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
+              Overview
+            </p>
+            <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+              My Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground sm:mt-1.5 sm:text-base">
+              Your personal overview of events and attendance
+            </p>
+          </div>
+
+          {/* Date Range Selector */}
+          <DateRangeSelector
+            onDateChange={setDateRange}
+            isLoading={isAttendanceLoading}
+          />
         </div>
 
         {/* Dashboard Totals Section */}
@@ -75,12 +86,6 @@ const UserDashboard = () => {
         ) : (
           <DashboardTotalsCard totals={totals} isAdmin={false} />
         )}
-
-        {/* Date Range Selector */}
-        <DateRangeSelector
-          onDateChange={setDateRange}
-          isLoading={isAttendanceLoading}
-        />
 
         {/* Attendance Data Section */}
         {isAttendanceLoading ? (

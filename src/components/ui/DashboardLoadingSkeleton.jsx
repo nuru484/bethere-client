@@ -6,8 +6,8 @@ const DashboardLoadingSkeleton = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Bar Skeleton */}
-      <nav className="border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4">
+      <nav className="border-b border-border bg-card sticky top-0 z-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
             {/* Logo and Name - Left Side */}
             <div className="flex items-center gap-3">
@@ -28,16 +28,13 @@ const DashboardLoadingSkeleton = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="container mx-auto px-4 py-6 sm:py-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {/* Page Header Skeleton */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-12 w-12 rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 w-40 sm:w-48" />
-                <Skeleton className="h-4 w-32 sm:w-40" />
-              </div>
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-40 sm:w-48" />
+              <Skeleton className="h-4 w-32 sm:w-40" />
             </div>
             <div className="flex gap-2">
               <Skeleton className="h-9 w-24 sm:w-32" />
@@ -119,16 +116,13 @@ const DashboardLoadingSkeleton = () => {
         </div>
 
         {/* Pagination Skeleton */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t">
-          <Skeleton className="h-4 w-40" />
+        <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <Skeleton className="h-3 w-40" />
           <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-9" />
-            <Skeleton className="h-9 w-9" />
-            <Skeleton className="h-9 w-9" />
-            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-8 w-[72px]" />
+            <Skeleton className="h-8 w-16" />
+            <Skeleton className="h-8 w-16" />
           </div>
-          <Skeleton className="h-9 w-32" />
         </div>
       </main>
     </div>

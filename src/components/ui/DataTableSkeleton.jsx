@@ -34,7 +34,7 @@ export function DataTableSkeleton({ rows = 10 }) {
       </div>
 
       {/* Table Skeleton */}
-      <div className="rounded-md border">
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -118,17 +118,12 @@ export function DataTableSkeleton({ rows = 10 }) {
       </div>
 
       {/* Pagination Skeleton */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <Skeleton className="h-4 w-32" />
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-8 w-24" />
-          <div className="flex items-center space-x-1">
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-8" />
-          </div>
-          <Skeleton className="h-8 w-24" />
+      <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-3 w-40" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-[72px]" />
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-8 w-16" />
         </div>
       </div>
     </div>
