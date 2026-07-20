@@ -65,6 +65,11 @@ const getMenuItems = (user) => {
             url: "attendance/reports",
             path: "/dashboard/attendance/reports",
           },
+          {
+            title: "Review",
+            url: "review",
+            path: "/dashboard/review",
+          },
         ]
       : []),
   ];
