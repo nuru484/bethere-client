@@ -5,7 +5,7 @@
 // with a streak, the attendance calendar, the personal trend, and per-status /
 // per-event breakdowns. Everything is scoped to the signed-in user.
 import { useState } from "react";
-import { format, subDays } from "date-fns";
+import { format, startOfYear } from "date-fns";
 import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
 import NowNextHero from "@/components/dashboard/analytics/user/NowNextHero";
 import UserHeroKpis from "@/components/dashboard/analytics/user/UserHeroKpis";
@@ -18,7 +18,7 @@ import {
 
 const UserDashboard = () => {
   const [dateRange, setDateRange] = useState({
-    startDate: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    startDate: format(startOfYear(new Date()), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
 

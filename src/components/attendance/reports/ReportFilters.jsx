@@ -6,7 +6,7 @@
 // by the page; each control commits immediately (search is debounced).
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { format, subDays, startOfMonth } from "date-fns";
+import { format, subDays, startOfMonth, startOfYear } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ const PERIODS = {
   last7: { label: "Last 7 days", range: () => ({ checkInStartDate: toDay(subDays(new Date(), 7)), checkInEndDate: toDay(new Date()) }) },
   last30: { label: "Last 30 days", range: () => ({ checkInStartDate: toDay(subDays(new Date(), 30)), checkInEndDate: toDay(new Date()) }) },
   month: { label: "This month", range: () => ({ checkInStartDate: toDay(startOfMonth(new Date())), checkInEndDate: toDay(new Date()) }) },
+  year: { label: "This year", range: () => ({ checkInStartDate: toDay(startOfYear(new Date())), checkInEndDate: toDay(new Date()) }) },
   custom: { label: "Custom", range: null },
 };
 
@@ -36,7 +37,7 @@ FieldLabel.propTypes = { children: PropTypes.node };
 
 const ReportFilters = ({ filters, onChange, onClear }) => {
   const [searchInput, setSearchInput] = useState(filters.search || "");
-  const [period, setPeriod] = useState("all");
+  const [period, setPeriod] = useState("year");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
 
@@ -157,7 +158,7 @@ const ReportFilters = ({ filters, onChange, onClear }) => {
           className="text-muted-foreground"
           onClick={() => {
             setSearchInput("");
-            setPeriod("all");
+            setPeriod("year");
             setCustomStart("");
             setCustomEnd("");
             onClear();

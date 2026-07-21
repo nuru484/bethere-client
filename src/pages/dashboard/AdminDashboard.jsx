@@ -7,7 +7,7 @@
 // stand outside it.
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { format, subDays } from "date-fns";
+import { format, startOfYear } from "date-fns";
 import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
 import LiveStrip from "@/components/dashboard/analytics/LiveStrip";
 import HeroKpis from "@/components/dashboard/analytics/HeroKpis";
@@ -40,7 +40,7 @@ SectionHeading.propTypes = {
 
 const AdminDashboard = () => {
   const [dateRange, setDateRange] = useState({
-    startDate: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    startDate: format(startOfYear(new Date()), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
 

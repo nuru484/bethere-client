@@ -11,6 +11,7 @@ import {
   subDays,
   addDays,
   startOfMonth,
+  startOfYear,
   endOfMonth,
   parseISO,
   differenceInCalendarDays,
@@ -31,6 +32,7 @@ const PRESETS = [
   { value: "LAST_7_DAYS", label: "Last 7 days" },
   { value: "LAST_30_DAYS", label: "Last 30 days" },
   { value: "THIS_MONTH", label: "This month" },
+  { value: "THIS_YEAR", label: "This year" },
   { value: "CUSTOM", label: "Custom" },
 ];
 
@@ -46,6 +48,8 @@ const getPresetRange = (preset) => {
         startDate: toDay(startOfMonth(today)),
         endDate: toDay(endOfMonth(today)),
       };
+    case "THIS_YEAR":
+      return { startDate: toDay(startOfYear(today)), endDate: toDay(today) };
     case "LAST_30_DAYS":
     default:
       return { startDate: toDay(subDays(today, 30)), endDate: toDay(today) };
@@ -65,8 +69,8 @@ const dateInputClassName =
   "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 sm:w-36";
 
 const DateRangeSelector = ({ onDateChange, isLoading }) => {
-  const [preset, setPreset] = useState("LAST_30_DAYS");
-  const defaultRange = getPresetRange("LAST_30_DAYS");
+  const [preset, setPreset] = useState("THIS_YEAR");
+  const defaultRange = getPresetRange("THIS_YEAR");
   const [startDate, setStartDate] = useState(defaultRange.startDate);
   const [endDate, setEndDate] = useState(defaultRange.endDate);
 

@@ -13,8 +13,15 @@ import ReportFilters from "@/components/attendance/reports/ReportFilters";
 import { AttendanceReportDisplay } from "@/components/attendance/reports/AttendanceReportDisplay";
 import { downloadReportXlsx, exportReportPdf, printReport } from "@/lib/report-export";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+import { format, startOfYear } from "date-fns";
 
-const DEFAULTS = { page: 1, limit: 10 };
+// The report opens on the current year (matching the dashboards).
+const DEFAULTS = {
+  page: 1,
+  limit: 10,
+  checkInStartDate: format(startOfYear(new Date()), "yyyy-MM-dd"),
+  checkInEndDate: format(new Date(), "yyyy-MM-dd"),
+};
 
 const AttendanceReportsPage = () => {
   const [filters, setFilters] = useState(DEFAULTS);
@@ -22,9 +29,15 @@ const AttendanceReportsPage = () => {
   const [busy, setBusy] = useState(null); // "xlsx" | "pdf" | null
   const reportRef = useRef(null);
 
+  // Count only filters that DIFFER from the defaults, so the default this-year
+  // range does not read as an applied filter on the Filters button.
   const activeCount = Object.entries(filters).filter(
     ([key, value]) =>
-      !["page", "limit"].includes(key) && value !== undefined && value !== null && value !== ""
+      !["page", "limit"].includes(key) &&
+      value !== undefined &&
+      value !== null &&
+      value !== "" &&
+      String(value) !== String(DEFAULTS[key])
   ).length;
 
   const handleChange = (partial) => setFilters((prev) => ({ ...prev, ...partial, page: 1 }));
