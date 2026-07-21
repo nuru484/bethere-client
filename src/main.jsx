@@ -7,6 +7,7 @@ import ErrorBoundary from "./lib/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "react-hot-toast";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { initSentry } from "./lib/sentry";
 
 // No-op unless VITE_SENTRY_DSN is set (lazy-loads the SDK when it is).
@@ -80,7 +81,11 @@ createRoot(document.getElementById("root")).render(
                 },
               }}
             />
-            <Routes />
+            {/* Single app-wide provider so any shadcn <Tooltip> (e.g. the
+                help tooltips in EventForm) has the Radix context it needs. */}
+            <TooltipProvider delayDuration={200}>
+              <Routes />
+            </TooltipProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
