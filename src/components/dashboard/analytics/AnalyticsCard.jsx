@@ -75,7 +75,7 @@ const AnalyticsCard = ({
         </div>
       ) : isEmpty ? (
         <div className="flex items-center justify-center" style={{ minHeight }}>
-          <EmptyState title={emptyTitle} description={emptyDescription} />
+          <EmptyState bordered={false} title={emptyTitle} description={emptyDescription} />
         </div>
       ) : (
         children
