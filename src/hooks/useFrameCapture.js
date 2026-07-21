@@ -29,6 +29,11 @@ export const useFrameCapture = ({
   frameCount = 11,
   intervalMs = 450,
   persistCamera = false,
+  // When set, frames are downscaled so their width <= maxWidth before encoding.
+  // Smaller frames encode far faster, which lets the burst SAMPLE faster - the
+  // difference between catching a ~100ms blink and missing it between frames -
+  // and keeps the face large enough for landmarks/identity.
+  maxWidth = null,
   onComplete,
 } = {}) => {
   const [cameraReady, setCameraReady] = useState(false);
@@ -145,15 +150,22 @@ export const useFrameCapture = ({
     const video = videoRef.current;
     if (!video || !video.videoWidth) return Promise.resolve(null);
 
+    const scale =
+      maxWidth && video.videoWidth > maxWidth
+        ? maxWidth / video.videoWidth
+        : 1;
+    const width = Math.round(video.videoWidth * scale);
+    const height = Math.round(video.videoHeight * scale);
+
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.width = width;
+    canvas.height = height;
+    canvas.getContext("2d").drawImage(video, 0, 0, width, height);
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.85);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.82);
     });
-  }, []);
+  }, [maxWidth]);
 
   const startCapture = useCallback(() => {
     if (!cameraReady || isCapturing) return;

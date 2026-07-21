@@ -9,13 +9,13 @@ import { Camera, RefreshCw, TriangleAlert, Check, Loader2 } from "lucide-react";
 const ACTION_LABELS = {
   TURN_LEFT: "Turn your head left",
   TURN_RIGHT: "Turn your head right",
-  BLINK: "Blink your eyes",
+  BLINK: "Blink a few times",
   SMILE: "Smile",
 };
 const ACTION_CUES = {
   TURN_LEFT: "Turn left now",
   TURN_RIGHT: "Turn right now",
-  BLINK: "Blink now",
+  BLINK: "Keep blinking",
   SMILE: "Smile now",
 };
 const labelFor = (action) => ACTION_LABELS[action] || action;
@@ -57,10 +57,13 @@ export default function StepLivenessCapture({
     retryCamera,
   } = useFrameCapture({
     persistCamera: true,
-    // Denser, faster sampling for the transient blink so the ~100-200ms closed
-    // frame lands in the burst; a steady window for the holdable actions.
-    frameCount: isBlink ? 14 : 9,
-    intervalMs: isBlink ? 120 : 180,
+    // A blink is a ~100ms transient, so it needs MANY frames sampled FAST (and
+    // the user is prompted to blink repeatedly) to land a closed frame in the
+    // burst; holdable actions need only a steady window. Downscaling makes each
+    // grab quick enough that the effective sampling actually catches the blink.
+    frameCount: isBlink ? 16 : 9,
+    intervalMs: isBlink ? 80 : 170,
+    maxWidth: 560,
     onComplete: onFrames,
   });
 
