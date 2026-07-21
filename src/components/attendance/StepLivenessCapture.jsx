@@ -57,10 +57,10 @@ export default function StepLivenessCapture({
     retryCamera,
   } = useFrameCapture({
     persistCamera: true,
-    // Denser, faster sampling for the transient blink; a steady window for the
-    // holdable actions.
-    frameCount: isBlink ? 12 : 8,
-    intervalMs: isBlink ? 140 : 190,
+    // Denser, faster sampling for the transient blink so the ~100-200ms closed
+    // frame lands in the burst; a steady window for the holdable actions.
+    frameCount: isBlink ? 14 : 9,
+    intervalMs: isBlink ? 120 : 180,
     onComplete: onFrames,
   });
 
