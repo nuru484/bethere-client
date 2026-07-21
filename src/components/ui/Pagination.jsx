@@ -17,8 +17,14 @@ const Pagination = ({
 }) => {
   const { total, page: currentPage, limit, totalPages } = meta;
 
-  // Nothing to paginate: a single page needs no controls at all.
-  if (totalPages <= 1) return null;
+  // Show the bar whenever pagination is meaningful at ANY selectable page size
+  // - i.e. the total exceeds the SMALLEST option. This keeps the rows-per-page
+  // selector on screen even when the CURRENT size fits everything on one page,
+  // so a user who bumped it to 100 can drop back to 10. A list that can never
+  // span more than one page (total <= the smallest size) shows nothing.
+  const minPageSize =
+    pageSizeOptions.length > 0 ? Math.min(...pageSizeOptions) : limit;
+  if (total <= minPageSize) return null;
 
   // Calculate current range
   const startItem = Math.min((currentPage - 1) * limit + 1, total);

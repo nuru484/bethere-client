@@ -3,7 +3,7 @@
 // URL round-trip for the list-page state hook: page/pageSize/filters are
 // read from the search params, written back with defaults omitted, and an
 // invalid page in the URL falls back to 1.
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import PropTypes from "prop-types";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -28,6 +28,12 @@ const renderListState = (initialEntry = "/dashboard/users") => {
 };
 
 describe("usePaginatedListState", () => {
+  // The hook now mirrors the view into sessionStorage; clear it between cases
+  // so one test's remembered view cannot leak into the next.
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
   it("reads page, pageSize and filters from the URL", () => {
     const { result } = renderListState(
       "/dashboard/users?page=3&pageSize=25&search=jane&status=PRESENT"
@@ -111,5 +117,47 @@ describe("usePaginatedListState", () => {
       const { result } = renderListState(`/dashboard/users?page=${bad}`);
       expect(result.current.list.page).toBe(1);
     }
+  });
+
+  it("applies a page-size and page change fired together in one tick", () => {
+    // Exactly what the pagination bar does when the rows-per-page select
+    // changes: set the size AND jump to a page in the same handler. The two
+    // updates must compose - the earlier "row count falls back to 10" bug was
+    // the second navigation clobbering the first.
+    const { result } = renderListState("/dashboard/users?page=5");
+
+    act(() => {
+      result.current.list.setPageSize(25);
+      result.current.list.setPage(2);
+    });
+
+    expect(result.current.list.pageSize).toBe(25);
+    expect(result.current.list.page).toBe(2);
+    expect(result.current.location.search).toContain("pageSize=25");
+    expect(result.current.location.search).toContain("page=2");
+  });
+
+  it("remembers the view and restores it when re-entered with a bare URL", () => {
+    // First visit at an explicit state - it is saved to sessionStorage.
+    const first = renderListState(
+      "/dashboard/users?page=3&pageSize=25&search=jane"
+    );
+    expect(first.result.current.list.page).toBe(3);
+    first.unmount();
+
+    // Re-enter the SAME list with a clean URL (e.g. via the sidebar): the
+    // remembered page/size/filters come back.
+    const second = renderListState("/dashboard/users");
+    expect(second.result.current.list.page).toBe(3);
+    expect(second.result.current.list.pageSize).toBe(25);
+    expect(second.result.current.list.filters.search).toBe("jane");
+  });
+
+  it("lets an explicit URL win over the remembered view", () => {
+    renderListState("/dashboard/users?page=4").unmount();
+
+    // Arriving with its own params ignores whatever was remembered.
+    const { result } = renderListState("/dashboard/users?page=2");
+    expect(result.current.list.page).toBe(2);
   });
 });

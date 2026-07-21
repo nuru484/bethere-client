@@ -6,6 +6,8 @@
 import PropTypes from "prop-types";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 30, 50, 100];
+
 export function DataTablePagination({
   table,
   totalCount,
@@ -17,9 +19,12 @@ export function DataTablePagination({
   const selectedCount = table.getSelectedRowModel().rows.length;
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
 
-  // Nothing to paginate: on a single page render only the selection count
-  // (when rows are selected), otherwise nothing at all.
-  if (totalPages <= 1) {
+  // Show the bar whenever pagination is meaningful at ANY selectable page size
+  // - i.e. the total exceeds the SMALLEST option - so the rows-per-page select
+  // stays available even when the current size fits everything on one page (a
+  // user who bumped it to 100 can drop back to 10). Below the smallest size
+  // there is nothing to paginate: render only the selection count, if any.
+  if (totalCount <= PAGE_SIZE_OPTIONS[0]) {
     if (selectedCount === 0) return null;
 
     return (
@@ -48,7 +53,7 @@ export function DataTablePagination({
         page={page}
         totalPages={totalPages}
         pageSize={pageSize}
-        pageSizeOptions={[5, 10, 20, 30, 50, 100]}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
         selectId="page-size"
