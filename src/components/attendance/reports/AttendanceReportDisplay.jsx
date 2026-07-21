@@ -115,7 +115,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
         <p className="font-mono text-xs font-bold uppercase tracking-tight text-muted-foreground">
           {meta?.total || 0} total
         </p>
-        <Button onClick={handleRefresh} variant="outline" size="sm">
+        <Button onClick={handleRefresh} variant="outline" size="sm" className="report-no-print">
           Refresh
         </Button>
       </div>
@@ -382,7 +382,7 @@ export const AttendanceReportDisplay = ({ params, onPageChange }) => {
 
               {/* Pagination: same minimal pattern as the shared component. */}
               {meta && meta.totalPages > 1 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t">
+                <div className="report-no-print flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t">
                   <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
                     Page {meta.page} of {meta.totalPages}
                   </p>

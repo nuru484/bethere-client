@@ -314,3 +314,25 @@
     }
   }
 }
+
+/* Report export: the print button isolates the report region so a browser
+   print (or print-to-PDF) shows only the report, not the app chrome. */
+@media print {
+  body.report-printing * {
+    visibility: hidden;
+  }
+  body.report-printing .report-print-area,
+  body.report-printing .report-print-area * {
+    visibility: visible;
+  }
+  body.report-printing .report-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+  }
+  body.report-printing .report-no-print {
+    display: none !important;
+  }
+}
