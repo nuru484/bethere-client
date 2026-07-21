@@ -5,6 +5,7 @@ import {
   useSubmitEnrollmentStep,
 } from "@/hooks/useFaceScanApi";
 import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
+import PairFromPhone from "@/components/attendance/PairFromPhone";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { UserCircle, TriangleAlert, ShieldCheck } from "lucide-react";
@@ -33,7 +34,7 @@ const STAGE = {
 const isAlreadyEnrolled = (error) => error?.status === 409;
 
 export default function AddUserFaceScan() {
-  const { login, user } = useAuth();
+  const { login, updateUser, user } = useAuth();
   const navigate = useNavigate();
 
   // Biometric consent is required by the server: the enrollment upload must
@@ -161,6 +162,15 @@ export default function AddUserFaceScan() {
     },
     [submitStep, challengeToken, login, navigate, resetToConsent]
   );
+
+  // The phone finished enrolling: reflect it in this device's session and go to
+  // the terminal "already registered" state.
+  const handlePhoneComplete = useCallback(() => {
+    updateUser({ hasFaceScan: true });
+    toast.success("Face registered on your phone!");
+    setStatusMessage(null);
+    setStage(STAGE.ENROLLED);
+  }, [updateUser]);
 
   // Self-enrollment is attendant-only: admins do not enroll their own face.
   if (user?.role === "ADMIN") {
@@ -336,6 +346,10 @@ export default function AddUserFaceScan() {
                 >
                   {isRequestingChallenge ? "Starting..." : "Continue"}
                 </Button>
+
+                {/* Or register from a phone instead of this device's camera.
+                    Consent is captured again on the phone's first step. */}
+                <PairFromPhone scope="ENROLL" onComplete={handlePhoneComplete} />
               </div>
             )}
           </div>

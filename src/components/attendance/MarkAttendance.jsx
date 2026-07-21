@@ -4,8 +4,10 @@ import { useParams, useNavigate, Navigate } from "react-router-dom";
 import {
   useRequestAttendanceStepChallenge,
   useSubmitAttendanceStep,
+  useInvalidateAfterAttendance,
 } from "@/hooks/useAttendance";
 import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
+import PairFromPhone from "@/components/attendance/PairFromPhone";
 import QrScanner from "@/components/attendance/QrScanner";
 import { useAuth } from "@/hooks/useAuth";
 import PropTypes from "prop-types";
@@ -59,6 +61,7 @@ export default function MarkAttendance({ type = "in" }) {
     useRequestAttendanceStepChallenge();
   const { mutate: submitStep, isPending: isSubmitting } =
     useSubmitAttendanceStep();
+  const invalidateAfterAttendance = useInvalidateAfterAttendance();
 
   const isCheckIn = type === "in";
   const mode = isCheckIn ? "in" : "out";
@@ -202,6 +205,19 @@ export default function MarkAttendance({ type = "in" }) {
     ]
   );
 
+  // The phone finished the hand-off scan: refresh what this device shows and
+  // send the user to the event page, same as an on-device check-in.
+  const handlePhoneComplete = useCallback(() => {
+    invalidateAfterAttendance(numericEventId);
+    const msg = isCheckIn ? "Checked in on your phone!" : "Checked out on your phone!";
+    toast.success(msg);
+    setStatusMessage({ message: msg, type: "success" });
+    redirectTimerRef.current = setTimeout(
+      () => navigate(`/dashboard/events/${eventId}`),
+      1500
+    );
+  }, [invalidateAfterAttendance, numericEventId, isCheckIn, navigate, eventId]);
+
   if (isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -308,6 +324,14 @@ export default function MarkAttendance({ type = "in" }) {
                 disabled={!user?.id || isRequestingChallenge}
               />
             </div>
+
+            {/* Continue on a phone instead of this device's camera. */}
+            <PairFromPhone
+              scope="ATTENDANCE"
+              eventId={numericEventId}
+              mode={mode}
+              onComplete={handlePhoneComplete}
+            />
           </div>
         )}
       </div>

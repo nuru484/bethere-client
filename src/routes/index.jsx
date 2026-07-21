@@ -20,6 +20,10 @@ import Layout from "@/components/Layout";
 // marketing page, and a first-time visitor on / never downloads auth code.
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
+// The phone side of the "scan from phone" hand-off. Public: the phone opens it
+// from the laptop's QR link and authenticates with the hand-off token in the
+// URL, not a session cookie.
+const RemoteCapturePage = lazy(() => import("@/pages/RemoteCapturePage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 
@@ -189,6 +193,12 @@ const Routes = () => {
     {
       path: "/login",
       element: page(<LoginPage />),
+      errorElement: <ErrorPage />,
+    },
+
+    {
+      path: "/pair",
+      element: page(<RemoteCapturePage />),
       errorElement: <ErrorPage />,
     },
 

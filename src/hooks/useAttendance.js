@@ -30,7 +30,7 @@ export const useRequestAttendanceChallenge = () =>
 // Checking in/out is THE core action: refresh everything it changes that the
 // user can see. Prefix invalidation via the keys factory catches every
 // params/user variant of the attendance lists and the dashboard panels.
-const useInvalidateAfterAttendance = () => {
+export const useInvalidateAfterAttendance = () => {
   const queryClient = useQueryClient();
 
   return (eventId) => {

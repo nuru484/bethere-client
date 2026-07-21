@@ -26,6 +26,13 @@ vi.mock("@/hooks/useAttendance", () => ({
     mutate: submitStepMutate,
     isPending: false,
   }),
+  useInvalidateAfterAttendance: () => vi.fn(),
+}));
+
+// The phone hand-off is its own concern (covered elsewhere); stub it so this
+// test does not need a QueryClient for its internal pairing hooks.
+vi.mock("@/components/attendance/PairFromPhone", () => ({
+  default: () => <div>pair-from-phone</div>,
 }));
 
 vi.mock("react-hot-toast", () => ({
