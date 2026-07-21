@@ -1,48 +1,53 @@
-// src/pages/AdminDashboard.jsx
+// src/pages/dashboard/AdminDashboard.jsx
+//
+// The redesigned admin analytics dashboard. Four stories - presence,
+// punctuality, integrity, engagement - each a set of independently-loading
+// slice widgets, above a live operational strip and a hero KPI row. The date
+// range drives every range-based widget; the live strip and retention curve
+// stand outside it.
 import { useState } from "react";
-import {
-  useGetAdminDashboardTotals,
-  useGetAllUsersAttendanceData,
-} from "@/hooks/useDashboard";
-import DashboardTotalsCard from "@/components/dashboard/DashboardTotalsCard";
-import AttendanceCardsError from "@/components/dashboard/AttendanceCardsError";
-import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
-import AttendanceLineChart from "@/components/dashboard/charts/AttendanceLineChart";
-import AttendanceBarChart from "@/components/dashboard/admin/AttendanceBarChart";
-import StatusPieChart from "@/components/dashboard/charts/StatusPieChart";
-import EventTypeChart from "@/components/dashboard/admin/EventTypeChart";
-import { statusPieData } from "@/lib/chart-colors";
-import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+import PropTypes from "prop-types";
 import { format, subDays } from "date-fns";
-import DashboardTotalsCardSkeleton from "@/components/dashboard/skeletons/DashboardTotalsCardSkeleton";
-import AttendanceDataSkeleton from "@/components/dashboard/skeletons/AttendanceDataSkeleton";
-import DashboardTotalsCardError from "@/components/dashboard/DashboardTotalsCardError";
+import DateRangeSelector from "@/components/dashboard/DateRangeSelector";
+import LiveStrip from "@/components/dashboard/analytics/LiveStrip";
+import HeroKpis from "@/components/dashboard/analytics/HeroKpis";
+import PresenceTrendChart from "@/components/dashboard/analytics/PresenceTrendChart";
+import PresenceBreakdownCard from "@/components/dashboard/analytics/PresenceBreakdownCard";
+import PunctualityTrendChart from "@/components/dashboard/analytics/PunctualityTrendChart";
+import LatenessHistogram from "@/components/dashboard/analytics/LatenessHistogram";
+import ArrivalHeatmap from "@/components/dashboard/analytics/ArrivalHeatmap";
+import IntegrityScoreCard from "@/components/dashboard/analytics/IntegrityScoreCard";
+import AnomalyTrendChart from "@/components/dashboard/analytics/AnomalyTrendChart";
+import AnomalyBreakdownCard from "@/components/dashboard/analytics/AnomalyBreakdownCard";
+import LivenessQualityCard from "@/components/dashboard/analytics/LivenessQualityCard";
+import TopAttendeesCard from "@/components/dashboard/analytics/TopAttendeesCard";
+import RetentionCurveCard from "@/components/dashboard/analytics/RetentionCurveCard";
+import AiSummaryCard from "@/components/dashboard/analytics/AiSummaryCard";
+
+const SectionHeading = ({ title, hint }) => (
+  <div className="flex items-baseline justify-between gap-3 pt-2">
+    <h2 className="font-display text-lg font-medium tracking-[-0.01em] text-foreground sm:text-xl">
+      {title}
+    </h2>
+    {hint && <p className="hidden text-xs text-muted-foreground sm:block">{hint}</p>}
+  </div>
+);
+
+SectionHeading.propTypes = {
+  title: PropTypes.string,
+  hint: PropTypes.string,
+};
 
 const AdminDashboard = () => {
-  const { data, isLoading, isError, error, refetch } =
-    useGetAdminDashboardTotals();
-
   const [dateRange, setDateRange] = useState({
     startDate: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     endDate: format(new Date(), "yyyy-MM-dd"),
   });
 
-  const {
-    data: attendanceData,
-    isLoading: isAttendanceLoading,
-    isError: isAttendanceError,
-    error: attendanceError,
-    refetch: refetchAttendance,
-  } = useGetAllUsersAttendanceData(dateRange);
-
-  const totals = data?.data || {};
-  const attendance = attendanceData?.data || {};
-  const { summary, timeSeriesData, statusPercentages, statusCounts } =
-    attendance;
-
   return (
     <div className="w-full min-h-screen">
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
@@ -52,77 +57,67 @@ const AdminDashboard = () => {
               Admin Dashboard
             </h1>
             <p className="mt-1 text-sm text-muted-foreground sm:mt-1.5 sm:text-base">
-              System statistics and metrics
+              Presence, punctuality, and verified-attendance integrity at a glance
             </p>
           </div>
-
-          <DateRangeSelector
-            onDateChange={setDateRange}
-            isLoading={isAttendanceLoading}
-          />
+          <DateRangeSelector onDateChange={setDateRange} />
         </div>
 
-        {isLoading ? (
-          <DashboardTotalsCardSkeleton />
-        ) : isError ? (
-          <DashboardTotalsCardError
-            error={extractApiErrorMessage(error).message}
-            onRetry={refetch}
-          />
-        ) : (
-          <DashboardTotalsCard totals={totals} isAdmin={true} />
-        )}
+        {/* live operational strip */}
+        <LiveStrip />
 
-        {isAttendanceLoading ? (
-          <AttendanceDataSkeleton />
-        ) : isAttendanceError ? (
-          <AttendanceCardsError
-            error={extractApiErrorMessage(attendanceError).message}
-            onRetry={refetchAttendance}
-          />
-        ) : (
-          summary && (
-            <>
-              {timeSeriesData && (
-                <div className="space-y-6">
-                  <div className="w-full overflow-hidden">
-                    <AttendanceLineChart
-                      data={timeSeriesData}
-                      title="Attendance Trends Over Time"
-                      emptyTitle="Attendance Over Time"
-                      totalLabel="Total"
-                    />
-                  </div>
+        {/* hero KPIs */}
+        <HeroKpis dateRange={dateRange} />
 
-                  <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-                    <div className="w-full overflow-hidden">
-                      <AttendanceBarChart
-                        statusCounts={statusCounts}
-                        statusPercentages={statusPercentages}
-                      />
-                    </div>
-                    <div className="w-full overflow-hidden">
-                      <StatusPieChart
-                        data={statusPieData(statusCounts)}
-                        title="Attendance Status Breakdown"
-                        emptyTitle="Attendance Status Breakdown"
-                        labelClassName="font-semibold"
-                      />
-                    </div>
-                  </div>
+        {/* AI narrative */}
+        <AiSummaryCard dateRange={dateRange} />
 
-                  {summary?.eventTypeBreakdown && (
-                    <div className="w-full overflow-hidden">
-                      <EventTypeChart
-                        eventTypeBreakdown={summary.eventTypeBreakdown}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )
-        )}
+        {/* PRESENCE */}
+        <section className="space-y-4">
+          <SectionHeading title="Presence" hint="Who showed up" />
+          <PresenceTrendChart dateRange={dateRange} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PresenceBreakdownCard dateRange={dateRange} by="status" title="Status breakdown" subtitle="Present · late · absent" />
+            <PresenceBreakdownCard dateRange={dateRange} by="eventType" title="Event type" subtitle="Recurring vs one-off" />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PresenceBreakdownCard dateRange={dateRange} by="event" title="Top events" subtitle="By attendance volume" variant="bars" />
+            <PresenceBreakdownCard dateRange={dateRange} by="location" title="Top venues" subtitle="By attendance volume" variant="bars" />
+          </div>
+        </section>
+
+        {/* PUNCTUALITY */}
+        <section className="space-y-4">
+          <SectionHeading title="Punctuality" hint="When they arrive" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PunctualityTrendChart dateRange={dateRange} />
+            <LatenessHistogram dateRange={dateRange} />
+          </div>
+          <ArrivalHeatmap dateRange={dateRange} />
+        </section>
+
+        {/* INTEGRITY */}
+        <section className="space-y-4">
+          <SectionHeading title="Integrity" hint="Was it real" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <IntegrityScoreCard dateRange={dateRange} />
+            <AnomalyTrendChart dateRange={dateRange} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <AnomalyBreakdownCard dateRange={dateRange} by="type" title="Anomalies by type" />
+            <AnomalyBreakdownCard dateRange={dateRange} by="severity" title="Anomalies by severity" />
+            <LivenessQualityCard dateRange={dateRange} />
+          </div>
+        </section>
+
+        {/* ENGAGEMENT */}
+        <section className="space-y-4">
+          <SectionHeading title="Engagement" hint="Who keeps coming back" />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <TopAttendeesCard dateRange={dateRange} />
+            <RetentionCurveCard />
+          </div>
+        </section>
       </div>
     </div>
   );

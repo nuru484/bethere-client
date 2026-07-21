@@ -29,6 +29,46 @@ export const statusPieData = (counts) => [
   { name: "Absent", value: counts?.absent || 0, color: STATUS_COLOR.absent },
 ];
 
+// --- Analytics widgets (the redesigned admin dashboard) -------------------
+
+// Semantic status colours reused across the analytics charts.
+export const ANALYTICS_STATUS = {
+  present: "hsl(var(--chart-1))",
+  onTime: "hsl(var(--chart-1))",
+  late: "hsl(var(--chart-4))",
+  absent: "hsl(var(--chart-3))",
+  rate: "hsl(var(--chart-1))",
+  // The dashed previous-period overlay line.
+  previous: "hsl(var(--muted-foreground))",
+};
+
+// Severity ramp for the integrity/anomaly widgets (low -> high risk).
+export const SEVERITY_COLOR = {
+  LOW: "hsl(var(--chart-4))",
+  MEDIUM: "#d97706",
+  HIGH: "hsl(var(--destructive))",
+};
+
+// A distinct hue per anomaly type for the stacked anomaly trend.
+export const ANOMALY_TYPE_COLOR = {
+  duplicateDescriptor: "#7c3aed",
+  livenessFailed: "#d97706",
+  replaySuspected: "hsl(var(--destructive))",
+  rapidAttempts: "#0e7490",
+};
+
+// Ordered categorical palette for breakdown donuts/bars; index by position.
+export const CATEGORICAL_PALETTE = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-3))",
+  "#7c3aed",
+  "#0e7490",
+  "#d97706",
+  "hsl(var(--destructive))",
+  "#1d4ed8",
+];
+
 export const eventTypePieData = (breakdown) => [
   {
     name: "Recurring Events",

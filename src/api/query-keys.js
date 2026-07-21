@@ -57,6 +57,35 @@ export const queryKeys = {
     userAttendanceDataAll: ["usersAttendanceData"],
     userAttendanceData: (params = {}) => ["usersAttendanceData", params],
   },
+  // The redesigned admin analytics slices. Each widget owns its key so the
+  // date-range change refetches every slice while they stay independently
+  // cached; `all` is the shared invalidation prefix.
+  analytics: {
+    all: ["adminAnalytics"],
+    live: ["adminAnalytics", "live"],
+    kpis: (params = {}) => ["adminAnalytics", "kpis", params],
+    presenceTrend: (params = {}) => ["adminAnalytics", "presenceTrend", params],
+    presenceBreakdown: (params = {}) => ["adminAnalytics", "presenceBreakdown", params],
+    punctualityTrend: (params = {}) => ["adminAnalytics", "punctualityTrend", params],
+    latenessDistribution: (params = {}) => ["adminAnalytics", "latenessDistribution", params],
+    arrivalHeatmap: (params = {}) => ["adminAnalytics", "arrivalHeatmap", params],
+    anomalyTrend: (params = {}) => ["adminAnalytics", "anomalyTrend", params],
+    anomalyBreakdown: (params = {}) => ["adminAnalytics", "anomalyBreakdown", params],
+    livenessQuality: (params = {}) => ["adminAnalytics", "livenessQuality", params],
+    integritySummary: (params = {}) => ["adminAnalytics", "integritySummary", params],
+    topAttendees: (params = {}) => ["adminAnalytics", "topAttendees", params],
+    retentionCurve: (params = {}) => ["adminAnalytics", "retentionCurve", params],
+  },
+  // The attendant's personal analytics slices (scoped to the signed-in user).
+  userAnalytics: {
+    all: ["userAnalytics"],
+    nowNext: ["userAnalytics", "nowNext"],
+    kpis: (params = {}) => ["userAnalytics", "kpis", params],
+    trend: (params = {}) => ["userAnalytics", "trend", params],
+    statusBreakdown: (params = {}) => ["userAnalytics", "statusBreakdown", params],
+    eventBreakdown: (params = {}) => ["userAnalytics", "eventBreakdown", params],
+    calendar: (params = {}) => ["userAnalytics", "calendar", params],
+  },
   review: {
     anomaliesAll: ["anomalies"],
     anomalies: (params = {}) => ["anomalies", params],
