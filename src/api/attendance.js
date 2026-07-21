@@ -22,6 +22,21 @@ export const createAttendance = async (eventId, formData) =>
 export const updateAttendance = async (eventId, formData) =>
   api.put(`/attendance/${eventId}`, formData);
 
+// Step-by-step flow. Step 1: preflight + issue a step challenge. The server
+// replies with the ordered actions, the first action to perform, a step token,
+// and totalSteps.
+export const createAttendanceStepChallenge = async (eventId, { venueCode, mode }) =>
+  api.post(`/attendance/${eventId}/step-challenge`, { venueCode, mode });
+
+// Per-action upload: one dense single-action burst (challengeToken + venueCode +
+// `frames`). POST advances a check-in, PUT a check-out. The server verifies just
+// this action and replies with either the next action or, on the last step, the
+// committed attendance. Pass FormData straight through (multipart boundary).
+export const submitAttendanceStep = async (eventId, formData, mode = "in") =>
+  mode === "out"
+    ? api.put(`/attendance/${eventId}/step`, formData)
+    : api.post(`/attendance/${eventId}/step`, formData);
+
 export const getUserAttendance = async (userId, params = {}) => {
   const queryString = buildSearchParams(params);
 

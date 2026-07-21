@@ -16,6 +16,10 @@ import { cameraErrorMessage } from "@/lib/camera-errors";
  * @param {object} opts
  * @param {number} [opts.frameCount=11]  number of frames to capture in the burst
  * @param {number} [opts.intervalMs=450] delay between frames (~5s total for 11)
+ * @param {boolean} [opts.persistCamera=false] keep the camera LIVE after a burst
+ *   instead of releasing it. The step-by-step flow captures one action per burst
+ *   and must not flicker the camera (or re-prompt permission) between steps, so
+ *   it keeps the stream and simply calls startCapture again for the next action.
  * @param {(blobs: Blob[]) => void} [opts.onComplete] called with captured blobs
  */
 const INTERRUPTED_MESSAGE =
@@ -24,6 +28,7 @@ const INTERRUPTED_MESSAGE =
 export const useFrameCapture = ({
   frameCount = 11,
   intervalMs = 450,
+  persistCamera = false,
   onComplete,
 } = {}) => {
   const [cameraReady, setCameraReady] = useState(false);
@@ -189,11 +194,17 @@ export const useFrameCapture = ({
         timerRef.current = setTimeout(() => grabNext(index + 1), intervalMs);
       } else {
         timerRef.current = null;
-        // The frames are already in hand and the upload plus the server-side
-        // face match can run for minutes, so release the camera now rather
-        // than leaving the indicator lit through all of it. startCamera()
-        // (via retryCamera or a remount) brings it straight back.
-        stopCamera();
+        if (persistCamera) {
+          // Step-by-step: the next action reuses the same live camera, so end
+          // the burst but keep the stream. startCapture() runs again for it.
+          setIsCapturing(false);
+        } else {
+          // The frames are already in hand and the upload plus the server-side
+          // face match can run for minutes, so release the camera now rather
+          // than leaving the indicator lit through all of it. startCamera()
+          // (via retryCamera or a remount) brings it straight back.
+          stopCamera();
+        }
         onCompleteRef.current?.(blobsRef.current);
       }
     };
@@ -205,6 +216,7 @@ export const useFrameCapture = ({
     captureFrame,
     frameCount,
     intervalMs,
+    persistCamera,
     abortCapture,
     stopCamera,
   ]);

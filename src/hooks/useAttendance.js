@@ -8,6 +8,8 @@ import {
 import {
   createAttendance,
   createAttendanceChallenge,
+  createAttendanceStepChallenge,
+  submitAttendanceStep,
   updateAttendance,
   getUserAttendance,
   getEventAttendance,
@@ -86,6 +88,27 @@ export const useUpdateAttendance = () => {
   return useMutation({
     mutationFn: ({ eventId, formData }) => updateAttendance(eventId, formData),
     onSuccess: (data, { eventId }) => invalidateAfterAttendance(eventId),
+  });
+};
+
+// Step-by-step: request a step challenge (single-use, so a plain mutation).
+export const useRequestAttendanceStepChallenge = () =>
+  useMutation({
+    mutationFn: ({ eventId, venueCode, mode }) =>
+      createAttendanceStepChallenge(eventId, { venueCode, mode }),
+  });
+
+// Step-by-step: submit ONE action's burst. Only the final (done) step changes
+// what the user sees, so the attendance-wide invalidation runs only then.
+export const useSubmitAttendanceStep = () => {
+  const invalidateAfterAttendance = useInvalidateAfterAttendance();
+
+  return useMutation({
+    mutationFn: ({ eventId, formData, mode }) =>
+      submitAttendanceStep(eventId, formData, mode),
+    onSuccess: (response, { eventId }) => {
+      if (response?.data?.done) invalidateAfterAttendance(eventId);
+    },
   });
 };
 

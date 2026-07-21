@@ -2,11 +2,10 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import {
-  useCreateAttendance,
-  useUpdateAttendance,
-  useRequestAttendanceChallenge,
+  useRequestAttendanceStepChallenge,
+  useSubmitAttendanceStep,
 } from "@/hooks/useAttendance";
-import LivenessCapture from "@/components/attendance/LivenessCapture";
+import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
 import QrScanner from "@/components/attendance/QrScanner";
 import { useAuth } from "@/hooks/useAuth";
 import PropTypes from "prop-types";
@@ -14,10 +13,11 @@ import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { Button } from "@/components/ui/button";
 
-// Two-step flow for BOTH directions:
+// Step-by-step flow for BOTH directions:
 //  scan      -> scan the venue's rotating QR to prove presence
-//  requesting-> exchange the venue code for a single-use liveness challenge
-//  capture   -> capture a face-frame burst and upload it
+//  requesting-> exchange the venue code for a step-by-step liveness challenge
+//  capture   -> perform ONE prompted action at a time; each is verified by the
+//               server before the next is shown, and the last commits attendance
 const STAGE = {
   SCAN: "scan",
   REQUESTING: "requesting",
@@ -31,11 +31,16 @@ export default function MarkAttendance({ type = "in" }) {
 
   const [stage, setStage] = useState(STAGE.SCAN);
   const [challengeToken, setChallengeToken] = useState(null);
-  // The server re-validates the rotating venue code at the upload step, so the
-  // scanned code has to survive the challenge stage and ride along on the
-  // multipart body.
+  // The server re-validates the rotating venue code at the final step, so the
+  // scanned code has to survive the challenge stage and ride along on every
+  // per-action upload.
   const [venueCode, setVenueCode] = useState(null);
-  const [actions, setActions] = useState([]);
+  // Step-by-step progress: the action to perform now, its 1-based number, the
+  // total, and the last server rejection (shown so the SAME step is re-tried).
+  const [currentAction, setCurrentAction] = useState(null);
+  const [stepNumber, setStepNumber] = useState(1);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [stepError, setStepError] = useState("");
   const [statusMessage, setStatusMessage] = useState(null);
   // Bumped to force-remount the scanner (which stops itself after a scan) when
   // we drop back to the scan stage.
@@ -51,15 +56,12 @@ export default function MarkAttendance({ type = "in" }) {
   );
 
   const { mutate: requestChallenge, isPending: isRequestingChallenge } =
-    useRequestAttendanceChallenge();
-  const { mutate: createAttendance, isPending: isCreating } =
-    useCreateAttendance();
-  const { mutate: updateAttendance, isPending: isUpdating } =
-    useUpdateAttendance();
+    useRequestAttendanceStepChallenge();
+  const { mutate: submitStep, isPending: isSubmitting } =
+    useSubmitAttendanceStep();
 
   const isCheckIn = type === "in";
   const mode = isCheckIn ? "in" : "out";
-  const isSubmitting = isCreating || isUpdating;
 
   // Only USER-role principals are attendants. Admins have no attendance and
   // the backend rejects these endpoints for them, so send them back.
@@ -76,18 +78,19 @@ export default function MarkAttendance({ type = "in" }) {
     setStage(STAGE.SCAN);
     setChallengeToken(null);
     setVenueCode(null);
-    setActions([]);
+    setCurrentAction(null);
+    setStepNumber(1);
+    setTotalSteps(0);
+    setStepError("");
     setScanKey((k) => k + 1);
   }, []);
 
-  // Stage 2: exchange the scanned venue code for a liveness challenge.
+  // Stage 2: exchange the scanned venue code for a step-by-step challenge and
+  // drop into the capture flow at its first action.
   const handleScan = useCallback(
     (scannedCode) => {
       setStage(STAGE.REQUESTING);
-      setStatusMessage({
-        message: "Verifying venue code...",
-        type: "loading",
-      });
+      setStatusMessage({ message: "Verifying venue code...", type: "loading" });
 
       requestChallenge(
         { eventId: numericEventId, venueCode: scannedCode, mode },
@@ -96,7 +99,10 @@ export default function MarkAttendance({ type = "in" }) {
             const data = response?.data || {};
             setChallengeToken(data.challengeToken ?? null);
             setVenueCode(scannedCode);
-            setActions(Array.isArray(data.actions) ? data.actions : []);
+            setCurrentAction(data.nextAction ?? null);
+            setStepNumber((data.currentStep ?? 0) + 1);
+            setTotalSteps(data.totalSteps ?? 0);
+            setStepError("");
             setStatusMessage(null);
             setStage(STAGE.CAPTURE);
           },
@@ -114,23 +120,18 @@ export default function MarkAttendance({ type = "in" }) {
     [requestChallenge, numericEventId, mode, resetToScan]
   );
 
-  // Stage 4: upload the captured frames. POST to check in, PUT to check out -
-  // identical multipart shape (challengeToken + venueCode + `frames`).
-  const handleCapture = useCallback(
+  // Stage 3: one action at a time. Upload this action's burst; the server either
+  // advances us to the next action, commits attendance on the last step, or
+  // rejects this action (shown inline so the SAME step is re-tried).
+  const handleFrames = useCallback(
     (blobs) => {
-      if (!blobs || blobs.length < 6) {
-        // The challenge is single-use and keeps ageing, so never leave the user
-        // parked on the capture screen holding it - start over from the scan.
-        const errMsg =
-          "Could not capture enough frames. Please scan the venue code again.";
-        toast.error(errMsg);
-        setStatusMessage({ message: errMsg, type: "error" });
-        resetToScan();
-        return;
-      }
       if (!challengeToken || !venueCode) {
         toast.error("Your session expired. Please scan the venue code again.");
         resetToScan();
+        return;
+      }
+      if (!blobs || blobs.length < 4) {
+        setStepError("We couldn't capture that. Hold still and try this step again.");
         return;
       }
 
@@ -141,29 +142,44 @@ export default function MarkAttendance({ type = "in" }) {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
 
-      const submit = isCheckIn ? createAttendance : updateAttendance;
-      const toastId = toast.loading("Verifying your face...");
+      setStepError("");
 
-      submit(
-        { eventId: numericEventId, formData },
+      submitStep(
+        { eventId: numericEventId, formData, mode },
         {
           onSuccess: (response) => {
-            const msg =
-              response?.message ||
-              (isCheckIn ? "Checked in successfully!" : "Checked out successfully!");
-            toast.success(msg, { id: toastId });
-            setStatusMessage({ message: msg, type: "success" });
-            redirectTimerRef.current = setTimeout(
-              () => navigate(`/dashboard/events/${eventId}`),
-              1500
-            );
+            const data = response?.data || {};
+            if (data.done) {
+              const msg =
+                response?.message ||
+                (isCheckIn ? "Checked in successfully!" : "Checked out successfully!");
+              toast.success(msg);
+              setStatusMessage({ message: msg, type: "success" });
+              setStage(STAGE.REQUESTING); // brief confirmation, no capture surface
+              redirectTimerRef.current = setTimeout(
+                () => navigate(`/dashboard/events/${eventId}`),
+                1500
+              );
+              return;
+            }
+            // Verified: advance to the next prompted action.
+            setCurrentAction(data.nextAction ?? null);
+            setStepNumber((data.currentStep ?? 0) + 1);
+            if (data.totalSteps) setTotalSteps(data.totalSteps);
           },
           onError: (error) => {
-            const { message } = extractApiErrorMessage(error);
-            const errMsg =
-              message ||
-              (isCheckIn ? "Check-in failed." : "Check-out failed.");
-            toast.error(errMsg, { id: toastId });
+            const { message, code } = extractApiErrorMessage(error);
+            // A missed action: keep the user on THIS step and let them retry.
+            if (code === "STEP_FAILED") {
+              setStepError(
+                message || "We couldn't verify that action. Try this step again."
+              );
+              return;
+            }
+            // Expired/spent challenge, stale venue code, or a conflict: the whole
+            // scan has to start over.
+            const errMsg = message || "Your scan could not be completed.";
+            toast.error(errMsg);
             setStatusMessage({
               message: `${errMsg} Please scan the venue code again.`,
               type: "error",
@@ -177,8 +193,8 @@ export default function MarkAttendance({ type = "in" }) {
       challengeToken,
       venueCode,
       isCheckIn,
-      createAttendance,
-      updateAttendance,
+      mode,
+      submitStep,
       numericEventId,
       eventId,
       navigate,
@@ -249,10 +265,14 @@ export default function MarkAttendance({ type = "in" }) {
 
         {stage === STAGE.CAPTURE ? (
           <div className="flex justify-center">
-            <LivenessCapture
-              actions={actions}
-              onCapture={handleCapture}
-              isSubmitting={isSubmitting}
+            <StepLivenessCapture
+              action={currentAction}
+              stepNumber={stepNumber}
+              totalSteps={totalSteps}
+              isValidating={isSubmitting}
+              errorMessage={stepError}
+              onFrames={handleFrames}
+              startLabel={isCheckIn ? "Start check-in scan" : "Start check-out scan"}
             />
           </div>
         ) : stage === STAGE.REQUESTING ? (

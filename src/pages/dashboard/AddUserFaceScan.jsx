@@ -1,10 +1,10 @@
 // src/pages/dashboard/AddUserFaceScan.jsx
 import { useCallback, useState } from "react";
 import {
-  useAddFaceScan,
-  useRequestEnrollmentChallenge,
+  useRequestEnrollmentStepChallenge,
+  useSubmitEnrollmentStep,
 } from "@/hooks/useFaceScanApi";
-import LivenessCapture from "@/components/attendance/LivenessCapture";
+import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { UserCircle, TriangleAlert, ShieldCheck } from "lucide-react";
@@ -45,19 +45,27 @@ export default function AddUserFaceScan() {
     user?.hasFaceScan === true ? STAGE.ENROLLED : STAGE.CONSENT
   );
   const [challengeToken, setChallengeToken] = useState(null);
-  const [actions, setActions] = useState([]);
+  // Step-by-step progress (mirrors the check-in flow).
+  const [currentAction, setCurrentAction] = useState(null);
+  const [stepNumber, setStepNumber] = useState(1);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [stepError, setStepError] = useState("");
   const [statusMessage, setStatusMessage] = useState(null);
 
   const { mutate: requestChallenge, isPending: isRequestingChallenge } =
-    useRequestEnrollmentChallenge();
-  const { mutate: addFaceScan, isPending: isSubmitting } = useAddFaceScan();
+    useRequestEnrollmentStepChallenge();
+  const { mutate: submitStep, isPending: isSubmitting } =
+    useSubmitEnrollmentStep();
 
   // Challenges are single-use, so a failed attempt always starts over and asks
   // for a fresh one.
   const resetToConsent = useCallback(() => {
     setStage(STAGE.CONSENT);
     setChallengeToken(null);
-    setActions([]);
+    setCurrentAction(null);
+    setStepNumber(1);
+    setTotalSteps(0);
+    setStepError("");
   }, []);
 
   const handleStart = useCallback(() => {
@@ -68,7 +76,10 @@ export default function AddUserFaceScan() {
       onSuccess: (response) => {
         const data = response?.data || {};
         setChallengeToken(data.challengeToken ?? null);
-        setActions(Array.isArray(data.actions) ? data.actions : []);
+        setCurrentAction(data.nextAction ?? null);
+        setStepNumber((data.currentStep ?? 0) + 1);
+        setTotalSteps(data.totalSteps ?? 0);
+        setStepError("");
         setStage(STAGE.CAPTURE);
       },
       onError: (error) => {
@@ -89,20 +100,17 @@ export default function AddUserFaceScan() {
     });
   }, [requestChallenge, resetToConsent]);
 
-  const handleCapture = useCallback(
+  // One action at a time. Consent rides on every step (the server enforces it on
+  // the first). The last step derives and stores the template.
+  const handleFrames = useCallback(
     (blobs) => {
-      if (!blobs || blobs.length < 6) {
-        // Challenges are single-use and keep ageing, so drop straight back to
-        // the start instead of leaving the user holding a stale one.
-        const errMsg = "Could not capture enough frames. Please start again.";
-        toast.error(errMsg);
-        setStatusMessage({ message: errMsg, type: "error" });
-        resetToConsent();
-        return;
-      }
       if (!challengeToken) {
         toast.error("Your session expired. Please start again.");
         resetToConsent();
+        return;
+      }
+      if (!blobs || blobs.length < 4) {
+        setStepError("We couldn't capture that. Hold still and try this step again.");
         return;
       }
 
@@ -113,40 +121,45 @@ export default function AddUserFaceScan() {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
 
-      const toastId = toast.loading("Registering your face...");
+      setStepError("");
 
-      addFaceScan(formData, {
+      submitStep(formData, {
         onSuccess: (response) => {
-          const msg = response?.message || "Face registered successfully!";
-          toast.success(msg, { id: toastId });
-          setStatusMessage({ message: msg, type: "success" });
-
-          if (response?.data?.user) {
-            login(response.data.user);
+          const data = response?.data || {};
+          if (data.done) {
+            const msg = response?.message || "Face registered successfully!";
+            toast.success(msg);
+            setStatusMessage({ message: msg, type: "success" });
+            if (data.user) login(data.user);
+            navigate(`/dashboard`);
+            return;
           }
-          navigate(`/dashboard`);
+          setCurrentAction(data.nextAction ?? null);
+          setStepNumber((data.currentStep ?? 0) + 1);
+          if (data.totalSteps) setTotalSteps(data.totalSteps);
         },
         onError: (error) => {
-          // The upload step 409s for the same reason the challenge does.
           if (isAlreadyEnrolled(error)) {
-            toast.dismiss(toastId);
             setStatusMessage(null);
             setStage(STAGE.ENROLLED);
             return;
           }
-
-          const { message } = extractApiErrorMessage(error);
+          const { message, code } = extractApiErrorMessage(error);
+          // A missed action: keep the user on THIS step and let them retry.
+          if (code === "STEP_FAILED") {
+            setStepError(
+              message || "We couldn't verify that action. Try this step again."
+            );
+            return;
+          }
           const errMsg = message || "Failed to register face.";
-          toast.error(errMsg, { id: toastId });
-          setStatusMessage({
-            message: `${errMsg} Please try again.`,
-            type: "error",
-          });
+          toast.error(errMsg);
+          setStatusMessage({ message: `${errMsg} Please try again.`, type: "error" });
           resetToConsent();
         },
       });
     },
-    [addFaceScan, challengeToken, login, navigate, resetToConsent]
+    [submitStep, challengeToken, login, navigate, resetToConsent]
   );
 
   // Self-enrollment is attendant-only: admins do not enroll their own face.
@@ -259,11 +272,14 @@ export default function AddUserFaceScan() {
               </div>
             ) : stage === STAGE.CAPTURE ? (
               <div className="flex justify-center">
-                <LivenessCapture
-                  actions={actions}
-                  onCapture={handleCapture}
-                  isSubmitting={isSubmitting}
-                  startLabel="Start Face Registration"
+                <StepLivenessCapture
+                  action={currentAction}
+                  stepNumber={stepNumber}
+                  totalSteps={totalSteps}
+                  isValidating={isSubmitting}
+                  errorMessage={stepError}
+                  onFrames={handleFrames}
+                  startLabel="Start face registration"
                 />
               </div>
             ) : stage === STAGE.REQUESTING ? (
