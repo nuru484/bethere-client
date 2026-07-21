@@ -4,6 +4,8 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 // lazy() with stale-deploy recovery: a failed chunk import reloads once to
 // pick up the new build instead of stranding the user on an error page.
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
+// Eagerly imported: it IS the fallback shown while lazy chunks load.
+import BeThereLoader from "@/components/ui/BeThereLoader";
 import ProtectedRoutes from "./ProtectedRoutes";
 import RequireRole from "./RequireRole";
 // Small always-needed shells stay static: the router needs them synchronously
@@ -72,11 +74,7 @@ const UserProfilePage = lazy(() =>
 
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div
-      className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"
-      role="status"
-      aria-label="Loading page"
-    />
+    <BeThereLoader />
   </div>
 );
 

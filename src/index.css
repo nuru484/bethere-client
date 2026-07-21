@@ -336,3 +336,30 @@
     display: none !important;
   }
 }
+
+/* BeThere general loader: a "presence scan" - mint rings pulse outward from
+   the B/ mark (like a liveness ping) while a thin arc sweeps. CSS-only and
+   reduced-motion aware, mirroring the app's other animations. */
+@keyframes bethere-ping {
+  0% { transform: scale(0.5); opacity: 0.6; }
+  70% { opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes bethere-sweep {
+  to { transform: rotate(360deg); }
+}
+@keyframes bethere-lift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.bethere-ping { animation: bethere-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.bethere-sweep { animation: bethere-sweep 1.1s linear infinite; }
+.bethere-lift { animation: bethere-lift 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .bethere-ping,
+  .bethere-sweep,
+  .bethere-lift {
+    animation: none;
+  }
+  .bethere-ping { opacity: 0.3; }
+}
