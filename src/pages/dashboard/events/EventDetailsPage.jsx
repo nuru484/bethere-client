@@ -1,5 +1,5 @@
 // src/pages/dashboard/events/EventDetails.jsx
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteEvent, useGetEvent } from "@/hooks/useEvent";
 import { Card, CardContent } from "@/components/ui/card";

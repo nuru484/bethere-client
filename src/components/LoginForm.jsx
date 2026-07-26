@@ -1,6 +1,6 @@
 // src/components/LoginForm.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import {

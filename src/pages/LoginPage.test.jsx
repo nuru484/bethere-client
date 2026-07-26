@@ -9,14 +9,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import PropTypes from "prop-types";
 
 const loginMutate = vi.fn();
 const logUserIn = vi.fn();
 const navigate = vi.fn();
 
-vi.mock("react-router-dom", async (importOriginal) => {
+vi.mock("react-router", async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, useNavigate: () => navigate };
 });

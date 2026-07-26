@@ -5,7 +5,7 @@
 // principals that sign in with one. The wrappers only differ in config
 // (password, note copy, button labels, cancel path).
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
   Form,

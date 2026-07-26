@@ -5,7 +5,7 @@
 // next session that is open right now (with a check-in CTA), or what's coming
 // up. Self-fetching from /dashboard/users/now-next.
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { format } from "date-fns";
 import { CheckCircle2, LogIn, LogOut, CalendarClock, MapPin, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";

@@ -1,5 +1,5 @@
 // src/components/landing/LandingNav.jsx
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import { PillLink, ChipLink } from "./LandingButtons";

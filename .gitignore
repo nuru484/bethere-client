@@ -15,6 +15,10 @@ dist-ssr
 *.local
 .env
 
+# Staged at build/dev time from node_modules/@mediapipe/tasks-vision by
+# scripts/copy-mediapipe-wasm.mjs; only the .task model is committed.
+public/models/mediapipe/wasm/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

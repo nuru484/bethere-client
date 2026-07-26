@@ -7,7 +7,7 @@ import {
   isRouteErrorResponse,
   useNavigate,
   useRouteError,
-} from "react-router-dom";
+} from "react-router";
 import { Button } from "@/components/ui/button";
 
 // Shared presentation for router errors, 404s and render crashes. `onBack`

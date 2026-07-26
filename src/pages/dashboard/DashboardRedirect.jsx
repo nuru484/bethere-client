@@ -2,7 +2,7 @@
 import { Suspense } from "react";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 // Each dashboard pulls in the full recharts set, so we lazy-load them and let
 // the router serve only the one this user's role needs: an attendant never
 // downloads the admin charts, and an admin never downloads the user charts.

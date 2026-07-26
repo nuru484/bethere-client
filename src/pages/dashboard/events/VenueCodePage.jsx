@@ -1,6 +1,6 @@
 // src/pages/dashboard/events/VenueCodePage.jsx
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
 import { useVenueCodes } from "@/hooks/useAttendance";
 import { useGetEvent } from "@/hooks/useEvent";

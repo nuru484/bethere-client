@@ -5,18 +5,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 const DashboardLoadingSkeleton = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Bar Skeleton */}
+      {/* Navigation Bar Skeleton - mirrors AppNavbar: logo only below lg,
+          tab row + avatar from lg up, BottomNav placeholder below lg. */}
       <nav className="border-b border-border bg-card sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 gap-4">
-            {/* Logo and Name - Left Side */}
+          <div className="flex items-center justify-between gap-3 h-16 lg:h-20">
             <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-lg" />
+              <Skeleton className="h-10 w-10 rounded-xl" />
               <Skeleton className="h-6 w-32 sm:w-40" />
             </div>
-
-            {/* Navigation Tabs - Right Side */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="hidden lg:flex items-center gap-2">
               <Skeleton className="h-9 w-20" />
               <Skeleton className="h-9 w-24" />
               <Skeleton className="h-9 w-20" />
@@ -27,8 +25,18 @@ const DashboardLoadingSkeleton = () => {
         </div>
       </nav>
 
+      {/* Bottom tab bar skeleton (mobile only) */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-around py-2">
+          <Skeleton className="h-9 w-12" />
+          <Skeleton className="h-9 w-12" />
+          <Skeleton className="h-9 w-12" />
+          <Skeleton className="h-9 w-12" />
+        </div>
+      </div>
+
       {/* Main Content Area */}
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-8">
         {/* Page Header Skeleton */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b">

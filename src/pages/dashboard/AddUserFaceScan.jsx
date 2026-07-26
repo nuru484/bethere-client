@@ -1,25 +1,27 @@
 // src/pages/dashboard/AddUserFaceScan.jsx
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  useRequestEnrollmentStepChallenge,
-  useSubmitEnrollmentStep,
+  useRequestEnrollmentChallenge,
+  useAddFaceScan,
 } from "@/hooks/useFaceScanApi";
-import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
+import GuidedLivenessCapture from "@/components/attendance/GuidedLivenessCapture";
 import PairFromPhone from "@/components/attendance/PairFromPhone";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { UserCircle, TriangleAlert, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router";
+import { loadFaceLandmarker, preloadFaceLandmarker } from "@/lib/face-landmarker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-// Two-step enrollment, mirroring check-in:
+// Guided one-take enrollment, mirroring check-in:
 //  consent    -> tick biometric consent, then request a liveness challenge
 //  requesting -> waiting for the challenge
-//  capture    -> capture a face-frame burst and upload it; the server derives
-//                the face template from the frames
+//  capture    -> the on-device guide prompts every challenged action in order
+//                and ONE upload lets the server verify the burst and derive
+//                the face template
 //  enrolled   -> terminal: a template already exists and only an admin can
 //                reset it, so there is nothing to retry here
 const STAGE = {
@@ -29,9 +31,12 @@ const STAGE = {
   ENROLLED: "enrolled",
 };
 
-// The server refuses both enrollment steps with 409 once a template exists.
-// It carries no machine-readable code, so the status is the signal.
+// The server refuses enrollment with 409 once a template exists. It carries
+// no machine-readable code, so the status is the signal.
 const isAlreadyEnrolled = (error) => error?.status === 409;
+
+// The server's minimum usable batch size.
+const MIN_BATCH_FRAMES = 6;
 
 export default function AddUserFaceScan() {
   const { login, updateUser, user } = useAuth();
@@ -45,99 +50,104 @@ export default function AddUserFaceScan() {
   const [stage, setStage] = useState(() =>
     user?.hasFaceScan === true ? STAGE.ENROLLED : STAGE.CONSENT
   );
-  const [challengeToken, setChallengeToken] = useState(null);
-  // Step-by-step progress (mirrors the check-in flow).
-  const [currentAction, setCurrentAction] = useState(null);
-  const [stepNumber, setStepNumber] = useState(1);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [stepError, setStepError] = useState("");
+  const [challenge, setChallenge] = useState(null); // { token, actions, expiresAt }
+  const [captureError, setCaptureError] = useState("");
   const [statusMessage, setStatusMessage] = useState(null);
 
+  // Warm the on-device face guide during consent so the challenge TTL never
+  // waits on a model download.
+  useEffect(() => {
+    preloadFaceLandmarker();
+  }, []);
+
   const { mutate: requestChallenge, isPending: isRequestingChallenge } =
-    useRequestEnrollmentStepChallenge();
-  const { mutate: submitStep, isPending: isSubmitting } =
-    useSubmitEnrollmentStep();
+    useRequestEnrollmentChallenge();
+  const { mutate: addFaceScan, isPending: isSubmitting } = useAddFaceScan();
 
   // Challenges are single-use, so a failed attempt always starts over and asks
   // for a fresh one.
   const resetToConsent = useCallback(() => {
     setStage(STAGE.CONSENT);
-    setChallengeToken(null);
-    setCurrentAction(null);
-    setStepNumber(1);
-    setTotalSteps(0);
-    setStepError("");
+    setChallenge(null);
+    setCaptureError("");
   }, []);
 
   const handleStart = useCallback(() => {
     setStage(STAGE.REQUESTING);
     setStatusMessage(null);
+    setCaptureError("");
 
-    requestChallenge(undefined, {
-      onSuccess: (response) => {
-        const data = response?.data || {};
-        setChallengeToken(data.challengeToken ?? null);
-        setCurrentAction(data.nextAction ?? null);
-        setStepNumber((data.currentStep ?? 0) + 1);
-        setTotalSteps(data.totalSteps ?? 0);
-        setStepError("");
-        setStage(STAGE.CAPTURE);
-      },
-      onError: (error) => {
-        // Retrying an already-enrolled user can never succeed: send them to
-        // the terminal state instead of looping them back to Continue.
-        if (isAlreadyEnrolled(error)) {
-          setStatusMessage(null);
-          setStage(STAGE.ENROLLED);
-          return;
-        }
+    // Model first: its download must not eat into the challenge TTL.
+    loadFaceLandmarker()
+      .catch(() => undefined)
+      .then(() => {
+        requestChallenge(undefined, {
+          onSuccess: (response) => {
+            const data = response?.data || {};
+            if (!data.challengeToken || !Array.isArray(data.actions)) {
+              toast.error("Could not start face registration. Please try again.");
+              resetToConsent();
+              return;
+            }
+            setChallenge({
+              token: data.challengeToken,
+              actions: data.actions,
+              expiresAt: data.expiresAt ?? null,
+            });
+            setStage(STAGE.CAPTURE);
+          },
+          onError: (error) => {
+            // Retrying an already-enrolled user can never succeed: send them to
+            // the terminal state instead of looping them back to Continue.
+            if (isAlreadyEnrolled(error)) {
+              setStatusMessage(null);
+              setStage(STAGE.ENROLLED);
+              return;
+            }
 
-        const { message } = extractApiErrorMessage(error);
-        const errMsg = message || "Could not start face registration.";
-        toast.error(errMsg);
-        setStatusMessage({ message: errMsg, type: "error" });
-        resetToConsent();
-      },
-    });
+            const { message } = extractApiErrorMessage(error);
+            const errMsg = message || "Could not start face registration.";
+            toast.error(errMsg);
+            setStatusMessage({ message: errMsg, type: "error" });
+            resetToConsent();
+          },
+        });
+      });
   }, [requestChallenge, resetToConsent]);
 
-  // One action at a time. Consent rides on every step (the server enforces it on
-  // the first). The last step derives and stores the template.
+  // The guided capture finished every action: one upload verifies the burst
+  // and stores the template.
   const handleFrames = useCallback(
     (blobs) => {
-      if (!challengeToken) {
+      if (!challenge?.token) {
         toast.error("Your session expired. Please start again.");
         resetToConsent();
         return;
       }
-      if (!blobs || blobs.length < 4) {
-        setStepError("We couldn't capture that. Hold still and try this step again.");
+      if (!blobs || blobs.length < MIN_BATCH_FRAMES) {
+        setCaptureError(
+          "We couldn't capture enough of that. Try again in better lighting."
+        );
         return;
       }
 
       const formData = new FormData();
-      formData.append("challengeToken", challengeToken);
+      formData.append("challengeToken", challenge.token);
       formData.append("consent", "true");
       blobs.forEach((blob, index) => {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
 
-      setStepError("");
+      setCaptureError("");
 
-      submitStep(formData, {
+      addFaceScan(formData, {
         onSuccess: (response) => {
           const data = response?.data || {};
-          if (data.done) {
-            const msg = response?.message || "Face registered successfully!";
-            toast.success(msg);
-            setStatusMessage({ message: msg, type: "success" });
-            if (data.user) login(data.user);
-            navigate(`/dashboard`);
-            return;
-          }
-          setCurrentAction(data.nextAction ?? null);
-          setStepNumber((data.currentStep ?? 0) + 1);
-          if (data.totalSteps) setTotalSteps(data.totalSteps);
+          const msg = response?.message || "Face registered successfully!";
+          toast.success(msg);
+          setStatusMessage({ message: msg, type: "success" });
+          if (data.user) login(data.user);
+          navigate(`/dashboard`);
         },
         onError: (error) => {
           if (isAlreadyEnrolled(error)) {
@@ -145,23 +155,24 @@ export default function AddUserFaceScan() {
             setStage(STAGE.ENROLLED);
             return;
           }
-          const { message, code } = extractApiErrorMessage(error);
-          // A missed action: keep the user on THIS step and let them retry.
-          if (code === "STEP_FAILED") {
-            setStepError(
-              message || "We couldn't verify that action. Try this step again."
-            );
-            return;
-          }
-          const errMsg = message || "Failed to register face.";
-          toast.error(errMsg);
-          setStatusMessage({ message: `${errMsg} Please try again.`, type: "error" });
-          resetToConsent();
+          const { message } = extractApiErrorMessage(error);
+          // The challenge is spent either way; the retry button mints a new
+          // one without bouncing through the consent screen.
+          setChallenge(null);
+          setCaptureError(
+            message ||
+              "We couldn't verify that scan. Make sure you are in good lighting and try again."
+          );
         },
       });
     },
-    [submitStep, challengeToken, login, navigate, resetToConsent]
+    [addFaceScan, challenge, login, navigate, resetToConsent]
   );
+
+  const handleExpired = useCallback(() => {
+    setChallenge(null);
+    setCaptureError("Time ran out for that attempt. Tap try again when you're ready.");
+  }, []);
 
   // The phone finished enrolling: reflect it in this device's session and go to
   // the terminal "already registered" state.
@@ -282,13 +293,14 @@ export default function AddUserFaceScan() {
               </div>
             ) : stage === STAGE.CAPTURE ? (
               <div className="flex justify-center">
-                <StepLivenessCapture
-                  action={currentAction}
-                  stepNumber={stepNumber}
-                  totalSteps={totalSteps}
-                  isValidating={isSubmitting}
-                  errorMessage={stepError}
-                  onFrames={handleFrames}
+                <GuidedLivenessCapture
+                  actions={challenge?.actions ?? []}
+                  isSubmitting={isSubmitting}
+                  errorMessage={captureError}
+                  expiresAt={challenge?.expiresAt ?? null}
+                  onComplete={handleFrames}
+                  onExpired={handleExpired}
+                  onRetry={handleStart}
                   startLabel="Start face registration"
                 />
               </div>
@@ -348,7 +360,7 @@ export default function AddUserFaceScan() {
                 </Button>
 
                 {/* Or register from a phone instead of this device's camera.
-                    Consent is captured again on the phone's first step. */}
+                    Consent is captured again on the phone. */}
                 <PairFromPhone scope="ENROLL" onComplete={handlePhoneComplete} />
               </div>
             )}

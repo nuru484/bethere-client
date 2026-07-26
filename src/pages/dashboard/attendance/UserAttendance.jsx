@@ -1,5 +1,5 @@
 // src/pages/dashboard/UserAttendancePage.jsx
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { useGetUserAttendance } from "@/hooks/useAttendance";

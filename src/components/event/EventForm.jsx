@@ -1,6 +1,6 @@
 // src/components/event/EventForm.jsx
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import PropTypes from "prop-types";
 import { Info, Loader2 } from "lucide-react";
 import {

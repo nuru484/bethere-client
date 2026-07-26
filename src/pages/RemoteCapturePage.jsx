@@ -2,22 +2,24 @@
 //
 // The PHONE side of the "scan from phone" hand-off (public route /pair). The
 // phone opens this from the laptop's QR link, authenticates ONLY with the
-// hand-off token in the URL, and runs the same step-by-step scan there. On the
-// last step the pairing is marked complete and the laptop's poll picks it up.
+// hand-off token in the URL, and runs the same guided one-take scan there:
+// the on-device guide prompts every challenged action, then ONE upload
+// verifies the burst and marks the pairing complete for the laptop's poll.
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import toast from "react-hot-toast";
 import { Loader2, ShieldCheck, TriangleAlert, Check } from "lucide-react";
 import QrScanner from "@/components/attendance/QrScanner";
-import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
+import GuidedLivenessCapture from "@/components/attendance/GuidedLivenessCapture";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   getPairingContext,
-  remoteStepChallenge,
-  remoteStep,
+  remoteChallenge,
+  remoteCapture,
 } from "@/api/pairing";
+import { loadFaceLandmarker, preloadFaceLandmarker } from "@/lib/face-landmarker";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 const STAGE = {
@@ -30,6 +32,9 @@ const STAGE = {
   ERROR: "error",
 };
 
+// The server's minimum usable batch size.
+const MIN_BATCH_FRAMES = 6;
+
 export default function RemoteCapturePage() {
   const [searchParams] = useSearchParams();
   const [token] = useState(() => searchParams.get("token"));
@@ -39,15 +44,18 @@ export default function RemoteCapturePage() {
   const [fatalMessage, setFatalMessage] = useState("");
 
   const [consent, setConsent] = useState(false);
-  const [challengeToken, setChallengeToken] = useState(null);
+  const [challenge, setChallenge] = useState(null); // { token, actions, expiresAt }
   const [venueCode, setVenueCode] = useState(null);
-  const [currentAction, setCurrentAction] = useState(null);
-  const [stepNumber, setStepNumber] = useState(1);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [stepError, setStepError] = useState("");
+  const [captureError, setCaptureError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEnroll = context?.scope === "ENROLL";
+
+  // Warm the on-device face guide immediately: on a phone this page IS the
+  // scan, and the short challenge TTL must not wait on a model download.
+  useEffect(() => {
+    preloadFaceLandmarker();
+  }, []);
 
   // Resolve what this pairing authorizes, then drop into the right first stage.
   useEffect(() => {
@@ -78,14 +86,23 @@ export default function RemoteCapturePage() {
   const startChallenge = useCallback(
     (scannedCode) => {
       setStage(STAGE.REQUESTING);
-      remoteStepChallenge(token, { venueCode: scannedCode })
+      setCaptureError("");
+      // Model in hand BEFORE the challenge clock starts.
+      loadFaceLandmarker()
+        .catch(() => undefined)
+        .then(() => remoteChallenge(token, { venueCode: scannedCode }))
         .then((res) => {
           const data = res?.data || {};
-          setChallengeToken(data.challengeToken ?? null);
-          setCurrentAction(data.nextAction ?? null);
-          setStepNumber((data.currentStep ?? 0) + 1);
-          setTotalSteps(data.totalSteps ?? 0);
-          setStepError("");
+          if (!data.challengeToken || !Array.isArray(data.actions)) {
+            toast.error("Could not start the scan.");
+            setStage(isEnroll ? STAGE.CONSENT : STAGE.SCAN);
+            return;
+          }
+          setChallenge({
+            token: data.challengeToken,
+            actions: data.actions,
+            expiresAt: data.expiresAt ?? null,
+          });
           setStage(STAGE.CAPTURE);
         })
         .catch((err) => {
@@ -106,53 +123,60 @@ export default function RemoteCapturePage() {
     [startChallenge]
   );
 
+  // A spent challenge retries with the stored venue code (still valid inside
+  // the server's skew window) without demanding another QR scan.
+  const restartWithFreshChallenge = useCallback(() => {
+    startChallenge(isEnroll ? undefined : venueCode);
+  }, [startChallenge, isEnroll, venueCode]);
+
+  // The guided capture finished every action: one upload settles the pairing.
   const handleFrames = useCallback(
     (blobs) => {
-      if (!challengeToken) {
+      if (!challenge?.token) {
         toast.error("Your session expired. Start again from your laptop.");
         setFatalMessage("Your pairing session expired.");
         setStage(STAGE.ERROR);
         return;
       }
-      if (!blobs || blobs.length < 4) {
-        setStepError("We couldn't capture that. Hold still and try this step again.");
+      if (!blobs || blobs.length < MIN_BATCH_FRAMES) {
+        setCaptureError(
+          "We couldn't capture enough of that. Try again in better lighting."
+        );
         return;
       }
 
       const formData = new FormData();
-      formData.append("challengeToken", challengeToken);
+      formData.append("challengeToken", challenge.token);
       if (isEnroll) formData.append("consent", "true");
       else formData.append("venueCode", venueCode);
       blobs.forEach((blob, index) => {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
 
-      setStepError("");
+      setCaptureError("");
       setIsSubmitting(true);
-      remoteStep(token, formData)
-        .then((res) => {
-          const data = res?.data || {};
-          if (data.done) {
-            setStage(STAGE.DONE);
-            return;
-          }
-          setCurrentAction(data.nextAction ?? null);
-          setStepNumber((data.currentStep ?? 0) + 1);
-          if (data.totalSteps) setTotalSteps(data.totalSteps);
+      remoteCapture(token, formData)
+        .then(() => {
+          setStage(STAGE.DONE);
         })
         .catch((err) => {
-          const { message, code } = extractApiErrorMessage(err);
-          if (code === "STEP_FAILED") {
-            setStepError(message || "We couldn't verify that action. Try again.");
-            return;
-          }
-          setFatalMessage(message || "Your scan could not be completed.");
-          setStage(STAGE.ERROR);
+          const { message } = extractApiErrorMessage(err);
+          // The challenge is spent either way; the retry mints a fresh one.
+          setChallenge(null);
+          setCaptureError(
+            message ||
+              "We couldn't verify that scan. Make sure you are in good lighting and try again."
+          );
         })
         .finally(() => setIsSubmitting(false));
     },
-    [challengeToken, venueCode, isEnroll, token]
+    [challenge, venueCode, isEnroll, token]
   );
+
+  const handleExpired = useCallback(() => {
+    setChallenge(null);
+    setCaptureError("Time ran out for that attempt. Tap try again when you're ready.");
+  }, []);
 
   return (
     <div className="min-h-screen bg-background px-4 py-6">
@@ -231,13 +255,14 @@ export default function RemoteCapturePage() {
 
         {stage === STAGE.CAPTURE && (
           <div className="flex justify-center">
-            <StepLivenessCapture
-              action={currentAction}
-              stepNumber={stepNumber}
-              totalSteps={totalSteps}
-              isValidating={isSubmitting}
-              errorMessage={stepError}
-              onFrames={handleFrames}
+            <GuidedLivenessCapture
+              actions={challenge?.actions ?? []}
+              isSubmitting={isSubmitting}
+              errorMessage={captureError}
+              expiresAt={challenge?.expiresAt ?? null}
+              onComplete={handleFrames}
+              onExpired={handleExpired}
+              onRetry={restartWithFreshChallenge}
               startLabel="Start scan"
             />
           </div>

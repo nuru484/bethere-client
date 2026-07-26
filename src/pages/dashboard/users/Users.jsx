@@ -3,7 +3,7 @@
 // Attendant management (principal split): /users on the server now serves
 // attendants only, so there is no role column, filter or stat here. Admin
 // staff live on the separate Admins page.
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { UsersDataTable } from "@/components/users/table/UsersDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import { useGetAllUsers } from "@/hooks/useUsers";

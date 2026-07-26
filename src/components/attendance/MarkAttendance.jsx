@@ -1,30 +1,38 @@
 // src/components/attendance/MarkAttendance.jsx
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router";
 import {
-  useRequestAttendanceStepChallenge,
-  useSubmitAttendanceStep,
+  useRequestAttendanceChallenge,
+  useCreateAttendance,
+  useUpdateAttendance,
   useInvalidateAfterAttendance,
 } from "@/hooks/useAttendance";
-import StepLivenessCapture from "@/components/attendance/StepLivenessCapture";
+import GuidedLivenessCapture from "@/components/attendance/GuidedLivenessCapture";
 import PairFromPhone from "@/components/attendance/PairFromPhone";
 import QrScanner from "@/components/attendance/QrScanner";
 import { useAuth } from "@/hooks/useAuth";
 import PropTypes from "prop-types";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
+import { loadFaceLandmarker, preloadFaceLandmarker } from "@/lib/face-landmarker";
 import { Button } from "@/components/ui/button";
 
-// Step-by-step flow for BOTH directions:
+// Guided one-take flow for BOTH directions:
 //  scan      -> scan the venue's rotating QR to prove presence
-//  requesting-> exchange the venue code for a step-by-step liveness challenge
-//  capture   -> perform ONE prompted action at a time; each is verified by the
-//               server before the next is shown, and the last commits attendance
+//  requesting-> exchange the venue code for a liveness challenge (the ordered
+//               actions + a single-use token)
+//  capture   -> the on-device guide prompts every action in order, captures
+//               the proving frames locally, and ONE upload verifies the whole
+//               burst server-side and commits attendance
 const STAGE = {
   SCAN: "scan",
   REQUESTING: "requesting",
   CAPTURE: "capture",
 };
+
+// The server's minimum usable batch size; fewer means capture went wrong
+// locally and the upload would be rejected anyway.
+const MIN_BATCH_FRAMES = 6;
 
 export default function MarkAttendance({ type = "in" }) {
   const { user } = useAuth();
@@ -32,17 +40,13 @@ export default function MarkAttendance({ type = "in" }) {
   const navigate = useNavigate();
 
   const [stage, setStage] = useState(STAGE.SCAN);
-  const [challengeToken, setChallengeToken] = useState(null);
-  // The server re-validates the rotating venue code at the final step, so the
-  // scanned code has to survive the challenge stage and ride along on every
-  // per-action upload.
+  const [challenge, setChallenge] = useState(null); // { token, actions, expiresAt }
+  // The server re-validates the rotating venue code at upload, so the scanned
+  // code has to survive the challenge stage and ride along with the burst.
+  // It also lets a failed verification retry with a FRESH challenge without
+  // forcing a re-scan of the QR (codes stay valid across a skew window).
   const [venueCode, setVenueCode] = useState(null);
-  // Step-by-step progress: the action to perform now, its 1-based number, the
-  // total, and the last server rejection (shown so the SAME step is re-tried).
-  const [currentAction, setCurrentAction] = useState(null);
-  const [stepNumber, setStepNumber] = useState(1);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [stepError, setStepError] = useState("");
+  const [captureError, setCaptureError] = useState("");
   const [statusMessage, setStatusMessage] = useState(null);
   // Bumped to force-remount the scanner (which stops itself after a scan) when
   // we drop back to the scan stage.
@@ -57,14 +61,21 @@ export default function MarkAttendance({ type = "in" }) {
     []
   );
 
+  // Warm the on-device face guide while the user is still at the QR step so
+  // the short-lived challenge never waits on a model download.
+  useEffect(() => {
+    preloadFaceLandmarker();
+  }, []);
+
   const { mutate: requestChallenge, isPending: isRequestingChallenge } =
-    useRequestAttendanceStepChallenge();
-  const { mutate: submitStep, isPending: isSubmitting } =
-    useSubmitAttendanceStep();
+    useRequestAttendanceChallenge();
+  const { mutate: checkIn, isPending: isCheckingIn } = useCreateAttendance();
+  const { mutate: checkOut, isPending: isCheckingOut } = useUpdateAttendance();
   const invalidateAfterAttendance = useInvalidateAfterAttendance();
 
   const isCheckIn = type === "in";
   const mode = isCheckIn ? "in" : "out";
+  const isSubmitting = isCheckingIn || isCheckingOut;
 
   // Only USER-role principals are attendants. Admins have no attendance and
   // the backend rejects these endpoints for them, so send them back.
@@ -79,131 +90,149 @@ export default function MarkAttendance({ type = "in" }) {
   // Codes rotate and challenges are single-use, so always restart clean.
   const resetToScan = useCallback(() => {
     setStage(STAGE.SCAN);
-    setChallengeToken(null);
+    setChallenge(null);
     setVenueCode(null);
-    setCurrentAction(null);
-    setStepNumber(1);
-    setTotalSteps(0);
-    setStepError("");
+    setCaptureError("");
     setScanKey((k) => k + 1);
   }, []);
 
-  // Stage 2: exchange the scanned venue code for a step-by-step challenge and
-  // drop into the capture flow at its first action.
-  const handleScan = useCallback(
-    (scannedCode) => {
+  // Exchange a venue code for a fresh challenge and enter (or re-enter) the
+  // guided capture. Used by the QR scan AND by post-failure retries, which
+  // reuse the stored code instead of demanding another scan.
+  const startChallenge = useCallback(
+    (code) => {
       setStage(STAGE.REQUESTING);
+      setCaptureError("");
       setStatusMessage({ message: "Verifying venue code...", type: "loading" });
 
-      requestChallenge(
-        { eventId: numericEventId, venueCode: scannedCode, mode },
-        {
-          onSuccess: (response) => {
-            const data = response?.data || {};
-            setChallengeToken(data.challengeToken ?? null);
-            setVenueCode(scannedCode);
-            setCurrentAction(data.nextAction ?? null);
-            setStepNumber((data.currentStep ?? 0) + 1);
-            setTotalSteps(data.totalSteps ?? 0);
-            setStepError("");
-            setStatusMessage(null);
-            setStage(STAGE.CAPTURE);
-          },
-          onError: (error) => {
-            const { message } = extractApiErrorMessage(error);
-            const errMsg =
-              message || "That venue code did not work. Please scan again.";
-            toast.error(errMsg);
-            setStatusMessage({ message: errMsg, type: "error" });
-            resetToScan();
-          },
-        }
-      );
+      // The model must be in hand BEFORE the challenge clock starts: its TTL
+      // is deliberately short and a first-visit model download could eat it.
+      loadFaceLandmarker()
+        .catch(() => undefined)
+        .then(() => {
+          requestChallenge(
+            { eventId: numericEventId, venueCode: code, mode },
+            {
+              onSuccess: (response) => {
+                const data = response?.data || {};
+                if (!data.challengeToken || !Array.isArray(data.actions)) {
+                  toast.error("Could not start the scan. Please try again.");
+                  resetToScan();
+                  return;
+                }
+                setChallenge({
+                  token: data.challengeToken,
+                  actions: data.actions,
+                  expiresAt: data.expiresAt ?? null,
+                });
+                setVenueCode(code);
+                setStatusMessage(null);
+                setStage(STAGE.CAPTURE);
+              },
+              onError: (error) => {
+                const { message } = extractApiErrorMessage(error);
+                const errMsg =
+                  message || "That venue code did not work. Please scan again.";
+                toast.error(errMsg);
+                setStatusMessage({ message: errMsg, type: "error" });
+                resetToScan();
+              },
+            }
+          );
+        });
     },
     [requestChallenge, numericEventId, mode, resetToScan]
   );
 
-  // Stage 3: one action at a time. Upload this action's burst; the server either
-  // advances us to the next action, commits attendance on the last step, or
-  // rejects this action (shown inline so the SAME step is re-tried).
+  const handleScan = useCallback(
+    (scannedCode) => startChallenge(scannedCode),
+    [startChallenge]
+  );
+
+  // A consumed/expired challenge needs a new one; the stored venue code is
+  // usually still inside the server's acceptance window, so retry without a
+  // re-scan and only fall back to scanning when the server refuses it.
+  const restartWithFreshChallenge = useCallback(() => {
+    if (!venueCode) {
+      resetToScan();
+      return;
+    }
+    startChallenge(venueCode);
+  }, [venueCode, startChallenge, resetToScan]);
+
+  // The guided capture finished every action: upload the ordered burst. ONE
+  // request verifies the whole thing and commits attendance.
   const handleFrames = useCallback(
     (blobs) => {
-      if (!challengeToken || !venueCode) {
+      if (!challenge?.token || !venueCode) {
         toast.error("Your session expired. Please scan the venue code again.");
         resetToScan();
         return;
       }
-      if (!blobs || blobs.length < 4) {
-        setStepError("We couldn't capture that. Hold still and try this step again.");
+      if (!blobs || blobs.length < MIN_BATCH_FRAMES) {
+        setCaptureError(
+          "We couldn't capture enough of that. Try again in better lighting."
+        );
         return;
       }
 
       const formData = new FormData();
-      formData.append("challengeToken", challengeToken);
+      formData.append("challengeToken", challenge.token);
       formData.append("venueCode", venueCode);
       blobs.forEach((blob, index) => {
         formData.append("frames", blob, `frame-${index}.jpg`);
       });
 
-      setStepError("");
+      setCaptureError("");
 
-      submitStep(
-        { eventId: numericEventId, formData, mode },
+      const submit = isCheckIn ? checkIn : checkOut;
+      submit(
+        { eventId: numericEventId, formData },
         {
           onSuccess: (response) => {
-            const data = response?.data || {};
-            if (data.done) {
-              const msg =
-                response?.message ||
-                (isCheckIn ? "Checked in successfully!" : "Checked out successfully!");
-              toast.success(msg);
-              setStatusMessage({ message: msg, type: "success" });
-              setStage(STAGE.REQUESTING); // brief confirmation, no capture surface
-              redirectTimerRef.current = setTimeout(
-                () => navigate(`/dashboard/events/${eventId}`),
-                1500
-              );
-              return;
-            }
-            // Verified: advance to the next prompted action.
-            setCurrentAction(data.nextAction ?? null);
-            setStepNumber((data.currentStep ?? 0) + 1);
-            if (data.totalSteps) setTotalSteps(data.totalSteps);
+            const msg =
+              response?.message ||
+              (isCheckIn ? "Checked in successfully!" : "Checked out successfully!");
+            toast.success(msg);
+            setStatusMessage({ message: msg, type: "success" });
+            setStage(STAGE.REQUESTING); // brief confirmation, no capture surface
+            redirectTimerRef.current = setTimeout(
+              () => navigate(`/dashboard/events/${eventId}`),
+              1500
+            );
           },
           onError: (error) => {
-            const { message, code } = extractApiErrorMessage(error);
-            // A missed action: keep the user on THIS step and let them retry.
-            if (code === "STEP_FAILED") {
-              setStepError(
-                message || "We couldn't verify that action. Try this step again."
-              );
-              return;
-            }
-            // Expired/spent challenge, stale venue code, or a conflict: the whole
-            // scan has to start over.
-            const errMsg = message || "Your scan could not be completed.";
-            toast.error(errMsg);
-            setStatusMessage({
-              message: `${errMsg} Please scan the venue code again.`,
-              type: "error",
-            });
-            resetToScan();
+            const { message } = extractApiErrorMessage(error);
+            // The challenge is single-use - pass or fail, it is now spent.
+            // Show the server's reason and offer a retry that mints a fresh
+            // challenge from the stored venue code.
+            setChallenge(null);
+            setCaptureError(
+              message ||
+                "Face verification failed. Make sure you are in good lighting and try again."
+            );
           },
         }
       );
     },
     [
-      challengeToken,
+      challenge,
       venueCode,
       isCheckIn,
-      mode,
-      submitStep,
+      checkIn,
+      checkOut,
       numericEventId,
       eventId,
       navigate,
       resetToScan,
     ]
   );
+
+  // The challenge clock ran out mid-capture: mint a fresh one on request.
+  const handleExpired = useCallback(() => {
+    setChallenge(null);
+    setCaptureError("Time ran out for that attempt. Tap try again when you're ready.");
+  }, []);
 
   // The phone finished the hand-off scan: refresh what this device shows and
   // send the user to the event page, same as an on-device check-in.
@@ -281,13 +310,14 @@ export default function MarkAttendance({ type = "in" }) {
 
         {stage === STAGE.CAPTURE ? (
           <div className="flex justify-center">
-            <StepLivenessCapture
-              action={currentAction}
-              stepNumber={stepNumber}
-              totalSteps={totalSteps}
-              isValidating={isSubmitting}
-              errorMessage={stepError}
-              onFrames={handleFrames}
+            <GuidedLivenessCapture
+              actions={challenge?.actions ?? []}
+              isSubmitting={isSubmitting}
+              errorMessage={captureError}
+              expiresAt={challenge?.expiresAt ?? null}
+              onComplete={handleFrames}
+              onExpired={handleExpired}
+              onRetry={restartWithFreshChallenge}
               startLabel={isCheckIn ? "Start check-in scan" : "Start check-out scan"}
             />
           </div>
@@ -299,7 +329,9 @@ export default function MarkAttendance({ type = "in" }) {
               aria-label="Verifying venue code"
             />
             <p className="text-sm text-muted-foreground">
-              Verifying venue code...
+              {statusMessage?.type === "success"
+                ? "Taking you back to the event..."
+                : "Verifying venue code..."}
             </p>
           </div>
         ) : (

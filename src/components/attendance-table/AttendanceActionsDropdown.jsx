@@ -4,7 +4,7 @@
 // opens the user's attendance for that event (the user+event view), deriving
 // both ids from the record itself so it works from the user, event and
 // user+event tables alike.
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

@@ -1,5 +1,6 @@
 import { AppNavbar } from "@/components/AppNavbar";
-import { Outlet, useLocation } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
+import { Outlet, useLocation } from "react-router";
 import ErrorBoundary from "@/lib/ErrorBoundary";
 
 export default function Layout() {
@@ -8,8 +9,11 @@ export default function Layout() {
   return (
     <main className="min-h-screen w-full bg-background">
       <AppNavbar />
-      {/* Content shell mirrors the navbar's inner width so both align. */}
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      {/* Content shell mirrors the navbar's inner width so both align.
+          Below lg the fixed BottomNav needs bottom clearance (bar height
+          plus the device safe-area inset) so the last content is never
+          covered. */}
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:py-8">
         {/* Route-level crash isolation: a panel crash keeps the navbar and
             shell alive (the global boundary in main.jsx stays as the outer
             safety net). The pathname key remounts the subtree across routes;
@@ -23,6 +27,7 @@ export default function Layout() {
           <Outlet />
         </ErrorBoundary>
       </div>
+      <BottomNav />
     </main>
   );
 }

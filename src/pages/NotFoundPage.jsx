@@ -1,7 +1,7 @@
 // src/pages/NotFoundPage.jsx
 //
 // Catch-all 404 route (path "*"), sharing the ErrorPanel language.
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ErrorPanel } from "./ErrorPage";
 import { usePageTitle } from "@/hooks/usePageTitle";
 

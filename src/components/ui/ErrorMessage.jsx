@@ -7,7 +7,7 @@
 //     (replaces the former dashboard CardErrorState).
 import PropTypes from "prop-types";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 
 const getErrorMessage = (error) => {

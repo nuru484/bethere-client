@@ -1,6 +1,6 @@
 // src/pages/dashboard/users/UserProfilePage.jsx
 import { useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProfileInfoTab from "@/components/users/user-profile/ProfileInfoTab";
 import SecurityTab from "@/components/users/user-profile/SecurityTab";

@@ -11,7 +11,7 @@ import LoginForm from "@/components/LoginForm";
 import TwoFactorStep from "@/components/auth/TwoFactorStep";
 import OtpRequestForm from "@/components/auth/OtpRequestForm";
 import CodeForm from "@/components/auth/CodeForm";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { usePageTitle } from "@/hooks/usePageTitle";

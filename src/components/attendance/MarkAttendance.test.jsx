@@ -1,32 +1,40 @@
 // src/components/attendance/MarkAttendance.test.jsx
 //
-// Drives the step-by-step check-in state machine with the scanner, the step
-// capture surface, and the api hooks stubbed out: a valid scan exchanges the
-// venue code for a step challenge and drops into capture; each verified action
-// advances to the next; a missed action (STEP_FAILED) stays on the same step to
-// retry; an expired challenge resets to a fresh scan; the final step shows the
-// confirmation and arms a redirect timer that unmount must clean up.
+// Drives the guided one-take check-in state machine with the scanner, the
+// guided capture surface, and the api hooks stubbed out: a valid scan
+// exchanges the venue code for a batch challenge (ordered actions) and drops
+// into capture; the finished burst is uploaded ONCE; a server rejection keeps
+// the user on the capture surface with a retry that mints a fresh challenge
+// from the stored venue code (no re-scan); a rejected code keeps scanning;
+// success shows the confirmation and arms a redirect timer that unmount must
+// clean up.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router";
 import PropTypes from "prop-types";
 import MarkAttendance from "@/components/attendance/MarkAttendance";
 import AuthContext from "@/context/AuthContext";
 
 const requestChallengeMutate = vi.fn();
-const submitStepMutate = vi.fn();
+const checkInMutate = vi.fn();
+const checkOutMutate = vi.fn();
 
 vi.mock("@/hooks/useAttendance", () => ({
-  useRequestAttendanceStepChallenge: () => ({
+  useRequestAttendanceChallenge: () => ({
     mutate: requestChallengeMutate,
     isPending: false,
   }),
-  useSubmitAttendanceStep: () => ({
-    mutate: submitStepMutate,
-    isPending: false,
-  }),
+  useCreateAttendance: () => ({ mutate: checkInMutate, isPending: false }),
+  useUpdateAttendance: () => ({ mutate: checkOutMutate, isPending: false }),
   useInvalidateAfterAttendance: () => vi.fn(),
+}));
+
+// The on-device model must never load in jsdom; the flow only awaits it
+// before requesting a challenge.
+vi.mock("@/lib/face-landmarker", () => ({
+  loadFaceLandmarker: vi.fn(() => Promise.resolve({})),
+  preloadFaceLandmarker: vi.fn(),
 }));
 
 // The phone hand-off is its own concern (covered elsewhere); stub it so this
@@ -55,41 +63,49 @@ vi.mock("@/components/attendance/QrScanner", () => {
   return { default: QrScannerStub };
 });
 
-// The step capture stub surfaces the current action/step and the retry message,
-// and can emit a full or empty burst of frames up to MarkAttendance.
-vi.mock("@/components/attendance/StepLivenessCapture", () => {
-  const StepLivenessCaptureStub = ({
-    action,
-    stepNumber,
-    totalSteps,
+// The guided capture stub surfaces the challenged actions and the retry
+// message, and can emit a full or thin burst, a retry tap, or an expiry.
+vi.mock("@/components/attendance/GuidedLivenessCapture", () => {
+  const GuidedLivenessCaptureStub = ({
+    actions,
     errorMessage,
-    onFrames,
+    onComplete,
+    onRetry,
+    onExpired,
   }) => (
     <div>
-      <p>step-capture</p>
-      <p>
-        action:{action} step:{stepNumber}/{totalSteps}
-      </p>
+      <p>guided-capture</p>
+      <p>actions:{actions.join(",")}</p>
       {errorMessage && <p>err:{errorMessage}</p>}
       <button
         type="button"
-        onClick={() => onFrames(Array.from({ length: 6 }, () => new Blob()))}
+        onClick={() => onComplete(Array.from({ length: 9 }, () => new Blob()))}
       >
         emit frames
       </button>
-      <button type="button" onClick={() => onFrames([])}>
-        emit empty
+      <button type="button" onClick={() => onComplete([new Blob()])}>
+        emit thin burst
       </button>
+      {onRetry && (
+        <button type="button" onClick={onRetry}>
+          stub retry
+        </button>
+      )}
+      {onExpired && (
+        <button type="button" onClick={onExpired}>
+          stub expire
+        </button>
+      )}
     </div>
   );
-  StepLivenessCaptureStub.propTypes = {
-    action: PropTypes.string,
-    stepNumber: PropTypes.number,
-    totalSteps: PropTypes.number,
+  GuidedLivenessCaptureStub.propTypes = {
+    actions: PropTypes.arrayOf(PropTypes.string).isRequired,
     errorMessage: PropTypes.string,
-    onFrames: PropTypes.func.isRequired,
+    onComplete: PropTypes.func.isRequired,
+    onRetry: PropTypes.func,
+    onExpired: PropTypes.func,
   };
-  return { default: StepLivenessCaptureStub };
+  return { default: GuidedLivenessCaptureStub };
 });
 
 import toast from "react-hot-toast";
@@ -120,18 +136,21 @@ const renderMarkAttendance = ({ eventId = "7" } = {}) =>
     </AuthContext.Provider>
   );
 
+const CHALLENGE = {
+  data: {
+    challengeToken: "challenge-1",
+    actions: ["BLINK", "SMILE", "TURN_LEFT"],
+    expiresAt: null,
+  },
+};
+
 const scanValidCode = async (user) => {
   requestChallengeMutate.mockImplementation((vars, { onSuccess }) =>
-    onSuccess({
-      data: {
-        challengeToken: "challenge-1",
-        nextAction: "BLINK",
-        currentStep: 0,
-        totalSteps: 3,
-      },
-    })
+    onSuccess(CHALLENGE)
   );
   await user.click(screen.getByRole("button", { name: "emit scan" }));
+  // The challenge request awaits the model preload microtask first.
+  await screen.findByText("guided-capture");
 };
 
 describe("MarkAttendance", () => {
@@ -143,7 +162,7 @@ describe("MarkAttendance", () => {
     vi.useRealTimers();
   });
 
-  it("advances from scan to the first capture step on a valid scan", async () => {
+  it("exchanges a valid scan for a batch challenge and enters guided capture", async () => {
     const user = userEvent.setup();
     renderMarkAttendance();
 
@@ -154,66 +173,80 @@ describe("MarkAttendance", () => {
       { eventId: 7, venueCode: "CODE123", mode: "in" },
       expect.any(Object)
     );
-    expect(screen.getByText("step-capture")).toBeInTheDocument();
-    expect(screen.getByText("action:BLINK step:1/3")).toBeInTheDocument();
+    expect(screen.getByText("actions:BLINK,SMILE,TURN_LEFT")).toBeInTheDocument();
     expect(screen.queryByText(/qr-scanner/)).not.toBeInTheDocument();
   });
 
-  it("advances to the next action after a step is verified", async () => {
+  it("uploads the finished burst once with the challenge token and venue code", async () => {
     const user = userEvent.setup();
     renderMarkAttendance();
     await scanValidCode(user);
 
-    submitStepMutate.mockImplementation((vars, { onSuccess }) =>
-      onSuccess({
-        data: { done: false, nextAction: "SMILE", currentStep: 1, totalSteps: 3 },
-      })
-    );
+    checkInMutate.mockImplementation(() => {});
     await user.click(screen.getByRole("button", { name: "emit frames" }));
 
-    expect(screen.getByText("action:SMILE step:2/3")).toBeInTheDocument();
+    expect(checkInMutate).toHaveBeenCalledTimes(1);
+    const { eventId, formData } = checkInMutate.mock.calls[0][0];
+    expect(eventId).toBe(7);
+    expect(formData.get("challengeToken")).toBe("challenge-1");
+    expect(formData.get("venueCode")).toBe("CODE123");
+    expect(formData.getAll("frames")).toHaveLength(9);
   });
 
-  it("stays on the same step and shows a retry when an action is missed", async () => {
+  it("rejects a thin burst locally without spending the upload", async () => {
     const user = userEvent.setup();
     renderMarkAttendance();
     await scanValidCode(user);
 
-    submitStepMutate.mockImplementation((vars, { onError }) =>
-      onError({
-        status: 401,
-        data: { status: "error", code: "STEP_FAILED", message: "We didn't catch your blink." },
-      })
-    );
-    await user.click(screen.getByRole("button", { name: "emit frames" }));
+    await user.click(screen.getByRole("button", { name: "emit thin burst" }));
 
-    // Still on step 1, with the retry message - not bounced to the scanner.
-    expect(screen.getByText("action:BLINK step:1/3")).toBeInTheDocument();
-    expect(screen.getByText("err:We didn't catch your blink.")).toBeInTheDocument();
-    expect(screen.queryByText(/qr-scanner/)).not.toBeInTheDocument();
-  });
-
-  it("resets to a fresh scan when the challenge expires", async () => {
-    const user = userEvent.setup();
-    renderMarkAttendance();
-    await scanValidCode(user);
-
-    submitStepMutate.mockImplementation((vars, { onError }) =>
-      onError({
-        status: 401,
-        data: {
-          status: "error",
-          code: "CHALLENGE_EXPIRED",
-          message: "Your scan session expired.",
-        },
-      })
-    );
-    await user.click(screen.getByRole("button", { name: "emit frames" }));
-
-    expect(screen.getByText(/qr-scanner/)).toBeInTheDocument();
+    expect(checkInMutate).not.toHaveBeenCalled();
     expect(
-      screen.getByText(/Your scan session expired\. Please scan the venue code again\./)
+      screen.getByText(/err:We couldn't capture enough of that/)
     ).toBeInTheDocument();
+  });
+
+  it("keeps the user on capture after a failed verification and retries with a fresh challenge, no re-scan", async () => {
+    const user = userEvent.setup();
+    renderMarkAttendance();
+    await scanValidCode(user);
+
+    checkInMutate.mockImplementation((vars, { onError }) =>
+      onError({
+        status: 401,
+        data: { status: "error", message: "Face verification failed." },
+      })
+    );
+    await user.click(screen.getByRole("button", { name: "emit frames" }));
+
+    // Still on the capture surface with the server's reason.
+    expect(screen.getByText("err:Face verification failed.")).toBeInTheDocument();
+    expect(screen.queryByText(/qr-scanner/)).not.toBeInTheDocument();
+
+    // Retry mints a NEW challenge from the stored venue code.
+    requestChallengeMutate.mockClear();
+    requestChallengeMutate.mockImplementation((vars, { onSuccess }) =>
+      onSuccess(CHALLENGE)
+    );
+    await user.click(screen.getByRole("button", { name: "stub retry" }));
+    await waitFor(() =>
+      expect(requestChallengeMutate).toHaveBeenCalledWith(
+        { eventId: 7, venueCode: "CODE123", mode: "in" },
+        expect.any(Object)
+      )
+    );
+    expect(screen.queryByText(/qr-scanner/)).not.toBeInTheDocument();
+  });
+
+  it("surfaces a challenge expiry as a retryable capture error", async () => {
+    const user = userEvent.setup();
+    renderMarkAttendance();
+    await scanValidCode(user);
+
+    await user.click(screen.getByRole("button", { name: "stub expire" }));
+
+    expect(screen.getByText(/err:Time ran out/)).toBeInTheDocument();
+    expect(screen.queryByText(/qr-scanner/)).not.toBeInTheDocument();
   });
 
   it("shows non-fatal feedback and keeps scanning when the code is rejected", async () => {
@@ -228,21 +261,23 @@ describe("MarkAttendance", () => {
     );
     await user.click(screen.getByRole("button", { name: "emit scan" }));
 
-    expect(toast.error).toHaveBeenCalledWith("This code is for a different event.");
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("This code is for a different event.")
+    );
     expect(
       screen.getByText("This code is for a different event.")
     ).toBeInTheDocument();
     expect(screen.getByText(/qr-scanner/)).toBeInTheDocument();
-    expect(screen.queryByText("step-capture")).not.toBeInTheDocument();
+    expect(screen.queryByText("guided-capture")).not.toBeInTheDocument();
   });
 
-  it("shows the confirmation on the final step and survives unmount before redirect", async () => {
+  it("shows the confirmation on success and survives unmount before redirect", async () => {
     const user = userEvent.setup();
     const view = renderMarkAttendance();
     await scanValidCode(user);
 
-    submitStepMutate.mockImplementation((vars, { onSuccess }) =>
-      onSuccess({ data: { done: true }, message: "Checked in successfully!" })
+    checkInMutate.mockImplementation((vars, { onSuccess }) =>
+      onSuccess({ message: "Checked in successfully!" })
     );
 
     vi.useFakeTimers();

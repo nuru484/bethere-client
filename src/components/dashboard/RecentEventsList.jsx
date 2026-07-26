@@ -1,6 +1,6 @@
 // src/components/dashboard/RecentEventsList.jsx
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const RecentEventsList = ({ events }) => {

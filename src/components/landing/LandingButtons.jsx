@@ -4,7 +4,7 @@
 // hover mechanic defined in index.css (.lp-btn). Renders a router <Link>
 // when `to` is given, otherwise an anchor.
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 // Full literal class strings: Tailwind's content scanner must see them,
 // or it purges the matching @layer components rules from index.css.

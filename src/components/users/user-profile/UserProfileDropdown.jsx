@@ -1,6 +1,6 @@
 // src/components/users/user-profile/UserProfileDropdown.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,7 +69,7 @@ const UserProfileDropdown = () => {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="p-0 my-2 bg-popover border-border"
+          className="p-0 my-2 w-auto min-w-56 max-w-72 bg-popover border-border"
           align="end"
           forceMount
         >
@@ -85,11 +85,13 @@ const UserProfileDropdown = () => {
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
-              <div className="space-y-1">
-                <p className="text-sm font-medium leading-none text-foreground">
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="truncate text-sm font-medium leading-none text-foreground">
                   {fullName}
                 </p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {user.email}
+                </p>
                 <Badge variant="outline" className="text-xs">
                   {user.role}
                 </Badge>

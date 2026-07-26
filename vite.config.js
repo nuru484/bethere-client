@@ -49,6 +49,9 @@ export default defineConfig({
         manualChunks: {
           recharts: ['recharts'],
           zxing: ['@zxing/browser', '@zxing/library'],
+          // On-device face guide: only the guided liveness screens pull this
+          // in, and it changes on its own cadence.
+          mediapipe: ['@mediapipe/tasks-vision'],
         },
       },
     },

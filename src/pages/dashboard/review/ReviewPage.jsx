@@ -3,7 +3,7 @@
 // Admin security review: anomaly flags (with evidence) and the append-only
 // audit log - the read surface for the detective controls the attendance flow
 // records.
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { usePageTitle } from "@/hooks/usePageTitle";

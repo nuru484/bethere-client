@@ -1,6 +1,6 @@
 // src/components/users/table/UserActionsDropdown.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import {
   MoreHorizontal,
   Trash2,

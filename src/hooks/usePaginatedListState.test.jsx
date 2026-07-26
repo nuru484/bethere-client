@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import PropTypes from "prop-types";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router";
 import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 
 const FILTER_KEYS = ["search", "status"];

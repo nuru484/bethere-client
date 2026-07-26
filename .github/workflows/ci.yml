@@ -28,9 +28,11 @@ jobs:
         run: npm ci
 
       # Fail the build on a known HIGH/critical advisory in a production
-      # dependency (dev/build tooling does not block the app).
+      # dependency (dev/build tooling does not block the app). Runs through
+      # scripts/audit-gate.mjs, which allowlists individually-justified
+      # advisories that provably cannot apply to this app.
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: node scripts/audit-gate.mjs
 
       - name: Lint
         run: npm run lint

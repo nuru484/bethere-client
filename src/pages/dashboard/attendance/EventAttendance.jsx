@@ -1,5 +1,5 @@
 // src/pages/dashboard/EventAttendancePage.jsx
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";

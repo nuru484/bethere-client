@@ -6,7 +6,7 @@
 // anchor is invalid HTML and hostile to keyboard and screen-reader users.
 // Button state comes from the attendance fields embedded in the events list
 // response (see useAttendanceActions) - no per-card fetching.
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import { useAttendanceActions } from "@/hooks/useAttendanceActions";

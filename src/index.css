@@ -363,3 +363,10 @@
   }
   .bethere-ping { opacity: 0.3; }
 }
+
+/* Horizontal-overflow safety net: one wide element must never scroll the
+   whole document sideways on phones. Applied to body (not html) so the
+   rule propagates to the viewport without breaking position: sticky. */
+body {
+  overflow-x: hidden;
+}

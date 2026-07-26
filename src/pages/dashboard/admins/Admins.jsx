@@ -4,7 +4,7 @@
 // the /admins endpoints, reusing the shared DataTable. Only reachable by
 // ADMIN users (route-guarded).
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 import { DataTable } from "@/components/data-table/DataTable";

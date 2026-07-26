@@ -20,8 +20,8 @@ After an explicit biometric-consent step, the browser requests a liveness challe
 **2. Presence: scan the rotating venue code.**
 An admin opens the **venue-code display** for an event on a screen at the location; it shows a QR that rotates every **30 seconds**. To check in or out, the attendant scans the current code with the in-app scanner. A screenshotted code is stale within seconds.
 
-**3. Identity: server-side liveness.**
-After a valid scan, the app requests a challenge and the server returns a **randomized action sequence** (turn, blink, smile). The app captures a short burst of camera frames performing those actions and uploads them; the **server** verifies liveness and identity from the raw frames. Check-in and check-out both use this flow. The result is **PRESENT / LATE**.
+**3. Identity: server-side liveness, on-device guidance.**
+After a valid scan, the app requests a challenge and the server returns a **randomized action sequence** (turn, blink, smile). A self-hosted, on-device face guide (MediaPipe FaceLandmarker) prompts each action in order, waits until it actually happens, and captures the proving frames locally - then uploads the whole ordered burst in **one request**. The **server** re-verifies liveness and identity from the raw pixels and trusts nothing the on-device guide says; no landmark data ever leaves the browser. Check-in and check-out both use this flow. The result is **PRESENT / LATE**.
 
 **4. Roles & dashboards.**
 Two roles (`ADMIN`, `USER`). **Users** check in/out and view their own history. **Admins** create/update/delete events, open the venue-code display, manage users, reset a user's face template, and view organization-wide analytics with charts (Recharts) and date-range filters.
@@ -88,7 +88,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 | **Framework**          | React (Vite)                                                   |
 | **UI & Styling**       | shadcn/ui (Radix UI primitives) + TailwindCSS + tailwindcss-animate |
 | **Icons**              | lucide-react                                                    |
-| **Animation**          | framer-motion                                                  |
+| **Animation**          | motion (framer-motion successor)                               |
 | **Server State / API** | @tanstack/react-query                                          |
 | **HTTP Client**        | axios                                                          |
 | **Data Tables**        | @tanstack/react-table                                          |
@@ -98,7 +98,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 | **Face (enrollment)**  | Frame-burst capture only; the server derives the template     |
 | **QR display / scan**  | qrcode.react (venue display) + @zxing/browser (in-app scanner) |
 | **Image Conversion**   | heic2any (iPhone HEIC → JPEG before scanning)                 |
-| **Routing**            | react-router-dom                                              |
+| **Routing**            | react-router                                                  |
 | **Auth**               | Cookie-only httpOnly tokens (server-managed)                  |
 | **Date Handling**      | date-fns + react-day-picker                                   |
 | **Notifications**      | react-hot-toast                                                |

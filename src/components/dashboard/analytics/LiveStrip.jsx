@@ -4,7 +4,7 @@
 // Never date-filtered; refetches every minute. The open-anomalies tile links
 // straight into the review queue so a flagged attempt is one click from triage.
 import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { format } from "date-fns";
 import { Radio, UserCheck, LogIn, AlarmClock, ShieldAlert, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";

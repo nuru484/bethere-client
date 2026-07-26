@@ -58,8 +58,14 @@ export const getPairingStatus = async (pairingId) =>
 export const getPairingContext = async (token) =>
   remote.get(`/pairing/session/context`, authHeader(token));
 
-export const remoteStepChallenge = async (token, { venueCode } = {}) =>
-  remote.post(`/pairing/session/step-challenge`, { venueCode }, authHeader(token));
+// Batch flow: mint the full ordered challenge up-front. The phone prompts
+// every action locally and uploads ONE burst. Returns
+// { actions, challengeToken, expiresAt }.
+export const remoteChallenge = async (token, { venueCode } = {}) =>
+  remote.post(`/pairing/session/challenge`, { venueCode }, authHeader(token));
 
-export const remoteStep = async (token, formData) =>
-  remote.post(`/pairing/session/step`, formData, authHeader(token));
+// Batch flow: the single burst upload (challengeToken + venueCode|consent +
+// `frames`). Pass FormData straight through so axios keeps the multipart
+// boundary - do NOT hand-set Content-Type here.
+export const remoteCapture = async (token, formData) =>
+  remote.post(`/pairing/session/capture`, formData, authHeader(token));

@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import EventForm from "@/components/event/EventForm";
 import EventFormSkeleton from "@/components/event/EventFormSkeleton";

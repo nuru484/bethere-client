@@ -12,7 +12,7 @@
 // browser session (sessionStorage cleared) starts clean. This mirrors the DMS
 // use-table-query-state design.
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router";
 import { normalizeFilterValue } from "@/lib/filter-value";
 
 const DEFAULT_PAGE = 1;

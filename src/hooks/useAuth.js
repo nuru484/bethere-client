@@ -9,7 +9,7 @@ import {
   twoFactorEnable,
   verify2fa,
 } from "@/api/auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useContext } from "react";
 import AuthContext from "@/context/AuthContext";
 

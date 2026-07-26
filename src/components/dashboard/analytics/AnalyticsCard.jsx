@@ -31,7 +31,10 @@ const AnalyticsCard = ({
   className,
   children,
 }) => (
-  <Card className={cn("flex flex-col", className)}>
+  // min-w-0: these cards sit in CSS grid tracks, and a card's min-content
+  // (e.g. the heatmap's fixed-width grid) would otherwise stretch the whole
+  // track past the viewport on phones instead of scrolling inside the card.
+  <Card className={cn("flex min-w-0 flex-col", className)}>
     {(title || action) && (
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div className="min-w-0">

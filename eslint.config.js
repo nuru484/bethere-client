@@ -5,7 +5,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  // public/ carries vendored, self-hosted third-party assets (the MediaPipe
+  // wasm loader JS) that are not ours to lint.
+  { ignores: ['dist', 'public'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
