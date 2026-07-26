@@ -18,7 +18,11 @@ const rawSiteUrl = process.env.VITE_SITE_URL || "https://bethere.manuru.dev";
 const siteUrl = rawSiteUrl.replace(/\/+$/, "");
 
 // Public, indexable routes. The dashboard and auth pages are private.
-const publicRoutes = ["/"];
+const publicRoutes = [
+  { path: "/", changefreq: "monthly", priority: "1.0" },
+  { path: "/privacy-policy", changefreq: "yearly", priority: "0.3" },
+  { path: "/terms-of-service", changefreq: "yearly", priority: "0.3" },
+];
 
 // Private areas kept out of search results.
 const disallow = ["/dashboard", "/login", "/forgot-password", "/reset-password"];
@@ -35,8 +39,8 @@ const lastmod = new Date().toISOString().slice(0, 10);
 
 const urlEntries = publicRoutes
   .map(
-    (route) =>
-      `  <url>\n    <loc>${siteUrl}${route}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>`
+    ({ path, changefreq, priority }) =>
+      `  <url>\n    <loc>${siteUrl}${path}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`
   )
   .join("\n");
 

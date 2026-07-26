@@ -1,4 +1,5 @@
 // src/components/landing/LandingFooter.jsx
+import { Link } from "react-router";
 import { useTheme } from "@/context/ThemeContext";
 import { dotsLight, dotsDark } from "./texture";
 import { PillLink } from "./LandingButtons";
@@ -68,9 +69,23 @@ export function LandingFooter() {
             Email
           </a>
         </div>
-        <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
-          BT-2026 / full-stack build
-        </p>
+        <div className="flex items-center gap-6">
+          <Link
+            to="/privacy-policy"
+            className="lp-link font-body text-sm text-[var(--lp-muted)]"
+          >
+            Privacy
+          </Link>
+          <Link
+            to="/terms-of-service"
+            className="lp-link font-body text-sm text-[var(--lp-muted)]"
+          >
+            Terms
+          </Link>
+          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
+            BT-2026 / full-stack build
+          </p>
+        </div>
       </div>
     </footer>
   );

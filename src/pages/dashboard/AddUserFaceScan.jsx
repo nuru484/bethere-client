@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { UserCircle, TriangleAlert, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, Navigate } from "react-router";
+import { useNavigate, Navigate, Link } from "react-router";
 import { loadFaceLandmarker, preloadFaceLandmarker } from "@/lib/face-landmarker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -333,7 +333,15 @@ export default function AddUserFaceScan() {
                     >
                       I consent to my facial biometric data being captured and
                       stored to verify my attendance. It is encrypted and can be
-                      deleted on request.
+                      deleted on request. See how it is handled in the{" "}
+                      <Link
+                        to="/privacy-policy"
+                        target="_blank"
+                        className="font-medium text-foreground underline underline-offset-2"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
                     </Label>
                   </div>
                 </div>

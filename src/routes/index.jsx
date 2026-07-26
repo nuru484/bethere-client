@@ -26,6 +26,10 @@ const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RemoteCapturePage = lazy(() => import("@/pages/RemoteCapturePage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
+// Public legal documents for the portfolio demo (linked from the landing
+// footer and the biometric consent step).
+const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage"));
+const TermsOfServicePage = lazy(() => import("@/pages/TermsOfServicePage"));
 
 // Dashboard pages are code-split so the initial bundle stays small.
 const DashboardRedirect = lazy(() =>
@@ -211,6 +215,18 @@ const Routes = () => {
     {
       path: "/reset-password",
       element: page(<ResetPasswordPage />),
+      errorElement: <ErrorPage />,
+    },
+
+    {
+      path: "/privacy-policy",
+      element: page(<PrivacyPolicyPage />),
+      errorElement: <ErrorPage />,
+    },
+
+    {
+      path: "/terms-of-service",
+      element: page(<TermsOfServicePage />),
       errorElement: <ErrorPage />,
     },
 
