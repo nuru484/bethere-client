@@ -35,25 +35,19 @@ export function LandingFooter() {
 
       <div className="flex flex-col items-center gap-3 px-5 py-5 text-center sm:flex-row sm:justify-between sm:text-left">
         <p className="font-body text-sm text-[var(--lp-muted)]">
-          Designed &amp; built by{" "}
+          © {new Date().getFullYear()} Nurudeen Abdul-Majeed. All rights
+          reserved. <span className="text-[var(--lp-faint)]">|</span> Developed
+          by{" "}
           <a
             href="https://manuru.dev"
             target="_blank"
             rel="noreferrer"
             className="lp-link font-semibold text-[var(--lp-ink)]"
           >
-            Nurudeen Abdul-Majeed
+            manuru
           </a>
         </p>
         <div className="flex items-center gap-6">
-          <a
-            href="https://manuru.dev"
-            target="_blank"
-            rel="noreferrer"
-            className="lp-link font-body text-sm text-[var(--lp-ink)]"
-          >
-            manuru.dev
-          </a>
           <a
             href="https://github.com/nuru484"
             target="_blank"
@@ -82,9 +76,6 @@ export function LandingFooter() {
           >
             Terms
           </Link>
-          <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
-            BT-2026 / full-stack build
-          </p>
         </div>
       </div>
     </footer>
