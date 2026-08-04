@@ -33,7 +33,7 @@ const IntegrityScoreCard = ({ dateRange }) => {
   const { data, isLoading, isError, error, refetch } = useGetIntegritySummary(dateRange);
   const payload = data?.data;
   const score = payload?.integrityScore?.score ?? 0;
-  const grade = payload?.integrityScore?.grade ?? "—";
+  const grade = payload?.integrityScore?.grade ?? "-";
   const components = payload?.integrityScore?.components ?? [];
   const summary = payload?.summary ?? {};
 

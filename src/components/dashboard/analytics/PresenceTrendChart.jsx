@@ -108,7 +108,7 @@ const PresenceTrendChart = ({ dateRange }) => {
         <Stat label="Attendance" value={fmtPercent(summary.attendanceRate ?? 0, 1)} />
         <Stat label="On time" value={fmtPercent(summary.punctualityRate ?? 0, 1)} />
         <Stat label="Total records" value={fmtInt(summary.total)} />
-        <Stat label="Peak" value={summary.peakLabel ? formatBucketLabel(summary.peakLabel) : "—"} />
+        <Stat label="Peak" value={summary.peakLabel ? formatBucketLabel(summary.peakLabel) : "-"} />
       </div>
     </AnalyticsCard>
   );

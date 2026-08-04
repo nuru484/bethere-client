@@ -51,14 +51,14 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 ### 👤 User Capabilities
 
 * Login securely using credentials.
-* **Reset a forgotten password** via an emailed, time-limited link — request a reset, verify the link, and set a new password.
+* **Reset a forgotten password** via an emailed, time-limited link - request a reset, verify the link, and set a new password.
 * On first login, register your **facial scan** by following a few on-screen actions while the camera captures a burst of frames for the server to verify and enrol.
 * Check in and out of **active event sessions** during their valid time windows.
 * View:
 
   * Personal attendance history.
   * Attendance records for specific events.
-  * Dashboard insights — including recent activities, active sessions, and event statistics.
+  * Dashboard insights - including recent activities, active sessions, and event statistics.
 
 ### 🧭 Admin Capabilities
 
@@ -151,7 +151,7 @@ A self-service flow backed by the BeThere API:
 
 1. From the login screen, **Forgot password?** opens `/forgot-password`, where the user submits their email. The response is intentionally generic (no account enumeration).
 2. The API emails a single-use, **15-minute** reset link pointing to `/reset-password?token=…`.
-3. On load, `/reset-password` **verifies the token** with the API — showing a loading, invalid/expired, or ready state accordingly.
+3. On load, `/reset-password` **verifies the token** with the API - showing a loading, invalid/expired, or ready state accordingly.
 4. The user sets a new password (validated with **Zod**, mirroring the server rules); on success they're redirected to login.
 
 Reset endpoints are **rate-limited** server-side to deter abuse.
