@@ -16,6 +16,15 @@ const rawSiteUrl =
 
 export const siteUrl = rawSiteUrl.replace(/\/+$/, "");
 
+// The API's own reference page, served by the backend rather than this app.
+// Derived from the same VITE_SERVER_URL the API client uses, so a preview
+// deployment pointed at a preview backend links to that backend's docs
+// instead of production's.
+const rawServerUrl =
+  import.meta.env.VITE_SERVER_URL || "https://api.bethere.manuru.dev";
+
+export const apiDocsUrl = `${rawServerUrl.replace(/\/+$/, "")}/api/docs`;
+
 export const siteConfig = {
   name: "BeThere",
   title: "BeThere - Attendance you can't fake",

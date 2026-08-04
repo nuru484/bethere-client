@@ -1,6 +1,7 @@
 // src/components/landing/LandingFooter.jsx
 import { Link } from "react-router";
 import { useTheme } from "@/context/ThemeContext";
+import { apiDocsUrl } from "@/lib/site";
 import { dotsLight, dotsDark } from "./texture";
 import { PillLink } from "./LandingButtons";
 
@@ -37,7 +38,15 @@ export function LandingFooter() {
         <p className="font-body text-sm text-[var(--lp-muted)]">
           © {new Date().getFullYear()} Nurudeen Abdul-Majeed
         </p>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <a
+            href={apiDocsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="lp-link font-body text-sm text-[var(--lp-ink)]"
+          >
+            API docs
+          </a>
           <a
             href="https://manuru.dev"
             target="_blank"
