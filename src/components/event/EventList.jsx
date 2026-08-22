@@ -57,8 +57,8 @@ const EventList = ({
   const debouncedSearch = useDebounce(searchInput, 500);
 
   // Normalize both sides: an empty box is "" while an absent URL filter is
-  // undefined, and comparing those raw made this fire 500ms after every mount,
-  // which reset the list to page 1 (see src/lib/filter-value.js).
+  // undefined, and comparing those raw makes this fire 500ms after every
+  // mount, which resets the list to page 1 (see src/lib/filter-value.js).
   useEffect(() => {
     if (
       normalizeFilterValue(debouncedSearch) !==

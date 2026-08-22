@@ -7,8 +7,8 @@
 //   viewerAttendance: { sessionId, status, checkInTime, checkOutTime,
 //                       autoCheckedOut } | null
 // Both fields are absent for admins. Driving the buttons off those embedded
-// fields replaced a per-card attendance query (a page of 25 event cards used
-// to fire 25 API calls) and the ~40 lines of derivation duplicated between
+// fields costs no per-card attendance query (a page of 25 event cards would
+// otherwise fire 25 API calls) and keeps the derivation in one place for
 // EventListItem and EventActionsSidebar.
 import { useAuth } from "@/hooks/useAuth";
 
@@ -41,9 +41,9 @@ export const useAttendanceActions = (event) => {
     Boolean(viewerAttendance?.autoCheckedOut);
 
   // No current session means there is nothing to sign in to (the server
-  // would reject the attempt anyway) - so neither button shows. This also
-  // fixes the old "recurring event with no session today" state, which
-  // offered Sign out to someone who had never signed in.
+  // would reject the attempt anyway) - so neither button shows. In particular
+  // a recurring event with no session today must not offer Sign out to
+  // someone who has never signed in.
   const showSignIn = Boolean(currentSession) && !hasSignedIn;
   const showSignOut = Boolean(currentSession) && hasSignedIn && !hasSignedOut;
 

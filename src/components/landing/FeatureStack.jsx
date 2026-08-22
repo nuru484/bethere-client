@@ -1,9 +1,9 @@
 // src/components/landing/FeatureStack.jsx
 //
-// Mirrors the reference's card-stack mechanic: 75svh of pinned intro text
-// first, then one viewport of scroll per card. All cards share one sticky
-// containing block, so each new card lands ON TOP of the previous ones and
-// they accumulate like a deck - they don't take turns.
+// Card-stack mechanic: 75svh of pinned intro text first, then one viewport of
+// scroll per card. All cards share one sticky containing block, so each new
+// card lands ON TOP of the previous ones and they accumulate like a deck -
+// they don't take turns.
 // Arrival is a small top-hinged rotation driven by each card's own scroll
 // progress (motion/react), disabled for reduced motion.
 import { useRef } from "react";

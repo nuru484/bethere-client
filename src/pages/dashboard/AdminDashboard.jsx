@@ -1,10 +1,10 @@
 // src/pages/dashboard/AdminDashboard.jsx
 //
-// The redesigned admin analytics dashboard. Four stories - presence,
-// punctuality, integrity, engagement - each a set of independently-loading
-// slice widgets, above a live operational strip and a hero KPI row. The date
-// range drives every range-based widget; the live strip and retention curve
-// stand outside it.
+// The admin analytics dashboard. Four stories - presence, punctuality,
+// integrity, engagement - each a set of independently-loading slice widgets,
+// above a live operational strip and a hero KPI row. The date range drives
+// every range-based widget; the live strip and retention curve stand outside
+// it.
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { format, startOfYear } from "date-fns";

@@ -2,8 +2,8 @@
 //
 // Minimal list pagination: mono micro-label on the left ("Page X of Y",
 // entry range), then the shared rows-per-page select and Prev/Next chips
-// (PaginationControls). Contract unchanged: meta {total, page, limit,
-// totalPages}, onPageChange, optional onLimitChange.
+// (PaginationControls). Contract: meta {total, page, limit, totalPages},
+// onPageChange, optional onLimitChange.
 import PropTypes from "prop-types";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 

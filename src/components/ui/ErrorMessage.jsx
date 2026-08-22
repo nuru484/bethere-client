@@ -3,8 +3,8 @@
 // The single canonical error surface. Two shapes:
 //   - variant="page" (default): a full designed error panel with go-back and
 //     retry actions, used for whole-view failures.
-//   - variant="card": a compact inline error meant to sit inside a Card body
-//     (replaces the former dashboard CardErrorState).
+//   - variant="card": a compact inline error meant to sit inside a Card
+//     body, such as a dashboard card.
 import PropTypes from "prop-types";
 import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router";

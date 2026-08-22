@@ -78,9 +78,9 @@ export const AuthProvider = ({ children }) => {
     logoutApi().catch(() => {});
 
     // Everything below is synchronous ON PURPOSE. Deferring the clear() into
-    // logoutApi()'s continuation meant that with the API unreachable the axios
-    // timeout (3 minutes, see src/api/index.js) could fire long after the user
-    // had signed back in - wiping the cache of the CURRENT principal.
+    // logoutApi()'s continuation means that with the API unreachable the axios
+    // timeout (3 minutes, see src/api/index.js) can fire long after the user
+    // has signed back in - wiping the cache of the CURRENT principal.
     //
     // The React Query cache holds the outgoing principal's data; on a shared
     // device the next login must not inherit it.

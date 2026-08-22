@@ -1,9 +1,9 @@
 // src/components/attendance/reports/ReportFilters.jsx
 //
-// The simplified, DMS-style report filters: a compact grid of a search box,
-// status, event type, a period preset (with optional custom range), and
-// results-per-page - replacing the old long sidebar of many inputs. Controlled
-// by the page; each control commits immediately (search is debounced).
+// Compact report filters: a grid of a search box, status, event type, a
+// period preset (with optional custom range), and results-per-page.
+// Controlled by the page; each control commits immediately (search is
+// debounced).
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { format, subDays, startOfMonth, startOfYear } from "date-fns";

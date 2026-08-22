@@ -16,7 +16,7 @@ const STATUS_CHIP_BASE =
   "inline-flex items-center rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-tight";
 
 // Status chip helper - shared by the tables and reusable elsewhere.
-// Tint-plus-themed-text (the AnomaliesTab pattern) so the chips stay legible
+// Tint plus themed text (matching the anomaly chips) so the chips stay legible
 // on both themes instead of hardcoded light-only palettes.
 export const getStatusChipClass = (status) => {
   switch (status) {
@@ -328,9 +328,8 @@ const actionsColumn = (dense) => ({
   ...(dense ? { size: 80, minSize: 80 } : {}),
 });
 
-// Assemble the ordered column set for a context. (The former row-selection
-// checkboxes were removed: no bulk action exists on these tables, so the
-// selection state was dead UI that only invited confusion.)
+// Assemble the ordered column set for a context. No row-selection checkboxes:
+// these tables carry no bulk action, so selection state would be dead UI.
 export const createAttendanceColumns = ({ context }) => {
   const dense = context === "userEvent";
 

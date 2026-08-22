@@ -84,9 +84,8 @@ const normalizeError = (error) => {
     // errorId? (dev), details? } - details only ever carries the
     // validation middleware's { errors: [{ field, message }] }. But the
     // body is not always an object: a gateway can answer 502 with a JSON
-    // `null` (or an HTML string), and reading `.message` off that used to
-    // throw inside this handler and surface "Cannot read properties of
-    // null" to the user.
+    // `null` (or an HTML string), so `.message` is never read off the body
+    // directly.
     const body = error.response.data ?? {};
     const data = {
       status: "error",
@@ -133,13 +132,13 @@ const normalizeError = (error) => {
   });
 };
 
-// One interceptor handles refresh AND normalization. They used to be two
-// stacked interceptors, which had a composition bug class: rejections
-// fabricated by the refresh layer were re-normalized into "An unexpected
-// error occurred" by the layer below it, and a retry issued through bare
-// axios skipped the teardown path entirely. A single handler means every
-// rejection is normalized exactly once and the retry re-enters the full
-// chain by going through `api` itself.
+// One interceptor handles refresh AND normalization. Splitting them into two
+// stacked interceptors opens a composition bug class: rejections fabricated
+// by the refresh layer get re-normalized into "An unexpected error occurred"
+// by the layer below it, and a retry issued through bare axios skips the
+// teardown path entirely. A single handler means every rejection is
+// normalized exactly once and the retry re-enters the full chain by going
+// through `api` itself.
 api.interceptors.response.use(
   (response) => response.data,
   async (error) => {
@@ -191,9 +190,9 @@ api.interceptors.response.use(
 
     // Any other 401 is not refreshable: the session was revoked, the token
     // epoch was bumped, the cookie is invalid, or a retry 401'd again. Doing
-    // nothing left a zombie session - AuthContext only probes on mount, so
-    // `user` stayed populated, ProtectedRoutes kept rendering, and every panel
-    // errored with no way out. Tear it down like a failed refresh does.
+    // nothing leaves a zombie session - AuthContext only probes on mount, so
+    // `user` stays populated, ProtectedRoutes keeps rendering, and every panel
+    // errors with no way out. Tear it down like a failed refresh does.
     // Login failures are exempt: they belong to the form, not the session.
     if (error.response?.status === 401 && !isLoginRequest(originalRequest)) {
       endSession(originalRequest);

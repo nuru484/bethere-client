@@ -1,9 +1,9 @@
 // src/components/ui/AsyncBoundary.jsx
 //
-// The loading -> skeleton / error -> ErrorMessage / else -> content triad that
-// was hand-written across the list and review pages, in one place. Each page
-// still supplies its own skeleton (the shapes differ) and keeps any bespoke
-// states (e.g. a 404 empty state or an after-success empty state) around this.
+// The loading -> skeleton / error -> ErrorMessage / else -> content triad the
+// list and review pages share, in one place. Each page still supplies its own
+// skeleton (the shapes differ) and keeps any bespoke states (e.g. a 404 empty
+// state or an after-success empty state) around this.
 //
 // The API-error extraction lives here so callers just hand over the raw query
 // error. By default the error panel is centred in a min-height wrapper (what

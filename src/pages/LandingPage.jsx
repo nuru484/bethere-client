@@ -18,7 +18,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 const LandingPage = () => {
   usePageTitle("Verified live presence");
 
-  // Momentum scroll (mirrors the mhp website-frontend Lenis setup).
+  // Momentum scroll (Lenis).
   useLenis();
 
   return (

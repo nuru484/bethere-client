@@ -1,4 +1,4 @@
-// src/components/posts/PostsTableSkeleton.jsx
+// src/components/ui/DataTableSkeleton.jsx
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,

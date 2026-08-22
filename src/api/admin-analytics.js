@@ -1,6 +1,6 @@
 // src/api/admin-analytics.js
 //
-// The redesigned admin analytics slices. Each function maps 1:1 to a
+// The admin analytics slices. Each function maps 1:1 to a
 // /dashboard/admin/* endpoint; the axios interceptor unwraps the response to
 // the server envelope { message, data }.
 import { api } from ".";

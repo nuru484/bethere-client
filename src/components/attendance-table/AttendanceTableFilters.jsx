@@ -44,13 +44,13 @@ export function AttendanceTableFilters({
 }) {
   const [searchInput, setSearchInput] = useState(filters.search || "");
   // Free-text filters are debounced like search: firing onFiltersChange per
-  // keystroke rewrote the URL and refired the server query on every letter.
+  // keystroke rewrites the URL and refires the server query on every letter.
   const [eventTypeInput, setEventTypeInput] = useState(filters.eventType || "");
   const [sessionIdInput, setSessionIdInput] = useState(filters.sessionId || "");
   // Derived, not state: the filters come from the URL, so back/forward (and
   // any other external change) has to move the pickers too. Seeding local
-  // state once left the calendar and the button label showing a stale day
-  // while the "From"/"To" badges below already showed the new one.
+  // state once leaves the calendar and the button label showing a stale day
+  // while the "From"/"To" badges below already show the new one.
   const startDate = filters.startDate ? new Date(filters.startDate) : undefined;
   const endDate = filters.endDate ? new Date(filters.endDate) : undefined;
 
@@ -59,8 +59,8 @@ export function AttendanceTableFilters({
   const debouncedSessionId = useDebounce(sessionIdInput, 500);
 
   // Normalize both sides: an empty box is "" while an absent URL filter is
-  // undefined, and comparing those raw made this fire on every mount, which
-  // reset the list to page 1 (see src/lib/filter-value.js).
+  // undefined, and comparing those raw makes this fire on every mount, which
+  // resets the list to page 1 (see src/lib/filter-value.js).
   useEffect(() => {
     if (
       showSearch &&

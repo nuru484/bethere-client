@@ -29,8 +29,8 @@ const RecentEventsList = ({ events }) => {
       <CardContent className="p-0">
         <div className="divide-y">
           {events.map((event, index) => (
-            // Real link (rows previously had hover + pointer styling but no
-            // destination - a false affordance).
+            // Real link: the row carries hover + pointer styling, so it must
+            // lead somewhere rather than be a false affordance.
             <Link
               key={event.id || index}
               to={`/dashboard/events/${event.id}`}

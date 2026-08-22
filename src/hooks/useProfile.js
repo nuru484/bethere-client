@@ -76,8 +76,8 @@ const useInvalidateProfile = (kind) => {
 
 // When the edited profile is the signed-in principal's own, merge the
 // server's fresh fields into AuthContext too - the navbar renders name and
-// avatar from the context user, and cache invalidation alone left it stale
-// until a full reload re-ran the boot getMe(). Ids alone are not enough:
+// avatar from the context user, and cache invalidation alone leaves it stale
+// until a full reload re-runs the boot getMe(). Ids alone are not enough:
 // admins and attendants live in separate tables, so an admin's numeric id
 // can collide with an attendant's - the kind must match as well.
 const useSyncOwnProfile = (kind) => {

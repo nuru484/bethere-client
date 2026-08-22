@@ -18,7 +18,7 @@ const UserEventAttendancePage = () => {
   const navigate = useNavigate();
 
   // URL-backed like the sibling list pages: refresh, back/forward and shared
-  // links keep the page and filters (this page previously used useState).
+  // links keep the page and filters.
   const { page, pageSize, filters, setPage, setPageSize, setFilters } =
     usePaginatedListState({ filterKeys: FILTER_KEYS });
 

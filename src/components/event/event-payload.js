@@ -1,7 +1,7 @@
 // src/components/event/event-payload.js
 //
 // Form values -> API payload transform shared by the create and update
-// event pages (they had drifted into verbatim copies of this block).
+// event pages, so the two cannot drift apart.
 export const buildEventPayload = (data) => ({
   ...data,
   startDate: new Date(data.startDate).toISOString(),

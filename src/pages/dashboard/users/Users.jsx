@@ -1,6 +1,6 @@
 // src/pages/dashboard/UsersManagePage.jsx
 //
-// Attendant management (principal split): /users on the server now serves
+// Attendant management (principal split): /users on the server serves
 // attendants only, so there is no role column, filter or stat here. Admin
 // staff live on the separate Admins page.
 import { Link } from "react-router";

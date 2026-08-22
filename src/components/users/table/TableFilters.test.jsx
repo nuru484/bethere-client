@@ -1,9 +1,9 @@
 // src/components/users/table/TableFilters.test.jsx
 //
-// The filter bar wired to the real URL-state hook, which is where the
-// interesting bug lived: an empty search box ("") compared against an absent
-// URL filter (undefined) used to look like a change, so simply OPENING
-// /dashboard/users?page=3 emitted a filter update and snapped back to page 1.
+// The filter bar wired to the real URL-state hook: an empty search box ("")
+// compared against an absent URL filter (undefined) must not look like a
+// change, or simply OPENING /dashboard/users?page=3 emits a filter update and
+// snaps back to page 1.
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import PropTypes from "prop-types";

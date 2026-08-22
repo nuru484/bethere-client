@@ -1,6 +1,6 @@
 
 
-# BeThere – Smart Attendance System Frontend
+# BeThere - Smart Attendance System Frontend
 
 **BeThere Client** is the web app for a full-stack **smart attendance system** that verifies **live presence**. Instead of signing a sheet or tapping a card, a person scans a **rotating code shown on a screen at the venue** to prove they are physically there, then performs a short **face-liveness capture** so the server can confirm it is really them, live. It is built for organizations, schools, and recurring events where attendance records need to be genuinely hard to fake: you have to *be there*, in person.
 

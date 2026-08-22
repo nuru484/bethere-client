@@ -44,8 +44,8 @@ const UserProfilePage = () => {
   const { message: errorMessage } = extractApiErrorMessage(error);
 
   // A non-admin can only view their own profile. Rendering currentUser's data
-  // under someone else's URL silently lied about whose profile it was - send
-  // them to their own canonical URL instead.
+  // under someone else's URL would silently lie about whose profile it is -
+  // send them to their own canonical URL instead.
   if (currentUser && !isAdmin && !isViewingOwnProfile) {
     return (
       <Navigate to={`/dashboard/users/${currentUser.id}/profile`} replace />

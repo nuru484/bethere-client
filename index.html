@@ -10,11 +10,11 @@
     <!-- No-flash theme: apply the stored (or system) theme before first
          paint. Keep the storage key in sync with src/context/ThemeContext.jsx.
          CSP NOTE: this inline script is allowlisted by a sha256 hash in
-         vercel.json's Content-Security-Policy. If you change ANY character
-         of it (including whitespace), recompute the hash of the exact text
+         vercel.json's Content-Security-Policy. Changing ANY character of it
+         (whitespace included) means recomputing the hash of the exact text
          between the opening and closing script tags (sha256, base64) and
-         update the 'sha256-...' entry in vercel.json, or the theme snippet
-         will be silently blocked in production. -->
+         updating the 'sha256-...' entry in vercel.json, or the theme snippet
+         is silently blocked in production. -->
     <script>
       (function () {
         try {

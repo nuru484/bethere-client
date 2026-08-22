@@ -2,8 +2,8 @@
 //
 // Logout has to clear the React Query cache SYNCHRONOUSLY. The axios timeout
 // is 3 minutes, so a logout fired while the API is unreachable settles long
-// after the user could have signed back in - and clearing from that
-// continuation wiped the new session's cache.
+// after the user could have signed back in - clearing from that continuation
+// would wipe the new session's cache.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { useContext } from "react";

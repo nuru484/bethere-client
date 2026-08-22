@@ -18,7 +18,7 @@ import {
  * The detector only GATES capture - the server re-verifies everything from
  * the raw frames. No landmark data ever leaves the device.
  *
- * Hardening carried over from the old burst hook (useFrameCapture):
+ * Hardening:
  *  - session counters kill in-flight work from torn-down camera/runs;
  *  - backgrounding the tab aborts the run (a frozen <video> would otherwise
  *    feed the same frame forever);

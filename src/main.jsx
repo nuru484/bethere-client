@@ -22,8 +22,8 @@ const isRetryableError = (error) =>
   error?.status === "FETCH_ERROR" ||
   error?.status === "TIMEOUT_ERROR";
 
-// Global caching conventions, hoisted from what most hooks used to repeat
-// per-query: dashboards and lists tolerate 5 minutes of staleness, linger in
+// Global caching conventions, hoisted here instead of repeated per-query:
+// dashboards and lists tolerate 5 minutes of staleness, linger in
 // the cache for 30, and retry twice before erroring a panel. Focus refetches
 // are off - data here changes through explicit actions, and those mutations
 // invalidate exactly what they touched. Anything that also changes from

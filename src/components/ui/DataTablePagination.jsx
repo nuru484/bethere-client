@@ -2,7 +2,7 @@
 //
 // Minimal table pagination: mono micro-label on the left ("Page X of Y",
 // total or selection count), then the shared rows-per-page select and
-// Prev/Next chips (PaginationControls). Contract unchanged.
+// Prev/Next chips (PaginationControls).
 import PropTypes from "prop-types";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 

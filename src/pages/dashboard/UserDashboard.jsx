@@ -1,8 +1,8 @@
 // src/pages/dashboard/UserDashboard.jsx
 //
-// The redesigned attendant (USER) dashboard: a personal, actionable view.
-// A now/next hero (with a check-in / check-out CTA) leads, then personal KPIs
-// with a streak, the attendance calendar, the personal trend, and per-status /
+// The attendant (USER) dashboard: a personal, actionable view. A now/next
+// hero (with a check-in / check-out CTA) leads, then personal KPIs with a
+// streak, the attendance calendar, the personal trend, and per-status /
 // per-event breakdowns. Everything is scoped to the signed-in user.
 import { useState } from "react";
 import { format, startOfYear } from "date-fns";

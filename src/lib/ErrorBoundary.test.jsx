@@ -1,7 +1,7 @@
 // src/lib/ErrorBoundary.test.jsx
 //
 // Layout keys the route-level boundary on location.pathname but resets it via
-// resetKey={location.key}. Page and filters live in the query string now, so
+// resetKey={location.key}. Page and filters live in the query string, so
 // same-pathname navigations (including the boundary's own history.back()
 // recovery) have to clear a shown error.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";

@@ -23,8 +23,8 @@ const menuRowClass =
  * Mobile-only (below lg) bottom tab bar, Facebook-style: the primary
  * destinations as icon tabs plus a trailing "Menu" tab (the user's avatar)
  * that opens a bottom sheet with the remaining account and management
- * actions. Together with the desktop-only tabs in AppNavbar this replaces
- * the old hamburger slide-down and the mobile profile dropdown.
+ * actions. Together with the desktop-only tabs in AppNavbar it carries all
+ * navigation below lg.
  */
 const BottomNav = () => {
   const { user } = useAuth();

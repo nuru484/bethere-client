@@ -1,10 +1,9 @@
 // src/components/landing/SeeForYourself.jsx
 //
-// Mirrors the reference's work section: a white interactive card ("See for
-// yourself") beside a dark 16px-radius quote card, with a stats board row
-// underneath. The reference uses WebGL canvases; here the white card runs a
-// cursor parallax over floating app fragments and the quote card carries a
-// cursor-following mint glow - same feel, no canvas.
+// The work section: a white interactive card ("See for yourself") beside a
+// dark 16px-radius quote card, with a stats board row underneath. No canvas:
+// the white card runs a cursor parallax over floating app fragments and the
+// quote card carries a cursor-following mint glow.
 import { useRef } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import { dotsLight, dotsDark } from "./texture";

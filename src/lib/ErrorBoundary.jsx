@@ -21,7 +21,7 @@ class ErrorBoundary extends React.Component {
   // A caller can hand us a value that changes on every navigation (see
   // Layout.jsx). Clearing the error here rather than via a `key` is
   // deliberate: a changing key would also remount a HEALTHY subtree, and
-  // filter/page changes are same-pathname navigations now, so every debounced
+  // filter/page changes are same-pathname navigations, so every debounced
   // keystroke would tear the list page down mid-typing.
   componentDidUpdate(prevProps) {
     if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {

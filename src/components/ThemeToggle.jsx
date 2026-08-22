@@ -1,7 +1,7 @@
 // src/components/ThemeToggle.jsx
 //
 // Sun/moon icon button for the dashboard navbar. Flips between light and
-// dark; the icon shows the mode you would switch *to*.
+// dark; the icon shows the mode the button switches *to*.
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 

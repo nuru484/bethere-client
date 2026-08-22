@@ -28,7 +28,7 @@ const renderListState = (initialEntry = "/dashboard/users") => {
 };
 
 describe("usePaginatedListState", () => {
-  // The hook now mirrors the view into sessionStorage; clear it between cases
+  // The hook mirrors the view into sessionStorage; clear it between cases
   // so one test's remembered view cannot leak into the next.
   beforeEach(() => {
     sessionStorage.clear();
@@ -122,8 +122,8 @@ describe("usePaginatedListState", () => {
   it("applies a page-size and page change fired together in one tick", () => {
     // Exactly what the pagination bar does when the rows-per-page select
     // changes: set the size AND jump to a page in the same handler. The two
-    // updates must compose - the earlier "row count falls back to 10" bug was
-    // the second navigation clobbering the first.
+    // updates must compose, or the second navigation clobbers the first and
+    // the row count falls back to the default.
     const { result } = renderListState("/dashboard/users?page=5");
 
     act(() => {

@@ -2,10 +2,9 @@
 //
 // Exercises the response interceptor by driving the REAL `api` instance
 // through a mocked axios adapter, so refresh handling and error
-// normalization are tested composed - exactly as they run in production.
-// (The old suite invoked each interceptor's handler in isolation, which
-// hid composition bugs: fabricated rejections being re-normalized into
-// "An unexpected error occurred", and retries that skipped teardown.)
+// normalization are tested composed - exactly as they run in production:
+// composition bugs (fabricated rejections re-normalized into "An unexpected
+// error occurred", retries that skip teardown) are only visible this way.
 // Auth is cookie-only: nothing is persisted client-side, the refresh POST
 // simply rides the httpOnly refresh cookie and the original request is
 // retried once the server has re-set the auth cookies.
@@ -137,9 +136,8 @@ describe("api response interceptor (composed chain)", () => {
         caught = err;
       });
 
-      // The fabricated rejection survives to callers intact - it used to be
-      // mangled into "An unexpected error occurred" by the second
-      // interceptor's normalizer.
+      // The fabricated rejection survives to callers intact, never mangled
+      // into "An unexpected error occurred" by a second normalizer.
       expect(caught).toBeInstanceOf(ApiError);
       expect(caught).toBeInstanceOf(Error);
       expect(caught).toMatchObject({
@@ -180,8 +178,8 @@ describe("api response interceptor (composed chain)", () => {
       });
 
       // One refresh only (_retry blocks a second), and the zombie session
-      // is torn down - this path used to bypass teardown entirely because
-      // the retry went through bare axios with no interceptors.
+      // is torn down: the retry re-enters this interceptor instead of going
+      // through bare axios with no interceptors.
       expect(postSpy).toHaveBeenCalledTimes(1);
       expect(localStorage.getItem(AUTHED_FLAG)).toBeNull();
     });
@@ -333,7 +331,7 @@ describe("api response interceptor (composed chain)", () => {
 
     it("survives a response with no usable body", async () => {
       // Gateways answer 502 with a JSON `null` body; reading .message off it
-      // used to throw a TypeError from inside the handler.
+      // directly would throw a TypeError from inside the handler.
       adapter.mockImplementation((config) => httpError(config, 502, null));
 
       await expect(api.get("/users")).rejects.toMatchObject({
@@ -354,9 +352,9 @@ describe("api response interceptor (composed chain)", () => {
     });
 
     it("classifies a timeout as TIMEOUT_ERROR even with a populated request", async () => {
-      // Real axios timeouts carry error.request; the old branch order
-      // checked error.request first, which made TIMEOUT_ERROR unreachable
-      // and told users the server was unreachable instead.
+      // Real axios timeouts carry error.request, so a branch order that
+      // checked error.request first would make TIMEOUT_ERROR unreachable and
+      // tell users the server was unreachable instead.
       adapter.mockImplementation((config) =>
         Promise.reject(
           new AxiosError(

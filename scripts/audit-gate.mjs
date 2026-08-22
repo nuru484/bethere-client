@@ -7,8 +7,7 @@
 // this app. Keep the list short and every entry justified.
 import { execFile } from "node:child_process";
 
-// GHSA id -> why it is acceptable to ship with. Currently empty: the React 19
-// + react-router 8 upgrade cleared the last entry (GHSA-qwww-vcr4-c8h2).
+// GHSA id -> why it is acceptable to ship with. Currently empty.
 const ALLOWLIST = {};
 
 const FAIL_SEVERITIES = new Set(["high", "critical"]);

@@ -8,9 +8,8 @@
 //
 // On top of the URL it mirrors the view into sessionStorage, so re-entering a
 // list with a BARE url (e.g. through the sidebar or a "back to list" link)
-// restores where you left it - an explicit URL always wins, and a fresh
-// browser session (sessionStorage cleared) starts clean. This mirrors the DMS
-// use-table-query-state design.
+// restores the view it was left in - an explicit URL always wins, and a
+// fresh browser session (sessionStorage cleared) starts clean.
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { normalizeFilterValue } from "@/lib/filter-value";
@@ -56,10 +55,10 @@ export const usePaginatedListState = ({
   // Mirrors the latest params AND chains WITHIN a tick: two updates fired from
   // the same handler (the pagination bar changes page size AND page at once)
   // must both land. React Router's functional `setSearchParams(prev => ...)`
-  // hands each call the SAME pre-handler `prev`, so the second navigation would
-  // otherwise clobber the first (this was the "row count falls back to 10"
-  // bug). Building each update from this ref, and passing a concrete value,
-  // makes them compose.
+  // hands each call the SAME pre-handler `prev`, so the second navigation
+  // would otherwise clobber the first and the row count would fall back to
+  // the default. Building each update from this ref, and passing a concrete
+  // value, makes them compose.
   const paramsRef = useRef(searchParams);
   paramsRef.current = searchParams;
 
@@ -69,9 +68,8 @@ export const usePaginatedListState = ({
     defaultPageSize
   );
 
-  // Same shape the pages previously kept in useState: every declared key is
-  // present, absent/empty URL values map to undefined so query-param builders
-  // drop them.
+  // A fixed filter shape: every declared key is present, and absent/empty URL
+  // values map to undefined so query-param builders drop them.
   const filters = useMemo(() => {
     const result = {};
     for (const key of filterKeys) {
@@ -105,8 +103,7 @@ export const usePaginatedListState = ({
     [updateParams]
   );
 
-  // Changing the page size re-slices the whole list, so jump back to page 1
-  // (mirrors the previous useState handlers).
+  // Changing the page size re-slices the whole list, so jump back to page 1.
   const setPageSize = useCallback(
     (newPageSize) => {
       updateParams((next) => {
@@ -121,8 +118,8 @@ export const usePaginatedListState = ({
     [updateParams, defaultPageSize]
   );
 
-  // Merge-style updater matching the previous handleFiltersChange contract:
-  // callers pass only the keys that changed; undefined/empty clears a key.
+  // Merge-style updater: callers pass only the keys that changed, and
+  // undefined/empty clears a key.
   // A filter that ACTUALLY changed resets to page 1.
   const setFilters = useCallback(
     (newFilters) => {

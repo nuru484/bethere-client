@@ -54,9 +54,8 @@
     --sidebar-border: 0 0% 85%;
     --sidebar-ring: 0 0% 17%;
 
-    /* Landing page (marketing) tokens - plain hex, not HSL triples. Light
-       values below equal the old hardcoded hex 1:1 so the light look is
-       preserved; the .dark block overrides them for the dark theme. */
+    /* Landing page (marketing) tokens - plain hex, not HSL triples. The
+       .dark block overrides them for the dark theme. */
     --lp-bg: #e9e9e9;
     --lp-surface: #fafafa;
     --lp-card: #ffffff;
@@ -255,7 +254,7 @@
     }
   }
 
-  /* Growing-underline text link (the reference's .t-link). */
+  /* Growing-underline text link. */
   .lp-link {
     position: relative;
   }

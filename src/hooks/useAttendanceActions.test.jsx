@@ -1,10 +1,8 @@
 // src/hooks/useAttendanceActions.test.jsx
 //
-// The sign-in/sign-out derivation was duplicated (~40 lines, verbatim)
-// between EventListItem and EventActionsSidebar before being extracted here;
-// this suite pins the shared behavior, including the fixed "recurring event
-// with no current session offered Sign out to someone who never signed in"
-// state and the system auto-checkout attribution.
+// Pins the sign-in/sign-out derivation shared by EventListItem and
+// EventActionsSidebar, including the "recurring event with no current
+// session" state (neither button) and the system auto-checkout attribution.
 import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import PropTypes from "prop-types";
@@ -94,9 +92,9 @@ describe("useAttendanceActions", () => {
   });
 
   it("offers neither button when there is no current session", () => {
-    // The old duplicated derivation showed BOTH buttons for a recurring
-    // event with no session today - including Sign out for someone who had
-    // never signed in. The server would reject either attempt anyway.
+    // A recurring event with no session today must not offer Sign out to
+    // someone who never signed in. The server would reject either attempt
+    // anyway.
     const actions = renderActions({
       id: 5,
       isRecurring: true,

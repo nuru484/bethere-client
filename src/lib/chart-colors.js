@@ -1,8 +1,7 @@
 // src/lib/chart-colors.js
 //
-// Single source of truth for the attendance chart palette. The same
-// status -> colour mapping was previously copy-pasted across every dashboard
-// chart; centralising it keeps the line, bar and pie charts visually in sync.
+// Single source of truth for the attendance chart palette: one shared
+// status -> colour mapping keeps the line, bar and pie charts in sync.
 // Values are theme-aware CSS variables defined in the Tailwind theme.
 
 // Attendance status colours (shared by the line, bar and pie charts).
@@ -29,7 +28,7 @@ export const statusPieData = (counts) => [
   { name: "Absent", value: counts?.absent || 0, color: STATUS_COLOR.absent },
 ];
 
-// --- Analytics widgets (the redesigned admin dashboard) -------------------
+// --- Analytics widgets (admin dashboard) ---------------------------------
 
 // Semantic status colours reused across the analytics charts.
 export const ANALYTICS_STATUS = {

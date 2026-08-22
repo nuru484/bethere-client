@@ -1,9 +1,9 @@
 // src/hooks/useLenis.js
 //
-// Lenis momentum / smooth scroll, mirroring the mhp website-frontend setup: a
-// long duration with easeOutCubic and boosted wheel/touch multipliers plus a
-// low lerp for a heavy, gliding feel. Honors prefers-reduced-motion (the
-// scroll simply stays native). Returns a scrollTo helper for anchor jumps.
+// Lenis momentum / smooth scroll: a long duration with easeOutCubic and
+// boosted wheel/touch multipliers plus a low lerp for a heavy, gliding feel.
+// Honors prefers-reduced-motion (the scroll simply stays native). Returns a
+// scrollTo helper for anchor jumps.
 import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 

@@ -57,9 +57,9 @@ export const queryKeys = {
     userAttendanceDataAll: ["usersAttendanceData"],
     userAttendanceData: (params = {}) => ["usersAttendanceData", params],
   },
-  // The redesigned admin analytics slices. Each widget owns its key so the
-  // date-range change refetches every slice while they stay independently
-  // cached; `all` is the shared invalidation prefix.
+  // The admin analytics slices. Each widget owns its key so a date-range
+  // change refetches every slice while they stay independently cached;
+  // `all` is the shared invalidation prefix.
   analytics: {
     all: ["adminAnalytics"],
     live: ["adminAnalytics", "live"],

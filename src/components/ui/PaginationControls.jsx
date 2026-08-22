@@ -1,9 +1,8 @@
 // src/components/ui/PaginationControls.jsx
 //
 // The shared right-hand side of both pagination bars (DataTablePagination
-// and Pagination): compact rows-per-page select + Prev/Next chips. Extracted
-// because the two bars had drifted into ~80% duplicates - including the same
-// dark-mode bug (hardcoded bg-white select trigger).
+// and Pagination): compact rows-per-page select + Prev/Next chips. Shared so
+// the two bars cannot drift apart.
 import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import {

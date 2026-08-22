@@ -26,9 +26,9 @@ const tabClass = (isActive) =>
 /**
  * Top app bar. Navigation tabs and the account dropdown are desktop-only
  * (lg and up); below lg the bar carries just the logo and BottomNav owns
- * navigation. Breakpoints are pure CSS - the old JS-measured breakpoint
- * painted the full desktop tab row on phones before the effect ran, which
- * pushed the document wider than the viewport.
+ * navigation. Breakpoints are pure CSS: a JS-measured breakpoint paints the
+ * full desktop tab row on phones before the effect runs, which pushes the
+ * document wider than the viewport.
  */
 export function AppNavbar() {
   const { user } = useAuth();

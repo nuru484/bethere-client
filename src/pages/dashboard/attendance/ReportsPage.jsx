@@ -1,8 +1,8 @@
 // src/pages/dashboard/attendance/ReportsPage.jsx
 //
-// The reports surface, reworked: a DMS-style toolbar (a Filters toggle + Excel
-// / PDF / Print exports) over a collapsible compact filter panel, above the
-// filtered report. The report region is wrapped in `report-print-area` so the
+// The reports surface: a toolbar (a Filters toggle + Excel / PDF / Print
+// exports) over a collapsible compact filter panel, above the filtered
+// report. The report region is wrapped in `report-print-area` so the
 // print stylesheet and the PDF capture can isolate it from the app chrome.
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
