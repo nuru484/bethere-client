@@ -12,7 +12,7 @@ This repository is the **React frontend**: it runs the in-app QR scanner and cam
 
 ---
 
-## 🧠 How It Works
+## How It Works
 
 **1. Enrollment (consented).**
 After an explicit biometric-consent step, the browser requests a liveness challenge and uploads a short burst of captured frames. The **server** derives the face template from those frames and stores it **encrypted**; the template is never computed in - nor sent back to - the browser.
@@ -31,7 +31,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 
 ---
 
-## 📚 Table of Contents
+## Table of Contents
 
 * [Features](#-features)
 * [Tech Stack](#-tech-stack)
@@ -46,9 +46,9 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 
 ---
 
-## ✨ Features
+## Features
 
-### 👤 User Capabilities
+### User Capabilities
 
 * Login securely using credentials.
 * **Reset a forgotten password** via an emailed, time-limited link - request a reset, verify the link, and set a new password.
@@ -60,7 +60,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
   * Attendance records for specific events.
   * Dashboard insights - including recent activities, active sessions, and event statistics.
 
-### 🧭 Admin Capabilities
+### Admin Capabilities
 
 * Create, update, and delete events.
 * Manage user records and reset user facial scans when needed.
@@ -70,7 +70,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
   * Attendance by event.
   * Overview of total users, total events, and active sessions.
 
-### 💡 Smart Client Features
+### Smart Client Features
 
 * Real-time communication with the backend API using **@tanstack/react-query**.
 * Cookie-only auth (httpOnly tokens) with a silent-refresh **axios** interceptor; no tokens in JS-readable storage.
@@ -81,7 +81,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer                  | Technology / Library                                            |
 | ---------------------- | -------------------------------------------------------------- |
@@ -107,7 +107,7 @@ Cookie-only auth with a silent-refresh **axios** interceptor, real-time data via
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 User Interface (React + Shadcn)
@@ -130,7 +130,7 @@ Redis (BullMQ Workers)
 
 ---
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 **Login → Face Enrollment → Access App**
 
@@ -158,7 +158,7 @@ Reset endpoints are **rate-limited** server-side to deter abuse.
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 bethere-client/
@@ -185,7 +185,7 @@ bethere-client/
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 Create a `.env` file in the root directory with the following:
 
@@ -202,7 +202,7 @@ VITE_SERVER_URL="your backend uri"
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -235,7 +235,7 @@ npm run preview
 
 ---
 
-## 🌍 Deployment
+## Deployment
 
 Deployed on **Vercel**
 
@@ -247,11 +247,11 @@ Deployed on **Vercel**
 | **Database**     | PostgreSQL         |
 | **Queue / Jobs** | Redis (BullMQ)     |
 
-> 🧩 The frontend automatically connects to the backend using the `VITE_SERVER_URL` environment variable.
+> The frontend automatically connects to the backend using the `VITE_SERVER_URL` environment variable.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! If you'd like to improve this project, feel free to:
 
@@ -270,7 +270,7 @@ Questions or suggestions?
 
 ---
 
-## 🧾 License
+## License
 
 **MIT License**
 
