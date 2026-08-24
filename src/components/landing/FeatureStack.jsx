@@ -106,7 +106,7 @@ export function FeatureStack() {
       {/* Pinned intro: reads alone for the first ~85svh of scroll, then the
           cards arrive over it and stack up. */}
       <div className="sticky top-0 z-0 flex h-[100svh] flex-col items-center justify-center px-4 text-center">
-        <h2 className="max-w-[8.5em] text-balance font-display text-5xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-6xl lg:text-7xl">
+        <h2 className="max-w-[8.5em] text-balance font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-5xl md:text-6xl lg:text-7xl">
           Built to know who showed up.
         </h2>
         <p className="mt-8 max-w-md font-body text-base leading-relaxed text-[var(--lp-muted)] sm:text-lg">

@@ -114,7 +114,7 @@ export function SeeForYourself() {
             className="absolute inset-3 rounded-xl"
             style={dots}
           />
-          <h2 className="absolute left-7 top-7 z-10 font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:left-9 sm:top-9 sm:text-5xl">
+          <h2 className="absolute left-7 top-7 z-10 font-display text-3xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:left-9 sm:top-9 sm:text-4xl md:text-5xl">
             See for
             <br />
             yourself
@@ -140,12 +140,12 @@ export function SeeForYourself() {
           />
           <span
             aria-hidden="true"
-            className="font-display text-5xl leading-none text-[var(--lp-accent)]"
+            className="font-display text-4xl leading-none text-[var(--lp-accent)] sm:text-5xl"
           >
             &ldquo;
           </span>
           <blockquote className="relative">
-            <p className="font-display text-4xl font-normal leading-[1.04] tracking-[-0.03em] text-[var(--lp-surface)] dark:text-[var(--lp-ink)] sm:text-5xl">
+            <p className="font-display text-3xl font-normal leading-[1.04] tracking-[-0.03em] text-[var(--lp-surface)] dark:text-[var(--lp-ink)] sm:text-4xl md:text-5xl">
               If you weren&apos;t there, it doesn&apos;t count.
             </p>
             <footer className="mt-8 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">
@@ -170,7 +170,7 @@ export function SeeForYourself() {
               key={s.label}
               className="group rounded-xl bg-[var(--lp-card)] p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-sm"
             >
-              <dd className="font-display text-4xl font-normal tracking-[-0.02em] text-[var(--lp-ink)] transition-colors duration-300 group-hover:text-[var(--lp-accent-ink)] sm:text-5xl">
+              <dd className="font-display text-3xl font-normal tracking-[-0.02em] text-[var(--lp-ink)] transition-colors duration-300 group-hover:text-[var(--lp-accent-ink)] sm:text-4xl md:text-5xl">
                 {s.value}
               </dd>
               <dt className="mt-2 font-mono text-[10px] font-bold uppercase tracking-tight text-[var(--lp-faint)]">

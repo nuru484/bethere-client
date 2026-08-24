@@ -25,7 +25,7 @@ export function TechBoard() {
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-24">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h2 className="font-display text-5xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-6xl">
+            <h2 className="font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-5xl md:text-6xl">
               Under the hood
             </h2>
             <p className="mt-4 max-w-md font-body text-[15px] leading-relaxed text-[var(--lp-muted)]">

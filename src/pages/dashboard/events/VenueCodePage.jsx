@@ -149,7 +149,7 @@ export default function VenueCodePage() {
         </div>
 
         {isLoading ? (
-          <div className="flex h-64 w-64 items-center justify-center sm:h-80 sm:w-80">
+          <div className="flex h-56 w-56 items-center justify-center sm:h-80 sm:w-80">
             <div
               className="h-12 w-12 animate-spin rounded-full border-4 border-foreground border-t-transparent"
               role="status"
@@ -157,17 +157,17 @@ export default function VenueCodePage() {
             />
           </div>
         ) : qrValue ? (
-          <div className="rounded-3xl bg-white p-5 sm:p-8">
+          <div className="max-w-full rounded-3xl bg-white p-5 sm:p-8">
             <QRCodeSVG
               value={qrValue}
               // Big and high-contrast so it reads from across a room.
-              className="h-64 w-64 sm:h-80 sm:w-80 md:h-96 md:w-96"
+              className="h-auto w-56 max-w-full sm:w-80 md:w-96"
               level="M"
               marginSize={2}
             />
           </div>
         ) : (
-          <div className="flex h-64 w-64 flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-border sm:h-80 sm:w-80">
+          <div className="flex h-56 w-56 flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-border sm:h-80 sm:w-80">
             <div
               className="h-10 w-10 animate-spin rounded-full border-4 border-foreground border-t-transparent"
               role="status"

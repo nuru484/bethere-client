@@ -75,7 +75,7 @@ const UserProfilePage = () => {
         <p className={microLabel}>
           {shouldFetchProfile ? "Profile - Administrator view" : "Profile"}
         </p>
-        <h1 className="break-words font-display text-3xl font-normal tracking-[-0.03em] text-foreground sm:text-4xl">
+        <h1 className="break-words font-display text-2xl font-normal tracking-[-0.03em] text-foreground sm:text-3xl md:text-4xl">
           {displayName}
         </h1>
       </header>

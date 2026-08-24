@@ -36,7 +36,7 @@ const LegalPageShell = ({ title, lastUpdated, crossLink, children }) => {
         <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
           Portfolio demonstration project
         </p>
-        <h1 className="mt-2 font-display text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
+        <h1 className="mt-2 font-display text-2xl font-medium tracking-tight text-foreground sm:text-3xl md:text-4xl">
           {title}
         </h1>
         <p className="mb-10 mt-3 text-sm text-muted-foreground">

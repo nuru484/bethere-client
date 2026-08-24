@@ -26,7 +26,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-10 sm:py-24">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.6fr] lg:gap-20">
           <div>
-            <h2 className="font-display text-5xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-6xl">
+            <h2 className="font-display text-4xl font-normal leading-[0.95] tracking-[-0.04em] text-[var(--lp-ink)] sm:text-5xl md:text-6xl">
               How it
               <br />
               works
