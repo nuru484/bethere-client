@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils"
 // Landing-page voice: pill buttons with mono uppercase labels, outlined
 // chips with squarer corners, no shadows anywhere.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-mono text-xs font-bold uppercase tracking-tight transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // A press gives way under the finger and comes back: the one piece of
+  // feedback that tells you the tap registered before the network answers.
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-mono text-xs font-bold uppercase tracking-tight transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

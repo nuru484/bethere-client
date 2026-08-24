@@ -24,7 +24,11 @@ export default function Layout() {
             same-pathname navigation, including its own recovery
             (window.history.back(), which often lands on that pathname). */}
         <ErrorBoundary key={location.pathname} resetKey={location.key}>
-          <Outlet />
+          {/* Keyed by route so the enter animation replays on navigation: the
+              panel settles in and its sections follow in sequence. */}
+          <div className="page-enter stagger" key={location.pathname}>
+            <Outlet />
+          </div>
         </ErrorBoundary>
       </div>
       <BottomNav />
