@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -37,8 +37,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
+      # Coverage floors live in vitest.config.js; a drop below them fails here.
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build

@@ -6,8 +6,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   // public/ carries vendored, self-hosted third-party assets (the MediaPipe
-  // wasm loader JS) that are not ours to lint.
-  { ignores: ['dist', 'public'] },
+  // wasm loader JS) that are not ours to lint; coverage/ is generated.
+  { ignores: ['dist', 'public', 'coverage'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {

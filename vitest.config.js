@@ -13,5 +13,18 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.js"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{js,jsx}"],
+      exclude: ["src/**/*.test.{js,jsx}", "src/test/**"],
+      reporter: ["text", "html"],
+      // Floors hold the current level so a change cannot quietly shed tests.
+      thresholds: {
+        lines: 20,
+        statements: 20,
+        functions: 15,
+        branches: 20,
+      },
+    },
   },
 });
