@@ -192,8 +192,13 @@ Create a `.env` file in the root directory with the following:
 ```bash
 VITE_SERVER_URL="your backend uri"
 
-# Optional error tracking; unset disables it
+# Optional error tracking; unset disables it (no SDK is loaded)
 # VITE_SENTRY_DSN=
+
+# Build only, optional: release id on Sentry events. Vercel supplies
+# VERCEL_GIT_COMMIT_SHA on its own; SENTRY_AUTH_TOKEN, SENTRY_ORG and
+# SENTRY_PROJECT additionally enable the source-map upload.
+# SENTRY_RELEASE=
 
 # Optional canonical site origin used by the SEO generator and meta tags.
 # Defaults to https://bethere.manuru.dev
@@ -206,8 +211,8 @@ VITE_SERVER_URL="your backend uri"
 
 ### Prerequisites
 
-* **Node.js** ≥ 18
-* **npm** or **yarn**
+* **Node.js** 22 (the exact version is pinned in `.nvmrc`; `nvm use` picks it up, and CI installs the same one)
+* **npm**
 
 ### Installation
 
@@ -231,7 +236,17 @@ npm run build
 
 # Preview production build
 npm run preview
+
+# Lint, tests, tests with coverage floors (what CI runs)
+npm run lint
+npm test
+npm run test:coverage
 ```
+
+CI (`.github/workflows/ci.yml`) runs the production dependency audit gate,
+lint, the test suite with coverage floors from `vitest.config.js`, and a
+production build with no Sentry variables set, so the build never depends on
+them.
 
 ---
 

@@ -9,6 +9,16 @@ import { sentryVitePlugin } from '@sentry/vite-plugin';
 // Sentry plugin uploads the maps against a release and deletes them from
 // dist so they are never deployed; without the token the plugin is skipped
 // entirely and the unreferenced maps are harmless build artifacts.
+// The release every Sentry event is tagged with: the commit Vercel is
+// building (VERCEL_GIT_COMMIT_SHA is set automatically), or SENTRY_RELEASE
+// for any other host. Defined into the bundle as VITE_SENTRY_RELEASE so the
+// runtime SDK reads it without a source-map upload having run.
+const sentryRelease =
+  process.env.SENTRY_RELEASE ||
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.VITE_VERCEL_GIT_COMMIT_SHA ||
+  undefined;
+
 const sentryPlugins = process.env.SENTRY_AUTH_TOKEN
   ? [
       sentryVitePlugin({
@@ -19,7 +29,7 @@ const sentryPlugins = process.env.SENTRY_AUTH_TOKEN
           // Vercel exposes the commit SHA at build time; the plugin also
           // injects this release id into the bundle so the runtime SDK
           // tags events with it automatically (see src/lib/sentry.js).
-          name: process.env.VERCEL_GIT_COMMIT_SHA || undefined,
+          name: sentryRelease,
         },
         sourcemaps: {
           filesToDeleteAfterUpload: ['dist/**/*.map'],
@@ -31,6 +41,9 @@ const sentryPlugins = process.env.SENTRY_AUTH_TOKEN
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), ...sentryPlugins],
+  define: {
+    'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(sentryRelease ?? ''),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
