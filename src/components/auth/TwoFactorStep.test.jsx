@@ -60,7 +60,7 @@ describe("TwoFactorStep", () => {
     };
     verify2fa.mockResolvedValue(response);
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { onSuccess } = renderStep();
 
     await typeCode(user, "123456");
@@ -77,7 +77,7 @@ describe("TwoFactorStep", () => {
   });
 
   it("keeps the submit button disabled until all six digits are entered", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     renderStep();
 
     const submit = screen.getByRole("button", {
@@ -99,7 +99,7 @@ describe("TwoFactorStep", () => {
       },
     });
 
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const { onExpired, onSuccess } = renderStep();
 
     await typeCode(user, "654321");
