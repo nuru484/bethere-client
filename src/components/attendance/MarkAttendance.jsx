@@ -270,18 +270,19 @@ export default function MarkAttendance({ type = "in" }) {
       <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex items-start gap-2 sm:gap-3">
-          <BackButton
-            to={`/dashboard/events/${eventId}`}
-            label="Back to event"
-          />
-
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
             </p>
-            <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-              Mark Attendance {isCheckIn ? "In" : "Out"}
-            </h1>
+            <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
+              <BackButton
+                to={`/dashboard/events/${eventId}`}
+                label="Back to event"
+              />
+              <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+                Mark Attendance {isCheckIn ? "In" : "Out"}
+              </h1>
+            </div>
             <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
               {isCheckIn
                 ? "Scan the venue code, then verify your face to check in"

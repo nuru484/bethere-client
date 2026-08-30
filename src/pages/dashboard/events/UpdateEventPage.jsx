@@ -100,17 +100,18 @@ const UpdateEventPage = () => {
 
   return (
     <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
-      {/* Header: back control, mono eyebrow + display title + event name caption */}
+      {/* Header: mono eyebrow, back control beside the display title, event name caption */}
       <div className="flex items-start gap-2 sm:gap-3">
-        <BackButton to="/dashboard/events" label="Back to events" />
-
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             Editing
           </p>
-          <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-            Update Event
-          </h1>
+          <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
+            <BackButton to="/dashboard/events" label="Back to events" />
+            <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+              Update Event
+            </h1>
+          </div>
           {isFetchingEvent ? (
             <Skeleton className="mt-2 h-4 w-48" />
           ) : (

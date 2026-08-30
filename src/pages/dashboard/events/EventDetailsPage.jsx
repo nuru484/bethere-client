@@ -49,10 +49,12 @@ const EventDetailsPage = () => {
       <div className="container mx-auto space-y-6">
         {/* Header Skeleton */}
         <div className="max-w-7xl mx-auto flex items-start gap-2 sm:gap-3 pb-4 sm:pb-6 border-b">
-          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-          <div className="space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-8 w-48" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+              <Skeleton className="h-8 w-48" />
+            </div>
             <Skeleton className="h-4 w-32" />
           </div>
         </div>
@@ -100,17 +102,18 @@ const EventDetailsPage = () => {
 
   return (
     <div className="container mx-auto space-y-6">
-      {/* Header: back control, mono eyebrow + display title */}
+      {/* Header: mono eyebrow, back control beside the display title */}
       <div className="max-w-7xl mx-auto flex items-start gap-2 pb-4 sm:gap-3 sm:pb-6 border-b">
-        <BackButton to="/dashboard/events" label="Back to events" />
-
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             Event
           </p>
-          <h1 className="mt-1 line-clamp-2 break-words font-display text-xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-2xl lg:text-3xl">
-            {event?.title || "Event Details"}
-          </h1>
+          <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
+            <BackButton to="/dashboard/events" label="Back to events" />
+            <h1 className="min-w-0 line-clamp-2 break-words font-display text-xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-2xl lg:text-3xl">
+              {event?.title || "Event Details"}
+            </h1>
+          </div>
           <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">
             View event information and details
           </p>

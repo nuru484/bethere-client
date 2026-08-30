@@ -89,17 +89,18 @@ const UserAttendancePage = () => {
     >
       <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6">
-        {/* Header: back control, mono eyebrow + display title */}
+        {/* Header: mono eyebrow, back control beside the display title */}
         <div className="flex items-start gap-2 sm:gap-3">
-          <BackButton to="/dashboard/users" label="Back to attendants" />
-
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
             </p>
-            <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-              {userName}
-            </h1>
+            <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
+              <BackButton to="/dashboard/users" label="Back to attendants" />
+              <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
+                {userName}
+              </h1>
+            </div>
             <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
               Check-in history across all events
             </p>
