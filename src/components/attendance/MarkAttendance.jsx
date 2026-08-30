@@ -280,7 +280,7 @@ export default function MarkAttendance({ type = "in" }) {
                 label="Back to event"
               />
               <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-                Mark Attendance {isCheckIn ? "In" : "Out"}
+                Mark attendance {isCheckIn ? "in" : "out"}
               </h1>
             </div>
             <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">

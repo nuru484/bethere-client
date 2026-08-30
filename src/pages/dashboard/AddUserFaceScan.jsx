@@ -228,7 +228,7 @@ export default function AddUserFaceScan() {
           </div>
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-normal tracking-[-0.02em] text-foreground">
-              Face Registration
+              Face registration
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
               Register your biometric data for event authentication

@@ -70,14 +70,17 @@ const UserProfilePage = () => {
 
   return (
     <div className="container mx-auto max-w-3xl space-y-6">
-      {/* Page header: mono eyebrow + display-face name */}
+      {/* Page header: mono eyebrow, page name, then whose profile it is */}
       <header className="space-y-1">
         <p className={microLabel}>
-          {shouldFetchProfile ? "Profile - Administrator view" : "Profile"}
+          {shouldFetchProfile ? "Profile - administrator view" : "Profile"}
         </p>
         <h1 className="break-words font-display text-2xl font-normal tracking-[-0.03em] text-foreground sm:text-3xl md:text-4xl">
-          {displayName}
+          User profile
         </h1>
+        <p className="break-words text-sm leading-snug text-muted-foreground md:text-base">
+          {displayName}
+        </p>
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

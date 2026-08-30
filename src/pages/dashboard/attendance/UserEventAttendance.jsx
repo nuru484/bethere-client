@@ -48,10 +48,18 @@ const UserEventAttendancePage = () => {
   const userDetails = attendanceRecords?.[0]?.user;
   const isRecurring = eventDetails?.isRecurring || false;
 
-  const eventTitle = eventDetails?.title || "Event";
+  const eventTitle = eventDetails?.title;
   const userName = userDetails
     ? `${userDetails.firstName} ${userDetails.lastName}`
-    : "User";
+    : null;
+
+  // Both names ride on the first record, so with no records there is nothing
+  // to name and the caption only describes the page.
+  const historyLabel = isRecurring ? "Session history" : "Record";
+  const caption =
+    userName && eventTitle
+      ? `${historyLabel} for ${userName} - ${eventTitle}`
+      : `${historyLabel} for this event`;
 
   // Calculate stats for recurring events
   const sessionsAttended =
@@ -121,13 +129,11 @@ const UserEventAttendancePage = () => {
                 label="Back to attendance"
               />
               <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-                {userName}
+                Attendance details
               </h1>
             </div>
             <p className="mt-1 break-words text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
-              {isRecurring
-                ? `Session history for ${eventTitle}`
-                : `Record for ${eventTitle}`}
+              {caption}
             </p>
           </div>
         </div>

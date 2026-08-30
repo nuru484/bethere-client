@@ -54,7 +54,7 @@ const AdminDashboard = () => {
               Overview
             </p>
             <h1 className="mt-1 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-              Admin Dashboard
+              Admin dashboard
             </h1>
             <p className="mt-1 text-sm text-muted-foreground sm:mt-1.5 sm:text-base">
               Presence, punctuality, and verified-attendance integrity at a glance

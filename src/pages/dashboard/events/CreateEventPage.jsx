@@ -79,7 +79,7 @@ const CreateEventPage = () => {
           <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
             <BackButton to="/dashboard/events" label="Back to events" />
             <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-              Create Event
+              Create event
             </h1>
           </div>
           <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">

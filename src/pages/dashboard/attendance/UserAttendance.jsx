@@ -44,7 +44,7 @@ const UserAttendancePage = () => {
 
   const userName = userDetails
     ? `${userDetails.firstName} ${userDetails.lastName}`
-    : "User";
+    : null;
 
   const { message } = extractApiErrorMessage(error);
 
@@ -98,11 +98,13 @@ const UserAttendancePage = () => {
             <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
               <BackButton to="/dashboard/users" label="Back to attendants" />
               <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-                {userName}
+                User attendance details
               </h1>
             </div>
-            <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
-              Check-in history across all events
+            <p className="mt-1 break-words text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
+              {userName
+                ? `Check-in history across all events for ${userName}`
+                : "Check-in history across all events"}
             </p>
           </div>
         </div>

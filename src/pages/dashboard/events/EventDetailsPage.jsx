@@ -111,11 +111,11 @@ const EventDetailsPage = () => {
           <div className="mt-1 flex min-w-0 items-center gap-2 sm:gap-3">
             <BackButton to="/dashboard/events" label="Back to events" />
             <h1 className="min-w-0 line-clamp-2 break-words font-display text-xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-2xl lg:text-3xl">
-              {event?.title || "Event Details"}
+              Event details
             </h1>
           </div>
-          <p className="mt-0.5 text-sm text-muted-foreground sm:text-base">
-            View event information and details
+          <p className="mt-0.5 break-words text-sm text-muted-foreground sm:text-base">
+            {event?.title || "View event information and details"}
           </p>
         </div>
       </div>

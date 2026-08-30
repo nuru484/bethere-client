@@ -41,7 +41,7 @@ const EventAttendancePage = () => {
   const totalCount = attendanceData?.meta?.total || 0;
 
   const eventDetails = attendanceRecords?.[0]?.session?.event;
-  const eventTitle = eventDetails?.title || "Event";
+  const eventTitle = eventDetails?.title;
 
   // The status breakdown is only available for the records on the current
   // page (the API returns just the page + a filtered total, no per-status
@@ -87,11 +87,13 @@ const EventAttendancePage = () => {
                 label="Back to event"
               />
               <h1 className="min-w-0 break-words font-display text-2xl font-normal leading-tight tracking-[-0.02em] text-foreground sm:text-3xl">
-                {eventTitle}
+                Event attendance
               </h1>
             </div>
-            <p className="mt-1 text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
-              Check-ins recorded for this event
+            <p className="mt-1 break-words text-sm leading-snug text-muted-foreground sm:mt-1.5 md:text-base">
+              {eventTitle
+                ? `Check-ins recorded for ${eventTitle}`
+                : "Check-ins recorded for this event"}
             </p>
           </div>
         </div>
