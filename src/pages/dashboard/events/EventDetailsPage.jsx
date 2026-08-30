@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteEvent, useGetEvent } from "@/hooks/useEvent";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
@@ -44,21 +44,17 @@ const EventDetailsPage = () => {
     );
   };
 
-  const handleBack = () => {
-    navigate("/dashboard/events");
-  };
-
   if (isLoading) {
     return (
       <div className="container mx-auto space-y-6">
         {/* Header Skeleton */}
-        <div className="max-w-7xl mx-auto flex items-end justify-between pb-4 sm:pb-6 border-b">
+        <div className="max-w-7xl mx-auto flex items-start gap-2 sm:gap-3 pb-4 sm:pb-6 border-b">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-32" />
           </div>
-          <Skeleton className="h-8 w-20 rounded-lg" />
         </div>
 
         {/* Content Skeleton */}
@@ -104,8 +100,10 @@ const EventDetailsPage = () => {
 
   return (
     <div className="container mx-auto space-y-6">
-      {/* Header: mono eyebrow + display title */}
-      <div className="max-w-7xl mx-auto flex items-end justify-between gap-3 pb-4 sm:pb-6 border-b">
+      {/* Header: back control, mono eyebrow + display title */}
+      <div className="max-w-7xl mx-auto flex items-start gap-2 pb-4 sm:gap-3 sm:pb-6 border-b">
+        <BackButton to="/dashboard/events" label="Back to events" />
+
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             Event
@@ -117,15 +115,6 @@ const EventDetailsPage = () => {
             View event information and details
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={handleBack}
-        >
-          Back
-        </Button>
       </div>
 
       {/* Main Content Area */}

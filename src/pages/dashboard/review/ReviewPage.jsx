@@ -3,21 +3,21 @@
 // Admin security review: anomaly flags (with evidence) and the append-only
 // audit log - the read surface for the detective controls the attendance flow
 // records.
-import { useNavigate } from "react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import AnomaliesTab from "./AnomaliesTab";
 import AuditLogTab from "./AuditLogTab";
 
 export default function ReviewPage() {
   usePageTitle("Security review - BeThere");
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto space-y-4 py-4 sm:space-y-6 sm:py-6">
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton to="/dashboard" label="Back to dashboard" />
+
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Security
@@ -29,14 +29,6 @@ export default function ReviewPage() {
               Flagged check-in attempts and the full audit trail
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-            onClick={() => navigate("/dashboard")}
-          >
-            Back
-          </Button>
         </div>
 
         <Tabs defaultValue="anomalies">

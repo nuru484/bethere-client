@@ -2,6 +2,7 @@
 import { useParams, useNavigate } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
@@ -108,8 +109,13 @@ const UserEventAttendancePage = () => {
     >
       <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6 py-4 sm:py-6">
-        {/* Header: mono eyebrow + display title */}
-        <div className="flex items-end justify-between gap-3">
+        {/* Header: back control, mono eyebrow + display title */}
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton
+            to={`/dashboard/attendance/${userId}`}
+            label="Back to attendance"
+          />
+
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
@@ -123,15 +129,6 @@ const UserEventAttendancePage = () => {
                 : `Record for ${eventTitle}`}
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-            onClick={() => navigate(-1)}
-          >
-            Back
-          </Button>
         </div>
 
         {/* Stats Cards - Only show for recurring events */}

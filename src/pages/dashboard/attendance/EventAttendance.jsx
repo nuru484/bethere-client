@@ -1,7 +1,7 @@
 // src/pages/dashboard/EventAttendancePage.jsx
-import { useParams, useNavigate } from "react-router";
+import { useParams } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { AttendanceDataTable } from "@/components/attendance-table/AttendanceDataTable";
 import { DataTableSkeleton } from "@/components/ui/DataTableSkeleton";
 import AsyncBoundary from "@/components/ui/AsyncBoundary";
@@ -14,7 +14,6 @@ const FILTER_KEYS = ["search", "status", "startDate", "endDate"];
 
 const EventAttendancePage = () => {
   const { eventId } = useParams();
-  const navigate = useNavigate();
 
   // Page, page size and filters live in the URL so refresh/back/share keep
   // the same view.
@@ -76,8 +75,13 @@ const EventAttendancePage = () => {
     >
       <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6 py-4 sm:py-6">
-        {/* Header: mono eyebrow + display title */}
-        <div className="flex items-end justify-between gap-3">
+        {/* Header: back control, mono eyebrow + display title */}
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton
+            to={`/dashboard/events/${eventId}`}
+            label="Back to event"
+          />
+
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
@@ -89,15 +93,6 @@ const EventAttendancePage = () => {
               Check-ins recorded for this event
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-            onClick={() => navigate(`/dashboard/events/${eventId}`)}
-          >
-            Back
-          </Button>
         </div>
 
         {/* Stats Cards - text-first, hidden when there is nothing to count */}

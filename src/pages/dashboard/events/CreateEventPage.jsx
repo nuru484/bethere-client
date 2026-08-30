@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import EventForm from "@/components/event/EventForm";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { useCreateEvent } from "@/hooks/useEvent";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { eventValidationSchema } from "@/validation/eventValidation";
@@ -68,14 +68,12 @@ const CreateEventPage = () => {
     });
   };
 
-  const handleGoBack = () => {
-    navigate("/dashboard/events");
-  };
-
   return (
     <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
-      {/* Header: mono eyebrow + display title */}
-      <div className="flex items-end justify-between gap-3">
+      {/* Header: back control, mono eyebrow + display title */}
+      <div className="flex items-start gap-2 sm:gap-3">
+        <BackButton to="/dashboard/events" label="Back to events" />
+
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             New event
@@ -87,15 +85,6 @@ const CreateEventPage = () => {
             Fill in the details to create a new event
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={handleGoBack}
-        >
-          Back
-        </Button>
       </div>
 
       <EventForm

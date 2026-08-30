@@ -1,13 +1,14 @@
 // src/pages/dashboard/events/VenueCodePage.jsx
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useParams } from "react-router";
 import { QRCodeSVG } from "qrcode.react";
 import { useVenueCodes } from "@/hooks/useAttendance";
 import { useGetEvent } from "@/hooks/useEvent";
 import { Button } from "@/components/ui/button";
 import ErrorMessage from "@/components/ui/ErrorMessage";
+import BackButton from "@/components/ui/BackButton";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
-import { Maximize, Minimize, ArrowLeft } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
 
 const DEFAULT_PERIOD_MS = 30000;
 
@@ -17,7 +18,6 @@ const REFETCH_THRESHOLD = 4;
 
 export default function VenueCodePage() {
   const { eventId } = useParams();
-  const navigate = useNavigate();
   const rootRef = useRef(null);
 
   const { data: eventData } = useGetEvent(eventId);
@@ -115,14 +115,10 @@ export default function VenueCodePage() {
     >
       {/* Top bar: back + fullscreen (hidden feel on a projector but reachable) */}
       <div className="flex w-full max-w-3xl items-center justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/dashboard/events/${eventId}`)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" strokeWidth={2} />
-          Back
-        </Button>
+        <BackButton
+          to={`/dashboard/events/${eventId}`}
+          label="Back to event"
+        />
 
         <Button
           variant="outline"

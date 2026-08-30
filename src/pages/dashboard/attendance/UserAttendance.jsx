@@ -7,6 +7,7 @@ import { usePaginatedListState } from "@/hooks/usePaginatedListState";
 import EmptyState from "@/components/ui/EmptyState";
 import AsyncBoundary from "@/components/ui/AsyncBoundary";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 
 // Module-level constant: usePaginatedListState needs a stable identity.
@@ -88,8 +89,10 @@ const UserAttendancePage = () => {
     >
       <div className="min-h-screen">
       <div className="container mx-auto space-y-4 sm:space-y-6">
-        {/* Header: mono eyebrow + display title */}
-        <div className="flex items-end justify-between gap-3">
+        {/* Header: back control, mono eyebrow + display title */}
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton to="/dashboard/users" label="Back to attendants" />
+
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
@@ -101,15 +104,6 @@ const UserAttendancePage = () => {
               Check-in history across all events
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-            onClick={() => navigate(-1)}
-          >
-            Back
-          </Button>
         </div>
 
         {/* Attendance Data Table */}

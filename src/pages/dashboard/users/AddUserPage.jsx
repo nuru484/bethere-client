@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import AddUserForm from "@/components/users/AddUserForm";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { useAddUser } from "@/hooks/useUsers";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { addUserSchema } from "@/validation/user/addUserValidation";
@@ -60,14 +60,12 @@ export default function AddUserPage() {
     }
   };
 
-  const handleGoBack = () => {
-    navigate("/dashboard/users");
-  };
-
   return (
     <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
-      {/* Header: mono eyebrow + display title */}
-      <div className="flex items-end justify-between gap-3">
+      {/* Header: back control, mono eyebrow + display title */}
+      <div className="flex items-start gap-2 sm:gap-3">
+        <BackButton to="/dashboard/users" label="Back to attendants" />
+
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             New attendant
@@ -79,15 +77,6 @@ export default function AddUserPage() {
             Fill in details to add a new attendant to the system
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={handleGoBack}
-        >
-          Back
-        </Button>
       </div>
 
       <AddUserForm form={form} onSubmit={onSubmit} isLoading={isPending} />

@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 import toast from "react-hot-toast";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
 import { loadFaceLandmarker, preloadFaceLandmarker } from "@/lib/face-landmarker";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 
 // Guided one-take flow for BOTH directions:
 //  scan      -> scan the venue's rotating QR to prove presence
@@ -269,7 +269,12 @@ export default function MarkAttendance({ type = "in" }) {
     <div className="min-h-screen">
       <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <BackButton
+            to={`/dashboard/events/${eventId}`}
+            label="Back to event"
+          />
+
           <div className="min-w-0 flex-1">
             <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
               Attendance
@@ -283,15 +288,6 @@ export default function MarkAttendance({ type = "in" }) {
                 : "Scan the venue code, then verify your face to check out"}
             </p>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-            onClick={() => navigate(`/dashboard/events/${eventId}`)}
-          >
-            Back
-          </Button>
         </div>
 
         {/* Status message: narrated for screen-reader users - this is the

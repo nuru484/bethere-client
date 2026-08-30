@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import AddAdminForm from "@/components/admins/AddAdminForm";
-import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { useAddAdmin } from "@/hooks/useAdmins";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { extractApiErrorMessage } from "@/utils/extract-api-error-message";
@@ -58,14 +58,12 @@ export default function AddAdminPage() {
     }
   };
 
-  const handleGoBack = () => {
-    navigate("/dashboard/admins");
-  };
-
   return (
     <div className="container mx-auto max-w-3xl space-y-4 sm:space-y-6">
-      {/* Header: mono eyebrow + display title */}
-      <div className="flex items-end justify-between gap-3">
+      {/* Header: back control, mono eyebrow + display title */}
+      <div className="flex items-start gap-2 sm:gap-3">
+        <BackButton to="/dashboard/admins" label="Back to admins" />
+
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
             New admin
@@ -77,15 +75,6 @@ export default function AddAdminPage() {
             Create a new administrator account with dashboard access
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-          onClick={handleGoBack}
-        >
-          Back
-        </Button>
       </div>
 
       <AddAdminForm form={form} onSubmit={onSubmit} isLoading={isPending} />
